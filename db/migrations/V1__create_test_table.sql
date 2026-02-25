@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS test_migration (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  message VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+INSERT INTO test_migration (message) VALUES ('Flyway migration executed successfully');

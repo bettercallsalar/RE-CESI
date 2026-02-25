@@ -1,7 +1,6 @@
 services:
   db:
     image: mysql:8.4
-    platform: ${DOCKER_PLATFORM:-}
     container_name: resr-mysql
     restart: unless-stopped
     environment:
@@ -27,21 +26,37 @@ services:
       timeout: 5s
       retries: 30
 
+  migrate:
+    image: flyway/flyway:10
+    container_name: resr-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    command: -connectRetries=60 migrate
+    environment:
+      # Build the JDBC URL here so .env ordering does not blank DB_HOST/DB_PORT.
+      FLYWAY_URL: "jdbc:mysql://${DB_HOST:-db}:${DB_PORT:-3306}/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+      FLYWAY_USER: ${MYSQL_USER}
+      FLYWAY_PASSWORD: ${MYSQL_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+
   api:
+    platform: ${API_DOCKER_PLATFORM:-}
     build:
       context: .
       dockerfile: src/RESR.WebAPI/Dockerfile
     container_name: resr-api
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
-
-      ConnectionStrings__DefaultConnection: "Server=${DB_HOST};Port=${DB_PORT};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
-
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-db};Port=${DB_PORT:-3306};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       JwtSettings__SecretKey: ${JWT_SECRET}
