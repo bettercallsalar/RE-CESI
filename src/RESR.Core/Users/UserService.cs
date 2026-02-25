@@ -20,10 +20,10 @@ public sealed class UserService : IUserService
         var username = cmd.Username.Trim();
 
         if (await _repo.GetByEmailAsync(email, ct) is not null)
-            throw new InvalidOperationException("Email already exists");
+            throw new InvalidOperationException("Email already exists.");
 
         if (await _repo.GetByUsernameAsync(username, ct) is not null)
-            throw new InvalidOperationException("Username already exists");
+            throw new InvalidOperationException("Username already exists.");
 
         var user = new User
         {
@@ -49,5 +49,19 @@ public sealed class UserService : IUserService
         using var sha = SHA256.Create();
         var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
         return Convert.ToHexString(bytes);
+    }
+
+    public Task<string?> LoginUserAsync(LoginDto loginDto)
+    {
+        var email = loginDto.Email.Trim();
+        var passwordHash = HashPassword(loginDto.Password);
+
+        User user = _repo.GetByEmailAndPasswordHashAsync(email, passwordHash, CancellationToken.None).Result
+            ?? throw new InvalidOperationException("Invalid email or password");
+
+        if (!user.IsVerified) throw new InvalidOperationException("User email is not verified");
+        if (user.DeletedAt is not null) throw new InvalidOperationException("User account is deleted");
+
+        return Task.FromResult<string?>(Guid.NewGuid().ToString());
     }
 }

@@ -1,4 +1,4 @@
-namespace RESR.WebAPI.Users;
+namespace RESR.Models.Users;
 
 public sealed record RegisterUserRequest(
     string Username,

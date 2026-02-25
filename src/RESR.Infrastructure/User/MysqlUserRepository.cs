@@ -153,4 +153,23 @@ public sealed class MySqlUserRepository : IUserRepository
             IdRole = r["id_role"] == DBNull.Value ? null : Convert.ToInt32(r["id_role"])
         };
     }
+
+    public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash, CancellationToken ct)
+    {
+        const string sql = """
+        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
+        FROM `user`
+        WHERE email = @email AND hashed_password = @hashed_password AND deleted_at IS NULL
+        """;
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@hashed_password", passwordHash);
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        return await r.ReadAsync(ct) ? Map(r) : null;
+    }
 }
