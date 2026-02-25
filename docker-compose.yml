@@ -44,24 +44,42 @@ services:
       - ./db/migrations:/flyway/sql:ro
 
   api:
-    platform: ${API_DOCKER_PLATFORM:-}
-    build:
-      context: .
-      dockerfile: src/RESR.WebAPI/Dockerfile
+    image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: resr-api
-    restart: unless-stopped
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
     environment:
-      ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+      DOTNET_WATCH_SUPPRESS_MSBUILD_INCREMENTALISM: "1"
       ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-db};Port=${DB_PORT:-3306};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       JwtSettings__SecretKey: ${JWT_SECRET}
     ports:
       - "${API_PORT}:8080"
+    volumes:
+      - ./src:/work/src
+      - ./tests:/work/tests
+      - nuget_cache:/root/.nuget/packages
+      - /work/src/RESR.WebAPI/bin
+      - /work/src/RESR.WebAPI/obj
+      - /work/src/RESR.Core/bin
+      - /work/src/RESR.Core/obj
+      - /work/src/RESR.Models/bin
+      - /work/src/RESR.Models/obj
+      - /work/src/RESR.Infrastructure/bin
+      - /work/src/RESR.Infrastructure/obj
+      - /work/tests/RESR.Core.Tests/bin
+      - /work/tests/RESR.Core.Tests/obj
+    working_dir: /work/src/RESR.WebAPI
+    command: ["dotnet", "watch", "run", "--urls", "http://+:8080"]
 
 volumes:
   resr_mysql_data:
+  nuget_cache:
