@@ -1,6 +1,9 @@
 using RESR.Core.Users;
 using RESR.Core.Users.Ports;
 using RESR.Infrastructure.Users;
+using RESR.Core.Roles;
+using RESR.Core.Roles.Ports;
+using RESR.Infrastructure.Roles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,9 @@ var cs = builder.Configuration.GetConnectionString("DefaultConnection")
          ?? throw new InvalidOperationException("Missing connection string DefaultConnection.");
 
 builder.Services.AddScoped<IUserRepository>(_ => new MySqlUserRepository(cs));
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IRoleRepository>(_ => new MySqlRoleRepository(cs));
 builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
