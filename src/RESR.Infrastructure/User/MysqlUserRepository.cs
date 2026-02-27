@@ -1,4 +1,5 @@
 using MySql.Data.MySqlClient;
+using RESR.Core.Users;
 using RESR.Core.Users.Ports;
 using RESR.Models.Users;
 using System.Data.Common;
@@ -112,6 +113,43 @@ public sealed class MySqlUserRepository : IUserRepository
 
         var id = await cmd.ExecuteScalarAsync(ct);
         return Convert.ToInt32(id);
+    }
+
+    public async Task<User> PatchAsync(UpdateUserCommand user, CancellationToken ct)
+    {
+        const string sql = """
+        UPDATE `user`
+        SET
+            username = COALESCE(@username, username),
+            first_name = COALESCE(@first_name, first_name),
+            birth_date = COALESCE(@birth_date, birth_date),
+            bio = COALESCE(@bio, bio),
+            email = COALESCE(@email, email),
+            is_verified = COALESCE(@is_verified, is_verified),
+            id_department = COALESCE(@id_department, id_department),
+            id_role = COALESCE(@id_role, id_role)
+        WHERE id_user = @id_user AND deleted_at IS NULL;
+        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
+        FROM `user`
+        WHERE id_user = @id_user;
+        """;
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@id_user", user.IdUser);
+        cmd.Parameters.AddWithValue("@username", (object?)user.Username ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@first_name", (object?)user.FirstName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@is_verified", (object?)user.IsVerified ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
+
+        await using var r = await cmd.ExecuteReaderAsync(ct);
+        return await r.ReadAsync(ct) ? Map(r) : throw new InvalidOperationException("User not found");
     }
 
     public async Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct)

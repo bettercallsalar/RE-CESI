@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RESR.Core.Errors;
 using RESR.Core.Users;
 using RESR.Models.Users;
 
@@ -46,7 +47,32 @@ public sealed class UsersController : ControllerBase
                 }
             );
         }
-        catch (InvalidOperationException ex)
+        catch (ConflictException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("{idUser:int}")]
+    public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
+    {
+        try
+        {
+            User user = await _service.UpdateAsync(
+                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, req.IsVerified, req.Bio, req.IdDepartment, req.IdRole),
+                ct
+            );
+            return Ok(ToResponse(user));
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ConflictException ex)
         {
             return Conflict(new { message = ex.Message });
         }

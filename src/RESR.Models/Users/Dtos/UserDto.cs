@@ -11,6 +11,17 @@ public sealed record RegisterUserRequest(
     int? IdRole
 );
 
+public sealed record UpdateUserRequest(
+    string? Username,
+    string? Email,
+    string? FirstName,
+    DateOnly? BirthDate,
+    bool? IsVerified,
+    string? Bio,
+    int? IdDepartment,
+    int? IdRole
+);
+
 public sealed record UserResponse(
     int IdUser,
     string Username,

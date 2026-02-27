@@ -25,18 +25,17 @@ public sealed class LoginController : ControllerBase
     /// The token if the login is successful. Null if the login is unsuccessful.
     /// </returns>
     /// 
-    [HttpPost("login-user")]
-    public async Task<IActionResult> LoginUserAsync([FromBody] LoginDto loginDto)
+    [HttpPost]
+    public async Task<IActionResult> LoginUserAsync([FromBody] Login loginDto, CancellationToken ct)
     {
-        var result = await _service.LoginUserAsync(loginDto);
-        if (result != null)
+        try
         {
-            return Ok(result);
+            var result = await _service.LoginUserAsync(loginDto, ct);
+            return Ok(new { token = result });
         }
-        else
+        catch (InvalidOperationException ex)
         {
-            return Unauthorized("Invalid credentials.");
+            return Unauthorized(new { message = ex.Message });
         }
     }
 }
-
