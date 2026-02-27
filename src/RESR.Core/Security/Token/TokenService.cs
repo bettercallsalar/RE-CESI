@@ -53,4 +53,50 @@ public sealed class TokenService : ITokenService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    public bool ValidateToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return false;
+
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
+
+            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidIssuer = _settings.Issuer,
+                ValidAudience = _settings.Audience,
+                IssuerSigningKey = key,
+                ClockSkew = TimeSpan.Zero
+            }, out _);
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public string? GetArgumentFromToken(string token, string argumentName)
+    {
+        if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(argumentName))
+            return null;
+
+        try
+        {
+            var jwtToken = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            return jwtToken.Claims.FirstOrDefault(c => c.Type == argumentName)?.Value;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Errors;
 using RESR.Core.Controllers.Users;
 using RESR.Models.Users;
+using RESR.WebAPI.Security;
 
-namespace RESR.WebAPI.Users;
+namespace Controllers;
 
+[Route("api/[controller]")]
 [ApiController]
-[Route("api/users")]
 public sealed class UsersController : ControllerBase
 {
     private readonly IUserService _service;
@@ -19,7 +20,7 @@ public sealed class UsersController : ControllerBase
         var users = await _service.GetAllAsync(ct);
         return Ok(users.Select(ToResponse).ToList());
     }
-
+    [AuthorizeToken()]
     [HttpGet("{idUser:int}")]
     public async Task<ActionResult<UserResponse>> GetById([FromRoute] int idUser, CancellationToken ct)
     {

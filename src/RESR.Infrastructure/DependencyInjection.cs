@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using RESR.Core.Users.Ports;
+using RESR.Core.Controllers.Users.Ports;
 using RESR.Infrastructure.Users;
 
 namespace RESR.Infrastructure;

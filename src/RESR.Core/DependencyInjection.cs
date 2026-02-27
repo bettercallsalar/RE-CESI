@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
-using RESR.Core.Users;
+using RESR.Core.Controllers.Users;
 
 namespace RESR.Core;
 
