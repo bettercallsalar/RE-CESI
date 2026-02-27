@@ -1,4 +1,4 @@
-namespace RESR.Core.Users;
+namespace RESR.Core.Controllers.Users;
 
 public sealed record RegisterUserCommand(
     string Username,

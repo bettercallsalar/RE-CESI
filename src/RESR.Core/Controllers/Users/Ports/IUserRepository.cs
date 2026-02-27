@@ -1,6 +1,6 @@
 using RESR.Models.Users;
 
-namespace RESR.Core.Users.Ports;
+namespace RESR.Core.Controllers.Users.Ports;
 
 public interface IUserRepository
 {

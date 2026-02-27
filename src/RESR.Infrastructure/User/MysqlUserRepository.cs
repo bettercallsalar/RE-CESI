@@ -1,6 +1,6 @@
 using MySql.Data.MySqlClient;
-using RESR.Core.Users;
-using RESR.Core.Users.Ports;
+using RESR.Core.Controllers.Users;
+using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
 using System.Data.Common;
 

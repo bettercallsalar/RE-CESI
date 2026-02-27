@@ -1,6 +1,6 @@
 using RESR.Models.Users;
 
-namespace RESR.Core.Users;
+namespace RESR.Core.Controllers.Users;
 
 public interface IUserService
 {

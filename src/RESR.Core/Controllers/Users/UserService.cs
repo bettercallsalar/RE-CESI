@@ -1,9 +1,9 @@
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
-using RESR.Core.Users.Ports;
+using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
-namespace RESR.Core.Users;
+namespace RESR.Core.Controllers.Users;
 
 public sealed class UserService : IUserService
 {

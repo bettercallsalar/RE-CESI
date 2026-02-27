@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Errors;
-using RESR.Core.Users;
+using RESR.Core.Controllers.Users;
 using RESR.Models.Users;
 
 namespace RESR.WebAPI.Users;
