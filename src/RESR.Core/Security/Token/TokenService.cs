@@ -53,6 +53,7 @@ public sealed class TokenService : ITokenService
             audience: _settings.Audience,
             claims: claims,
             notBefore: DateTime.UtcNow,
+            // DEV NOTE: For testing purposes, tokens don't expire
             //expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
             signingCredentials: creds
         );

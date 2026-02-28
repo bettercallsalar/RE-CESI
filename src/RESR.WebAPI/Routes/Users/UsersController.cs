@@ -60,24 +60,22 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [HttpPatch("vrify-email/{idUser:int}")]
-    public async Task<ActionResult> VerifyEmail([FromRoute] int idUser, CancellationToken ct)
+    [AuthorizeToken(TokenRole.Admin)]
+    [HttpPatch("{idUser:int}/verification")]
+    public async Task<ActionResult<UserResponse>> SetVerification(
+        [FromRoute] int idUser,
+        [FromBody] SetUserVerificationRequest req,
+        CancellationToken ct
+    )
     {
         try
         {
-            var user = await _service.GetByIdAsync(idUser, ct);
-            if (user is null)
-                return NotFound(new { message = "User not found" });
-
-            if (user.IsVerified)
-                return BadRequest(new { message = "Email is already verified" });
-
-            var updatedUser = await _service.UpdateAsync(
-                new UpdateUserCommand(idUser, user.Username, user.Email, user.FirstName, user.BirthDate, true, user.Bio, user.IdDepartment, user.IdRole),
-                ct
-            );
-
-            return Ok(new { message = "Email verified successfully" });
+            var user = await _service.SetVerificationAsync(new SetUserVerificationCommand(idUser, req.IsVerified), ct);
+            return Ok(ToResponse(user));
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (ValidationException ex)
         {
@@ -85,18 +83,14 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-
     [AuthorizeToken(TokenRole.User, TokenRole.Admin)]
     [HttpPatch("{idUser:int}")]
     public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
     {
         try
         {
-            User? existingUser = await _service.GetByIdAsync(idUser, ct);
-            if (existingUser is null) return NotFound(new { message = "User not found" });
-
             User user = await _service.UpdateAsync(
-                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, existingUser.IsVerified, req.Bio, req.IdDepartment, req.IdRole),
+                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, req.Bio, req.IdDepartment, req.IdRole),
                 ct
             );
             return Ok(ToResponse(user));

@@ -17,8 +17,12 @@ public sealed record UpdateUserCommand(
     string? Email,
     string? FirstName,
     DateOnly? BirthDate,
-    bool? IsVerified,
     string? Bio,
     int? IdDepartment,
     int? IdRole
+);
+
+public sealed record SetUserVerificationCommand(
+    int IdUser,
+    bool IsVerified
 );

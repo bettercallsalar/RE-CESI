@@ -132,7 +132,6 @@ public sealed class MySqlUserRepository : IUserRepository
             birth_date = COALESCE(@birth_date, birth_date),
             bio = COALESCE(@bio, bio),
             email = COALESCE(@email, email),
-            is_verified = COALESCE(@is_verified, is_verified),
             id_department = COALESCE(@id_department, id_department),
             id_role = COALESCE(@id_role, id_role)
         WHERE id_user = @id_user AND deleted_at IS NULL
@@ -179,6 +178,40 @@ public sealed class MySqlUserRepository : IUserRepository
 
         var rows = await cmd.ExecuteNonQueryAsync(ct);
         return rows > 0;
+    }
+
+    public async Task<User> SetVerificationAsync(int idUser, bool isVerified, CancellationToken ct)
+    {
+        const string updateSql = """
+        UPDATE `user`
+        SET is_verified = @is_verified
+        WHERE id_user = @id_user AND deleted_at IS NULL
+        """;
+
+        const string selectSql = """
+        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
+        FROM `user`
+        WHERE id_user = @id_user AND deleted_at IS NULL
+        """;
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var updateCmd = new MySqlCommand(updateSql, conn);
+        updateCmd.Parameters.AddWithValue("@id_user", idUser);
+        updateCmd.Parameters.AddWithValue("@is_verified", isVerified);
+
+        var rows = await updateCmd.ExecuteNonQueryAsync(ct);
+        if (rows == 0)
+            throw new InvalidOperationException("User not found");
+
+        await using var selectCmd = new MySqlCommand(selectSql, conn);
+        selectCmd.Parameters.AddWithValue("@id_user", idUser);
+
+        await using var reader = await selectCmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct)
+            ? Map(reader)
+            : throw new InvalidOperationException("User not found");
     }
 
     private User Map(DbDataReader reader)
@@ -236,7 +269,6 @@ public sealed class MySqlUserRepository : IUserRepository
         cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@is_verified", (object?)user.IsVerified ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
     }

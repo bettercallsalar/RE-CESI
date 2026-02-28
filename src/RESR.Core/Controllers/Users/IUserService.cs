@@ -9,5 +9,6 @@ public interface IUserService
     Task<User?> GetByIdAsync(int idUser, CancellationToken ct);
     Task<int?> RegisterAsync(RegisterUserCommand cmd, CancellationToken ct);
     Task<User> UpdateAsync(UpdateUserCommand cmd, CancellationToken ct);
+    Task<User> SetVerificationAsync(SetUserVerificationCommand cmd, CancellationToken ct);
     Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct);
 }

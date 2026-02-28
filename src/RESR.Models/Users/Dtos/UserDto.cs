@@ -21,6 +21,10 @@ public sealed record UpdateUserRequest(
     int? IdRole
 );
 
+public sealed record SetUserVerificationRequest(
+    bool IsVerified
+);
+
 public sealed record UserResponse(
     int IdUser,
     string Username,

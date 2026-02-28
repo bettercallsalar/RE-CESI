@@ -113,6 +113,20 @@ public sealed class UserService : IUserService
         return await _repo.PatchAsync(normalizedCommand, ct);
     }
 
+    public async Task<User> SetVerificationAsync(SetUserVerificationCommand cmd, CancellationToken ct)
+    {
+        var user = await _repo.GetByIdAsync(cmd.IdUser, ct)
+            ?? throw new NotFoundException($"User {cmd.IdUser} not found");
+
+        if (user.DeletedAt is not null)
+            throw new ValidationException("User account is deleted");
+
+        if (user.IsVerified == cmd.IsVerified)
+            return user;
+
+        return await _repo.SetVerificationAsync(cmd.IdUser, cmd.IsVerified, ct);
+    }
+
     public Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct) => _repo.SoftDeleteAsync(idUser, ct);
 
     public async Task<string?> LoginUserAsync(Login loginDto, CancellationToken ct)
