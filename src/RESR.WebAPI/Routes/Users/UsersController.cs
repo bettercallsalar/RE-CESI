@@ -77,7 +77,7 @@ public sealed class UsersController : ControllerBase
                 ct
             );
 
-            return Ok(new { message = "Email verified successfully", user = ToResponse(updatedUser) });
+            return Ok(new { message = "Email verified successfully" });
         }
         catch (ValidationException ex)
         {
@@ -92,8 +92,11 @@ public sealed class UsersController : ControllerBase
     {
         try
         {
+            User? existingUser = await _service.GetByIdAsync(idUser, ct);
+            if (existingUser is null) return NotFound(new { message = "User not found" });
+
             User user = await _service.UpdateAsync(
-                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, req.IsVerified, req.Bio, req.IdDepartment, req.IdRole),
+                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, existingUser.IsVerified, req.Bio, req.IdDepartment, req.IdRole),
                 ct
             );
             return Ok(ToResponse(user));

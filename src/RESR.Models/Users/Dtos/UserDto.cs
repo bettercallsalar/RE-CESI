@@ -16,7 +16,6 @@ public sealed record UpdateUserRequest(
     string? Email,
     string? FirstName,
     DateOnly? BirthDate,
-    bool? IsVerified,
     string? Bio,
     int? IdDepartment,
     int? IdRole
