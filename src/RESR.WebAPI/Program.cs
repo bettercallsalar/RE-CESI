@@ -1,3 +1,9 @@
+using RESR.Core.Users;
+using RESR.Core.Users.Ports;
+using RESR.Infrastructure.Users;
+using RESR.Core.Roles;
+using RESR.Core.Roles.Ports;
+using RESR.Infrastructure.Roles;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -62,6 +68,11 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddScoped<IUserRepository>(_ => new MySqlUserRepository(cs));
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IRoleRepository>(_ => new MySqlRoleRepository(cs));
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 
