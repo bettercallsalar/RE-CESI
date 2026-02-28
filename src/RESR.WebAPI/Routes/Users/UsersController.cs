@@ -4,7 +4,7 @@ using RESR.Core.Controllers.Users;
 using RESR.Models.Users;
 using RESR.WebAPI.Security;
 
-namespace Controllers;
+namespace RESR.WebAPI.Routes.Users;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -14,13 +14,15 @@ public sealed class UsersController : ControllerBase
 
     public UsersController(IUserService service) => _service = service;
 
+    [AuthorizeToken(TokenRole.Admin)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetAll(CancellationToken ct)
     {
         var users = await _service.GetAllAsync(ct);
         return Ok(users.Select(ToResponse).ToList());
     }
-    [AuthorizeToken()]
+
+    [AuthorizeToken(TokenRole.User, TokenRole.Admin)]
     [HttpGet("{idUser:int}")]
     public async Task<ActionResult<UserResponse>> GetById([FromRoute] int idUser, CancellationToken ct)
     {
@@ -52,8 +54,39 @@ public sealed class UsersController : ControllerBase
         {
             return Conflict(new { message = ex.Message });
         }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
+    [HttpPatch("vrify-email/{idUser:int}")]
+    public async Task<ActionResult> VerifyEmail([FromRoute] int idUser, CancellationToken ct)
+    {
+        try
+        {
+            var user = await _service.GetByIdAsync(idUser, ct);
+            if (user is null)
+                return NotFound(new { message = "User not found" });
+
+            if (user.IsVerified)
+                return BadRequest(new { message = "Email is already verified" });
+
+            var updatedUser = await _service.UpdateAsync(
+                new UpdateUserCommand(idUser, user.Username, user.Email, user.FirstName, user.BirthDate, true, user.Bio, user.IdDepartment, user.IdRole),
+                ct
+            );
+
+            return Ok(new { message = "Email verified successfully", user = ToResponse(updatedUser) });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+
+    [AuthorizeToken(TokenRole.User, TokenRole.Admin)]
     [HttpPatch("{idUser:int}")]
     public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
     {
@@ -79,6 +112,7 @@ public sealed class UsersController : ControllerBase
         }
     }
 
+    [AuthorizeToken(TokenRole.Admin)]
     [HttpDelete("{idUser:int}")]
     public async Task<ActionResult> SoftDelete([FromRoute] int idUser, CancellationToken ct)
     {

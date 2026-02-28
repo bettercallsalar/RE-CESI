@@ -4,11 +4,11 @@ public sealed record RegisterUserCommand(
     string Username,
     string Email,
     string Password,
-    string? FirstName,
+    string FirstName,
     DateOnly? BirthDate,
     string? Bio,
-    int? IdDepartment,
-    int? IdRole
+    int IdDepartment,
+    int IdRole
 );
 
 public sealed record UpdateUserCommand(

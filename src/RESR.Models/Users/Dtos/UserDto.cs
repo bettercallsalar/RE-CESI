@@ -4,11 +4,11 @@ public sealed record RegisterUserRequest(
     string Username,
     string Email,
     string Password,
-    string? FirstName,
+    string FirstName,
     DateOnly? BirthDate,
     string? Bio,
-    int? IdDepartment,
-    int? IdRole
+    int IdDepartment,
+    int IdRole
 );
 
 public sealed record UpdateUserRequest(
@@ -26,10 +26,10 @@ public sealed record UserResponse(
     int IdUser,
     string Username,
     string Email,
-    string? FirstName,
+    string FirstName,
     DateOnly? BirthDate,
     string? Bio,
     bool IsVerified,
-    int? IdDepartment,
-    int? IdRole
+    int IdDepartment,
+    int IdRole
 );

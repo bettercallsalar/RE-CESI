@@ -1,10 +1,14 @@
+using RESR.Models.Permissions;
 namespace RESR.Models.Roles;
 
-public sealed record RegisterRoleRequest(
-    string Name
-);
+// public sealed record RegisterRoleRequest(
+//     string Name,
+//     string? Description
+// );
 
 public sealed record RoleResponse(
-    int Idrole,
-    string Name
+    int IdRole,
+    string Name,
+    string? Description,
+    IReadOnlyList<PermissionResponse> Permissions
 );

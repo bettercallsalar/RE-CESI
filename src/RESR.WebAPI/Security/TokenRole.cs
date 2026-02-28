@@ -3,6 +3,8 @@
 /// <summary>
 /// Represents the roles that can be assigned to a token.
 /// </summary>
+namespace RESR.WebAPI.Security;
+
 [Flags]
 public enum TokenRole
 {
@@ -13,12 +15,12 @@ public enum TokenRole
     /// <summary>
     /// Represents a user role.
     /// </summary>
-    User,
+    User = 1,
 
     /// <summary>
     /// Represents a customer role.
     /// </summary>
-    Customer,
+    Customer = 2,
     /// <summary>
     /// Represents an administrator role.
     /// </summary>

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Users;
 using RESR.Models.Users;
 
-namespace RESR.WebAPI.Users;
+namespace RESR.WebAPI.Routes.Users;
 
 [ApiController]
 [Route("api/login")]
@@ -11,7 +11,6 @@ public sealed class LoginController : ControllerBase
     private readonly IUserService _service;
 
     public LoginController(IUserService service) => _service = service;
-
 
     /// <summary>
     /// Logs in a user.

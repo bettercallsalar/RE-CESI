@@ -1,7 +1,11 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using RESR.Core.Security.Token;
-public class GenericAuthorizationFilter : IAuthorizationFilter
+
+namespace RESR.WebAPI.Security;
+
+public sealed class GenericAuthorizationFilter : IAuthorizationFilter
 {
     private readonly ITokenService _tokenService;
     private readonly TokenRole[] _expectedRoles;
@@ -14,7 +18,14 @@ public class GenericAuthorizationFilter : IAuthorizationFilter
 
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        var jwtToken = context.HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", string.Empty);
+        var authHeader = context.HttpContext.Request.Headers.Authorization.ToString();
+        if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Result = new UnauthorizedObjectResult("Missing or invalid Authorization header.");
+            return;
+        }
+
+        var jwtToken = authHeader["Bearer ".Length..].Trim();
 
         if (string.IsNullOrEmpty(jwtToken) || !_tokenService.ValidateToken(jwtToken))
         {
@@ -22,23 +33,45 @@ public class GenericAuthorizationFilter : IAuthorizationFilter
             return;
         }
 
-        var clientIs = _tokenService.GetArgumentFromToken(jwtToken, "User");
-        var isAdmin = _tokenService.GetArgumentFromToken(jwtToken, "IsAdmin");
+        if (_expectedRoles.Length == 0)
+            return;
 
-        bool isAuthorized = _expectedRoles.Any(role =>
+        var roleClaim = _tokenService.GetArgumentFromToken(jwtToken, "id_role")
+            ?? _tokenService.GetArgumentFromToken(jwtToken, ClaimTypes.Role);
+
+        if (!int.TryParse(roleClaim, out var roleId))
         {
-            if (role == TokenRole.Admin)
-                return clientIs == "User" && isAdmin == "True";
-            if (role == TokenRole.User)
-                return clientIs == "User";
-            if (role == TokenRole.Customer)
-                return clientIs == "Customer";
-            return false;
-        });
+            context.Result = new ForbidResult();
+            return;
+        }
 
-        // if (!isAuthorized)
-        // {
-        //     context.Result = new UnauthorizedObjectResult("Access restricted to specific roles.");
-        // }
+        var actualRole = MapRole(roleId);
+        var isAuthorized = _expectedRoles.Any(expected => IsRoleAllowed(expected, actualRole));
+
+        if (!isAuthorized)
+            context.Result = new ForbidResult();
+    }
+
+    private static TokenRole MapRole(int roleId) =>
+        roleId switch
+        {
+            1 => TokenRole.User,
+            2 => TokenRole.Admin,
+            3 => TokenRole.Admin,
+            _ => TokenRole.None
+        };
+
+    private static bool IsRoleAllowed(TokenRole required, TokenRole actual)
+    {
+        if (required == TokenRole.Admin)
+            return actual == TokenRole.Admin;
+
+        if (required == TokenRole.User)
+            return actual is TokenRole.User or TokenRole.Admin;
+
+        if (required == TokenRole.Customer)
+            return actual is TokenRole.Customer or TokenRole.Admin;
+
+        return false;
     }
 }

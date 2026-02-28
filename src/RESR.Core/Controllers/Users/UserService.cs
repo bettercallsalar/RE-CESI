@@ -1,23 +1,32 @@
 using RESR.Core.Errors;
+using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
+using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
+using RESR.Models.Permissions;
 namespace RESR.Core.Controllers.Users;
 
 public sealed class UserService : IUserService
 {
     private readonly IUserRepository _repo;
+    private readonly IRoleRepository _roleRepository;
+    private readonly IUserFactory _userFactory;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
 
     public UserService(
         IUserRepository repo,
+        IRoleRepository roleRepository,
+        IUserFactory userFactory,
         IPasswordHasher passwordHasher,
         ITokenService tokenService
     )
     {
         _repo = repo;
+        _roleRepository = roleRepository;
+        _userFactory = userFactory;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
     }
@@ -29,6 +38,16 @@ public sealed class UserService : IUserService
     {
         var email = cmd.Email.Trim();
         var username = cmd.Username.Trim();
+        var firstName = cmd.FirstName.Trim();
+
+        if (string.IsNullOrWhiteSpace(firstName))
+            throw new ValidationException("First name is required");
+
+        if (cmd.IdDepartment <= 0)
+            throw new ValidationException("IdDepartment must be greater than 0");
+
+        if (cmd.IdRole <= 0)
+            throw new ValidationException("IdRole must be greater than 0");
 
         if (await _repo.GetByEmailAsync(email, ct) is not null)
             throw new ConflictException("Email already exists");
@@ -36,19 +55,21 @@ public sealed class UserService : IUserService
         if (await _repo.GetByUsernameAsync(username, ct) is not null)
             throw new ConflictException("Username already exists.");
 
-        var user = new User
-        {
-            Username = username,
-            Email = email,
-            HashedPassword = _passwordHasher.HashPassword(cmd.Password),
-            FirstName = cmd.FirstName?.Trim(),
-            BirthDate = cmd.BirthDate,
-            Bio = cmd.Bio,
-            IdDepartment = cmd.IdDepartment,
-            IdRole = cmd.IdRole,
-            IsVerified = false,
-            DeletedAt = null
-        };
+        if (await _roleRepository.GetByIdAsync(cmd.IdRole, ct) is null)
+            throw new ValidationException($"Role {cmd.IdRole} does not exist");
+
+        // TODO: check if department exists
+
+        var user = _userFactory.CreateForRegistration(
+            username,
+            email,
+            _passwordHasher.HashPassword(cmd.Password),
+            firstName,
+            cmd.BirthDate,
+            NormalizeOptional(cmd.Bio),
+            cmd.IdDepartment,
+            cmd.IdRole
+        );
 
         return await _repo.CreateAsync(user, ct);
     }
@@ -61,21 +82,35 @@ public sealed class UserService : IUserService
         if (user.DeletedAt is not null)
             throw new ValidationException("User account is deleted");
 
-        if (!string.IsNullOrWhiteSpace(cmd.Email) &&
-            !string.Equals(cmd.Email.Trim(), user.Email, StringComparison.OrdinalIgnoreCase))
+        var nextEmail = NormalizeOptional(cmd.Email);
+        var nextUsername = NormalizeOptional(cmd.Username);
+
+        if (!string.IsNullOrWhiteSpace(nextEmail) &&
+            !string.Equals(nextEmail, user.Email, StringComparison.OrdinalIgnoreCase))
         {
-            if (await _repo.GetByEmailAsync(cmd.Email.Trim(), ct) is not null)
+            if (await _repo.GetByEmailAsync(nextEmail, ct) is not null)
                 throw new ConflictException("Email already exists");
         }
 
-        if (!string.IsNullOrWhiteSpace(cmd.Username) &&
-            !string.Equals(cmd.Username.Trim(), user.Username, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(nextUsername) &&
+            !string.Equals(nextUsername, user.Username, StringComparison.OrdinalIgnoreCase))
         {
-            if (await _repo.GetByUsernameAsync(cmd.Username.Trim(), ct) is not null)
+            if (await _repo.GetByUsernameAsync(nextUsername, ct) is not null)
                 throw new ConflictException("Username already exists");
         }
 
-        return await _repo.PatchAsync(cmd, ct);
+        if (cmd.IdRole is int idRole && idRole != user.IdRole && await _roleRepository.GetByIdAsync(idRole, ct) is null)
+            throw new ValidationException($"Role {idRole} does not exist");
+
+        var normalizedCommand = cmd with
+        {
+            Email = nextEmail,
+            Username = nextUsername,
+            FirstName = NormalizeOptional(cmd.FirstName),
+            Bio = NormalizeOptional(cmd.Bio)
+        };
+
+        return await _repo.PatchAsync(normalizedCommand, ct);
     }
 
     public Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct) => _repo.SoftDeleteAsync(idUser, ct);
@@ -91,6 +126,16 @@ public sealed class UserService : IUserService
         if (!user.IsVerified) throw new InvalidOperationException("User email is not verified");
         if (user.DeletedAt is not null) throw new InvalidOperationException("User account is deleted");
 
-        return _tokenService.GenerateUserToken(user);
+        IReadOnlyList<Permission> permissions = await _roleRepository.GetPermissionsByRoleIdAsync(user.IdRole, ct);
+
+        return _tokenService.GenerateUserToken(user, permissions);
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return value.Trim();
     }
 }

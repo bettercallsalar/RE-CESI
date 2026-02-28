@@ -80,5 +80,19 @@ fi
 docker_compose up -d --build db
 wait_for_service_health db "${DB_STARTUP_TIMEOUT_SECONDS:-180}"
 
+# MySQL only applies MYSQL_DATABASE/MYSQL_USER on first init of an empty datadir.
+# If a reused volume is missing the target schema, create it explicitly.
+db_name="${MYSQL_DATABASE:-resr}"
+db_user="${MYSQL_USER:-resr}"
+db_password="${MYSQL_PASSWORD:-resr}"
+root_password="${MYSQL_ROOT_PASSWORD:-root}"
+
+echo "Ensuring database '${db_name}' exists..."
+docker_compose exec -T db mysql -uroot "-p${root_password}" -e \
+  "CREATE DATABASE IF NOT EXISTS \`${db_name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; \
+   CREATE USER IF NOT EXISTS '${db_user}'@'%' IDENTIFIED BY '${db_password}'; \
+   GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'%'; \
+   FLUSH PRIVILEGES;"
+
 docker_compose up -d --build
 docker_compose ps

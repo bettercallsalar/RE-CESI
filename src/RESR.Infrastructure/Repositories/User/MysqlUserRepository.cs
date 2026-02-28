@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Users;
+using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
 using System.Data.Common;
@@ -9,7 +10,13 @@ namespace RESR.Infrastructure.Users;
 public sealed class MySqlUserRepository : IUserRepository
 {
     private readonly string _cs;
-    public MySqlUserRepository(string connectionString) => _cs = connectionString;
+    private readonly IUserFactory _userFactory;
+
+    public MySqlUserRepository(string connectionString, IUserFactory userFactory)
+    {
+        _cs = connectionString;
+        _userFactory = userFactory;
+    }
 
     public async Task<User?> GetByIdAsync(int idUser, CancellationToken ct)
     {
@@ -25,8 +32,8 @@ public sealed class MySqlUserRepository : IUserRepository
         await using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@id_user", idUser);
 
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        return await r.ReadAsync(ct) ? Map(r) : null;
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? Map(reader) : null;
     }
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct)
@@ -43,8 +50,8 @@ public sealed class MySqlUserRepository : IUserRepository
         await using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@email", email);
 
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        return await r.ReadAsync(ct) ? Map(r) : null;
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? Map(reader) : null;
     }
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)
@@ -61,8 +68,8 @@ public sealed class MySqlUserRepository : IUserRepository
         await using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@username", username);
 
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        return await r.ReadAsync(ct) ? Map(r) : null;
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? Map(reader) : null;
     }
 
     public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct)
@@ -80,10 +87,10 @@ public sealed class MySqlUserRepository : IUserRepository
         await conn.OpenAsync(ct);
 
         await using var cmd = new MySqlCommand(sql, conn);
-        await using var r = await cmd.ExecuteReaderAsync(ct);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
 
-        while (await r.ReadAsync(ct))
-            list.Add(Map(r));
+        while (await reader.ReadAsync(ct))
+            list.Add(Map(reader));
 
         return list;
     }
@@ -101,15 +108,15 @@ public sealed class MySqlUserRepository : IUserRepository
 
         await using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@username", user.Username);
-        cmd.Parameters.AddWithValue("@first_name", (object?)user.FirstName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@first_name", user.FirstName);
         cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@email", user.Email);
         cmd.Parameters.AddWithValue("@hashed_password", user.HashedPassword);
         cmd.Parameters.AddWithValue("@is_verified", user.IsVerified);
         cmd.Parameters.AddWithValue("@deleted_at", (object?)user.DeletedAt ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_department", user.IdDepartment);
+        cmd.Parameters.AddWithValue("@id_role", user.IdRole);
 
         var id = await cmd.ExecuteScalarAsync(ct);
         return Convert.ToInt32(id);
@@ -117,7 +124,7 @@ public sealed class MySqlUserRepository : IUserRepository
 
     public async Task<User> PatchAsync(UpdateUserCommand user, CancellationToken ct)
     {
-        const string sql = """
+        const string updateSql = """
         UPDATE `user`
         SET
             username = COALESCE(@username, username),
@@ -128,28 +135,32 @@ public sealed class MySqlUserRepository : IUserRepository
             is_verified = COALESCE(@is_verified, is_verified),
             id_department = COALESCE(@id_department, id_department),
             id_role = COALESCE(@id_role, id_role)
-        WHERE id_user = @id_user AND deleted_at IS NULL;
+        WHERE id_user = @id_user AND deleted_at IS NULL
+        """;
+
+        const string selectSql = """
         SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
         FROM `user`
-        WHERE id_user = @id_user;
+        WHERE id_user = @id_user AND deleted_at IS NULL
         """;
 
         await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("@id_user", user.IdUser);
-        cmd.Parameters.AddWithValue("@username", (object?)user.Username ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@first_name", (object?)user.FirstName ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
-        cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@is_verified", (object?)user.IsVerified ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
+        await using var updateCmd = new MySqlCommand(updateSql, conn);
+        AddPatchParameters(updateCmd, user);
 
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        return await r.ReadAsync(ct) ? Map(r) : throw new InvalidOperationException("User not found");
+        var rows = await updateCmd.ExecuteNonQueryAsync(ct);
+        if (rows == 0)
+            throw new InvalidOperationException("User not found");
+
+        await using var selectCmd = new MySqlCommand(selectSql, conn);
+        selectCmd.Parameters.AddWithValue("@id_user", user.IdUser);
+
+        await using var reader = await selectCmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct)
+            ? Map(reader)
+            : throw new InvalidOperationException("User not found");
     }
 
     public async Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct)
@@ -170,26 +181,32 @@ public sealed class MySqlUserRepository : IUserRepository
         return rows > 0;
     }
 
-    private static User Map(DbDataReader r)
+    private User Map(DbDataReader reader)
     {
         DateOnly? birthDate = null;
-        if (r["birth_date"] != DBNull.Value)
-            birthDate = DateOnly.FromDateTime(Convert.ToDateTime(r["birth_date"]));
+        if (reader["birth_date"] != DBNull.Value)
+            birthDate = DateOnly.FromDateTime(Convert.ToDateTime(reader["birth_date"]));
 
-        return new User
-        {
-            IdUser = Convert.ToInt32(r["id_user"]),
-            Username = Convert.ToString(r["username"]) ?? "",
-            FirstName = r["first_name"] == DBNull.Value ? null : Convert.ToString(r["first_name"]),
-            BirthDate = birthDate,
-            Bio = r["bio"] == DBNull.Value ? null : Convert.ToString(r["bio"]),
-            Email = Convert.ToString(r["email"]) ?? "",
-            HashedPassword = Convert.ToString(r["hashed_password"]) ?? "",
-            IsVerified = Convert.ToBoolean(r["is_verified"]),
-            DeletedAt = r["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(r["deleted_at"]),
-            IdDepartment = r["id_department"] == DBNull.Value ? null : Convert.ToInt32(r["id_department"]),
-            IdRole = r["id_role"] == DBNull.Value ? null : Convert.ToInt32(r["id_role"])
-        };
+        if (reader["first_name"] == DBNull.Value)
+            throw new InvalidOperationException("User first_name cannot be NULL. Run latest DB migrations.");
+        if (reader["id_department"] == DBNull.Value)
+            throw new InvalidOperationException("User id_department cannot be NULL. Run latest DB migrations.");
+        if (reader["id_role"] == DBNull.Value)
+            throw new InvalidOperationException("User id_role cannot be NULL. Run latest DB migrations.");
+
+        return _userFactory.CreateFromPersistence(
+            Convert.ToInt32(reader["id_user"]),
+            Convert.ToString(reader["username"]) ?? string.Empty,
+            Convert.ToString(reader["email"]) ?? string.Empty,
+            Convert.ToString(reader["hashed_password"]) ?? string.Empty,
+            Convert.ToString(reader["first_name"]) ?? string.Empty,
+            birthDate,
+            reader["bio"] == DBNull.Value ? null : Convert.ToString(reader["bio"]),
+            Convert.ToBoolean(reader["is_verified"]),
+            reader["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["deleted_at"]),
+            Convert.ToInt32(reader["id_department"]),
+            Convert.ToInt32(reader["id_role"])
+        );
     }
 
     public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash, CancellationToken ct)
@@ -207,7 +224,20 @@ public sealed class MySqlUserRepository : IUserRepository
         cmd.Parameters.AddWithValue("@email", email);
         cmd.Parameters.AddWithValue("@hashed_password", passwordHash);
 
-        await using var r = await cmd.ExecuteReaderAsync(ct);
-        return await r.ReadAsync(ct) ? Map(r) : null;
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? Map(reader) : null;
+    }
+
+    private static void AddPatchParameters(MySqlCommand cmd, UpdateUserCommand user)
+    {
+        cmd.Parameters.AddWithValue("@id_user", user.IdUser);
+        cmd.Parameters.AddWithValue("@username", (object?)user.Username ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@first_name", (object?)user.FirstName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@is_verified", (object?)user.IsVerified ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
     }
 }

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RESR.Models.Permissions;
 using RESR.Models.Users;
 
 namespace RESR.Core.Security.Token;
@@ -23,7 +24,7 @@ public sealed class TokenService : ITokenService
             throw new InvalidOperationException("JwtSettings:Audience is missing.");
     }
 
-    public string GenerateUserToken(User user)
+    public string GenerateUserToken(User user, IReadOnlyList<Permission> permissions)
     {
         var claims = new List<Claim>
         {
@@ -37,6 +38,11 @@ public sealed class TokenService : ITokenService
         {
             claims.Add(new Claim(ClaimTypes.Role, roleId.ToString()));
             claims.Add(new Claim("id_role", roleId.ToString()));
+
+            foreach (var permission in permissions)
+            {
+                claims.Add(new Claim("permission", permission.Name));
+            }
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
@@ -47,7 +53,7 @@ public sealed class TokenService : ITokenService
             audience: _settings.Audience,
             claims: claims,
             notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
+            //expires: DateTime.UtcNow.AddMinutes(_settings.ExpirationMinutes),
             signingCredentials: creds
         );
 
