@@ -13,7 +13,7 @@ public sealed class PermissionsController : ControllerBase
 
     public PermissionsController(IPermissionService service) => _service = service;
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageRoles)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<PermissionResponse>>> GetAll(CancellationToken ct)
     {
@@ -21,7 +21,7 @@ public sealed class PermissionsController : ControllerBase
         return Ok(permissions.Select(ToResponse).ToList());
     }
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageRoles)]
     [HttpGet("{idPermission:int}")]
     public async Task<ActionResult<PermissionResponse>> GetById([FromRoute] int idPermission, CancellationToken ct)
     {

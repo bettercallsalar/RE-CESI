@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RESR.Core.Errors;
 using RESR.Core.Controllers.Roles;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
@@ -41,6 +42,52 @@ public sealed class RolesController : ControllerBase
 
         var permissions = await _service.GetPermissionsByRoleIdAsync(idRole, ct);
         return Ok(ToResponse(role, permissions));
+    }
+
+    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [HttpGet("{idRole:int}/permissions")]
+    public async Task<ActionResult<IReadOnlyList<PermissionResponse>>> GetRolePermissions([FromRoute] int idRole, CancellationToken ct)
+    {
+        var role = await _service.GetByIdAsync(idRole, ct);
+        if (role is null)
+            return NotFound(new { message = $"Role {idRole} not found" });
+
+        var permissions = await _service.GetPermissionsByRoleIdAsync(idRole, ct);
+        return Ok(permissions.Select(p => new PermissionResponse(p.IdPermission, p.Name, p.Description)).ToList());
+    }
+
+    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [HttpPost("{idRole:int}/permissions/{idPermission:int}")]
+    public async Task<ActionResult> AddPermissionToRole([FromRoute] int idRole, [FromRoute] int idPermission, CancellationToken ct)
+    {
+        try
+        {
+            await _service.AddPermissionToRoleAsync(idRole, idPermission, ct);
+            return NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ConflictException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
+
+    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [HttpDelete("{idRole:int}/permissions/{idPermission:int}")]
+    public async Task<ActionResult> RemovePermissionFromRole([FromRoute] int idRole, [FromRoute] int idPermission, CancellationToken ct)
+    {
+        try
+        {
+            await _service.RemovePermissionFromRoleAsync(idRole, idPermission, ct);
+            return NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 
     private static RoleResponse ToResponse(Role role, IReadOnlyList<Permission> permissions) =>
