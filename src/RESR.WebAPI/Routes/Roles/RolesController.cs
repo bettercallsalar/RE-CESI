@@ -15,7 +15,7 @@ public sealed class RolesController : ControllerBase
 
     public RolesController(IRoleService service) => _service = service;
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageRoles)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoleResponse>>> GetAll(CancellationToken ct)
     {
@@ -31,7 +31,7 @@ public sealed class RolesController : ControllerBase
         return Ok(responses);
     }
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageRoles)]
     [HttpGet("{idRole:int}")]
     public async Task<ActionResult<RoleResponse>> GetById([FromRoute] int idRole, CancellationToken ct)
     {

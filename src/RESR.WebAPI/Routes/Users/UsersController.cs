@@ -14,7 +14,7 @@ public sealed class UsersController : ControllerBase
 
     public UsersController(IUserService service) => _service = service;
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetAll(CancellationToken ct)
     {
@@ -22,7 +22,7 @@ public sealed class UsersController : ControllerBase
         return Ok(users.Select(ToResponse).ToList());
     }
 
-    [AuthorizeToken(TokenRole.User, TokenRole.Admin)]
+    [AuthorizePermission]
     [HttpGet("{idUser:int}")]
     public async Task<ActionResult<UserResponse>> GetById([FromRoute] int idUser, CancellationToken ct)
     {
@@ -60,7 +60,7 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpPatch("{idUser:int}/verification")]
     public async Task<ActionResult<UserResponse>> SetVerification(
         [FromRoute] int idUser,
@@ -83,7 +83,7 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizeToken(TokenRole.User, TokenRole.Admin)]
+    [AuthorizePermission]
     [HttpPatch("{idUser:int}")]
     public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
     {
@@ -109,7 +109,7 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizeToken(TokenRole.Admin)]
+    [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpDelete("{idUser:int}")]
     public async Task<ActionResult> SoftDelete([FromRoute] int idUser, CancellationToken ct)
     {
