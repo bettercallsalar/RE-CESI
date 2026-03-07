@@ -22,7 +22,7 @@ public sealed class UsersController : ControllerBase
         return Ok(users.Select(ToResponse).ToList());
     }
 
-    [AuthorizePermission]
+    [AuthorizePermissionOrSelf("idUser", PermissionNames.ManageUsers)]
     [HttpGet("{idUser:int}")]
     public async Task<ActionResult<UserResponse>> GetById([FromRoute] int idUser, CancellationToken ct)
     {
@@ -60,17 +60,13 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.ManageUsers)]
+    [AuthorizePermissionOrSelf("idUser")]
     [HttpPatch("{idUser:int}/verification")]
-    public async Task<ActionResult<UserResponse>> SetVerification(
-        [FromRoute] int idUser,
-        [FromBody] SetUserVerificationRequest req,
-        CancellationToken ct
-    )
+    public async Task<ActionResult<UserResponse>> SetVerification([FromRoute] int idUser, CancellationToken ct)
     {
         try
         {
-            var user = await _service.SetVerificationAsync(new SetUserVerificationCommand(idUser, req.IsVerified), ct);
+            var user = await _service.SetVerificationAsync(new SetUserVerificationCommand(IdUser: idUser, IsVerified: true), ct);
             return Ok(ToResponse(user));
         }
         catch (NotFoundException ex)
@@ -83,14 +79,40 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermission]
+    [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpPatch("{idUser:int}")]
     public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
     {
         try
         {
             User user = await _service.UpdateAsync(
-                new UpdateUserCommand(idUser, req.Username, req.Email, req.FirstName, req.BirthDate, req.Bio, req.IdDepartment, req.IdRole),
+                new UpdateUserCommand(IdUser: idUser, IdRole: req.IdRole),
+                ct
+            );
+            return Ok(ToResponse(user));
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message, userId = idUser, StatusCode = 404 });
+        }
+    }
+
+    [AuthorizePermissionOrSelf("idUser")]
+    [HttpPatch("{idUser:int}/profile")]
+    public async Task<ActionResult> UpdateOwnProfile([FromRoute] int idUser, [FromBody] UpdateOwnProfileRequest req, CancellationToken ct)
+    {
+        try
+        {
+            User user = await _service.UpdateAsync(
+                new UpdateUserCommand(
+                    IdUser: idUser,
+                    Username: req.Username,
+                    Email: req.Email,
+                    FirstName: req.FirstName,
+                    BirthDate: req.BirthDate,
+                    Bio: req.Bio,
+                    IdDepartment: req.IdDepartment
+                    ),
                 ct
             );
             return Ok(ToResponse(user));

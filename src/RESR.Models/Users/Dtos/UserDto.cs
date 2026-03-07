@@ -21,6 +21,15 @@ public sealed record UpdateUserRequest(
     int? IdRole
 );
 
+public sealed record UpdateOwnProfileRequest(
+    string? Username,
+    string? Email,
+    string? FirstName,
+    DateOnly? BirthDate,
+    string? Bio,
+    int? IdDepartment
+);
+
 public sealed record SetUserVerificationRequest(
     bool IsVerified
 );
