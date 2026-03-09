@@ -23,11 +23,10 @@ public sealed class UsersController : ControllerBase
         [FromQuery] List<int>? departmentIds = null,
         [FromQuery] List<int>? roleIds = null,
         [FromQuery] DateOnly? birthDate = null,
-        [FromQuery] bool? isVerified = true,
+        [FromQuery] bool? isVerified = null,
         [FromQuery] bool includeDeleted = false,
         CancellationToken ct = default)
     {
-
         if (page <= 0 || departmentIds is not null && departmentIds.Any(id => id <= 0) || roleIds is not null && roleIds.Any(id => id <= 0))
             return BadRequest(new { message = "Page number, DepartmentIds or RoleIds must be greater than 0" });
 
