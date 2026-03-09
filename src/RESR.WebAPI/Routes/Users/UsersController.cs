@@ -16,10 +16,35 @@ public sealed class UsersController : ControllerBase
 
     [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetAll(CancellationToken ct)
+    public async Task<ActionResult<PaginatedUsersResponse>> GetUsersPaginated(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] List<int>? departmentIds = null,
+        [FromQuery] List<int>? roleIds = null,
+        [FromQuery] DateOnly? birthDate = null,
+        [FromQuery] bool? isVerified = true,
+        [FromQuery] bool includeDeleted = false,
+        CancellationToken ct = default)
     {
-        var users = await _service.GetAllAsync(ct);
-        return Ok(users.Select(ToResponse).ToList());
+
+        if (page <= 0 || departmentIds is not null && departmentIds.Any(id => id <= 0) || roleIds is not null && roleIds.Any(id => id <= 0))
+            return BadRequest(new { message = "Page number, DepartmentIds or RoleIds must be greater than 0" });
+
+        var filters = new UserListingFilters(
+            Keyword: keyword,
+            DepartmentIds: departmentIds,
+            RoleIds: roleIds,
+            BirthDate: birthDate,
+            IsVerified: isVerified,
+            IncludeDeleted: includeDeleted
+        );
+
+        var (users, totalCount) = await _service.GetUsersPaginatedAsync(page, pageSize, filters, ct);
+        var items = users.Select(ToResponse).ToList();
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedUsersResponse(items, page, pageSize, totalCount, totalPages));
     }
 
     [AuthorizePermissionOrSelf("idUser", PermissionNames.ManageUsers)]
@@ -66,6 +91,7 @@ public sealed class UsersController : ControllerBase
     {
         try
         {
+            // TODO : only allow if the user is really verified with an email or something like that
             var user = await _service.SetVerificationAsync(new SetUserVerificationCommand(IdUser: idUser, IsVerified: true), ct);
             return Ok(ToResponse(user));
         }
@@ -79,12 +105,14 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.ManageUsers)]
+    [AuthorizePermission([PermissionNames.ManageRoles, PermissionNames.ManageUsers])]
     [HttpPatch("{idUser:int}")]
-    public async Task<ActionResult> Update([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
+    public async Task<ActionResult> UpdateRoleOfUser([FromRoute] int idUser, [FromBody] UpdateUserRequest req, CancellationToken ct)
     {
         try
         {
+            if (req.IdRole is null)
+                return BadRequest(new { message = "IdRole is required" });
             User user = await _service.UpdateAsync(
                 new UpdateUserCommand(IdUser: idUser, IdRole: req.IdRole),
                 ct
@@ -101,6 +129,8 @@ public sealed class UsersController : ControllerBase
     [HttpPatch("{idUser:int}/profile")]
     public async Task<ActionResult> UpdateOwnProfile([FromRoute] int idUser, [FromBody] UpdateOwnProfileRequest req, CancellationToken ct)
     {
+        if (req.Username is null && req.Email is null && req.FirstName is null && req.BirthDate is null && req.Bio is null && req.IdDepartment is null)
+            return BadRequest(new { message = "At least one field must be provided for update" });
         try
         {
             User user = await _service.UpdateAsync(
@@ -131,7 +161,7 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.ManageUsers)]
+    [AuthorizePermissionOrSelf("idUser")]
     [HttpDelete("{idUser:int}")]
     public async Task<ActionResult> SoftDelete([FromRoute] int idUser, CancellationToken ct)
     {

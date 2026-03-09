@@ -45,3 +45,20 @@ public sealed record UserResponse(
     int IdDepartment,
     int IdRole
 );
+
+public sealed record PaginatedUsersResponse(
+    IReadOnlyList<UserResponse> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages
+);
+
+public sealed record UserListingFilters(
+    string? Keyword,
+    IReadOnlyList<int>? DepartmentIds,
+    IReadOnlyList<int>? RoleIds,
+    DateOnly? BirthDate,
+    bool? IsVerified,
+    bool IncludeDeleted
+);

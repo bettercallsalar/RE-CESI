@@ -4,6 +4,7 @@ using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
 using System.Data.Common;
+using System.Text;
 
 namespace RESR.Infrastructure.Users;
 
@@ -72,27 +73,51 @@ public sealed class MySqlUserRepository : IUserRepository
         return await reader.ReadAsync(ct) ? Map(reader) : null;
     }
 
-    public async Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<User>> GetUsersPaginatedAsync(int page, int pageSize, UserListingFilters filters, CancellationToken ct)
     {
-        const string sql = """
+        var offset = (page - 1) * pageSize;
+        var sql = new StringBuilder("""
         SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
         FROM `user`
-        WHERE deleted_at IS NULL
-        ORDER BY id_user DESC
-        """;
+        WHERE 1 = 1
+        """);
 
         var list = new List<User>();
 
         await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = new MySqlCommand(sql, conn);
+        await using var cmd = new MySqlCommand { Connection = conn };
+        AppendListingFilters(sql, cmd, filters);
+        sql.AppendLine("ORDER BY id_user DESC");
+        sql.AppendLine("LIMIT @limit OFFSET @offset");
+        cmd.CommandText = sql.ToString();
+        cmd.Parameters.AddWithValue("@limit", pageSize);
+        cmd.Parameters.AddWithValue("@offset", offset);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
 
         while (await reader.ReadAsync(ct))
             list.Add(Map(reader));
 
         return list;
+    }
+
+    public async Task<int> CountUsersAsync(UserListingFilters filters, CancellationToken ct)
+    {
+        var sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM `user`
+        WHERE 1 = 1
+        """);
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand { Connection = conn };
+        AppendListingFilters(sql, cmd, filters);
+        cmd.CommandText = sql.ToString();
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return Convert.ToInt32(result);
     }
 
     public async Task<int> CreateAsync(User user, CancellationToken ct)
@@ -271,5 +296,57 @@ public sealed class MySqlUserRepository : IUserRepository
         cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
+    }
+
+    private static void AppendListingFilters(StringBuilder sql, MySqlCommand cmd, UserListingFilters filters)
+    {
+        if (!filters.IncludeDeleted)
+            sql.AppendLine("  AND deleted_at IS NULL");
+
+        if (filters.Keyword is not null)
+        {
+            sql.AppendLine("""
+              AND (
+                username LIKE @keyword
+                OR email LIKE @keyword
+                OR first_name LIKE @keyword
+                OR bio LIKE @keyword
+              )
+            """);
+            cmd.Parameters.AddWithValue("@keyword", $"%{filters.Keyword}%");
+        }
+
+        if (filters.BirthDate is not null)
+        {
+            sql.AppendLine("  AND birth_date = @birth_date");
+            cmd.Parameters.AddWithValue("@birth_date", filters.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+        }
+
+        if (filters.IsVerified is not null)
+        {
+            sql.AppendLine("  AND is_verified = @is_verified");
+            cmd.Parameters.AddWithValue("@is_verified", filters.IsVerified.Value);
+        }
+
+        AddIntInFilter(sql, cmd, filters.DepartmentIds, "id_department", "dep");
+        AddIntInFilter(sql, cmd, filters.RoleIds, "id_role", "role");
+    }
+
+    private static void AddIntInFilter(StringBuilder sql, MySqlCommand cmd, IReadOnlyList<int>? values, string columnName, string parameterPrefix)
+    {
+        if (values is null || values.Count == 0)
+            return;
+
+        sql.Append($"  AND {columnName} IN (");
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (i > 0)
+                sql.Append(", ");
+
+            var parameterName = $"@{parameterPrefix}{i}";
+            sql.Append(parameterName);
+            cmd.Parameters.AddWithValue(parameterName, values[i]);
+        }
+        sql.AppendLine(")");
     }
 }

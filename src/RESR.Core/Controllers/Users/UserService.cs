@@ -31,7 +31,13 @@ public sealed class UserService : IUserService
         _tokenService = tokenService;
     }
 
-    public Task<IReadOnlyList<User>> GetAllAsync(CancellationToken ct) => _repo.GetAllAsync(ct);
+    public async Task<(IReadOnlyList<User> Users, int TotalCount)> GetUsersPaginatedAsync(int page, int pageSize, UserListingFilters filters, CancellationToken ct)
+    {
+        UserListingFilters normalizedFilters = NormalizeListingFilters(filters);
+        IReadOnlyList<User> users = await _repo.GetUsersPaginatedAsync(page, pageSize, normalizedFilters, ct);
+        int totalCount = await _repo.CountUsersAsync(normalizedFilters, ct);
+        return (users, totalCount);
+    }
     public Task<User?> GetByIdAsync(int idUser, CancellationToken ct) => _repo.GetByIdAsync(idUser, ct);
 
     public async Task<int?> RegisterAsync(RegisterUserCommand cmd, CancellationToken ct)
@@ -151,5 +157,19 @@ public sealed class UserService : IUserService
             return null;
 
         return value.Trim();
+    }
+
+    private static UserListingFilters NormalizeListingFilters(UserListingFilters filters)
+    {
+        // Remove duplicates and invalid ids from filters
+        var departmentIds = filters.DepartmentIds?.Where(id => id > 0).Distinct().ToArray();
+        var roleIds = filters.RoleIds?.Where(id => id > 0).Distinct().ToArray();
+
+        return filters with
+        {
+            Keyword = NormalizeOptional(filters.Keyword),
+            DepartmentIds = departmentIds is { Length: > 0 } ? departmentIds : null,
+            RoleIds = roleIds is { Length: > 0 } ? roleIds : null
+        };
     }
 }
