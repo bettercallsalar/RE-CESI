@@ -52,9 +52,6 @@ public sealed class UserService : IUserService
         if (cmd.IdDepartment <= 0)
             throw new ValidationException("IdDepartment must be greater than 0");
 
-        if (cmd.IdRole <= 0)
-            throw new ValidationException("IdRole must be greater than 0");
-
         if (await _repo.GetByEmailAsync(email, ct) is not null)
             throw new ConflictException("Email already exists");
 
@@ -65,7 +62,6 @@ public sealed class UserService : IUserService
             throw new ValidationException($"Role {cmd.IdRole} does not exist");
 
         // TODO: check if department exists
-
         var user = _userFactory.CreateForRegistration(
             username,
             email,
