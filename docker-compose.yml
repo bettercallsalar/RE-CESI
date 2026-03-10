@@ -1,0 +1,91 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: resr-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - resr_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      start_period: 30s
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  migrate:
+    image: flyway/flyway:10
+    container_name: resr-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    command: -connectRetries=60 migrate
+    environment:
+      # Build the JDBC URL here so .env ordering does not blank DB_HOST/DB_PORT.
+      FLYWAY_URL: "jdbc:mysql://${DB_HOST:-db}:${DB_PORT:-3306}/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+      FLYWAY_USER: ${MYSQL_USER}
+      FLYWAY_PASSWORD: ${MYSQL_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+
+  api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: resr-api
+    depends_on:
+      db:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: http://+:8080
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+      DOTNET_WATCH_SUPPRESS_MSBUILD_INCREMENTALISM: "1"
+      ConnectionStrings__DefaultConnection: "Server=${DB_HOST:-db};Port=${DB_PORT:-3306};Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+    ports:
+      - "${API_PORT}:8080"
+    volumes:
+      - ./src:/work/src
+      - ./tests:/work/tests
+      - nuget_cache:/root/.nuget/packages
+      - /work/src/RESR.WebAPI/bin
+      - /work/src/RESR.WebAPI/obj
+      - /work/src/RESR.Core/bin
+      - /work/src/RESR.Core/obj
+      - /work/src/RESR.Models/bin
+      - /work/src/RESR.Models/obj
+      - /work/src/RESR.Infrastructure/bin
+      - /work/src/RESR.Infrastructure/obj
+      - /work/tests/RESR.Core.Tests/bin
+      - /work/tests/RESR.Core.Tests/obj
+    working_dir: /work/src/RESR.WebAPI
+    command:
+      [
+        "bash",
+        "-lc",
+        "dotnet restore /work/src/RESR.sln && dotnet watch run --urls http://+:8080",
+      ]
+
+volumes:
+  resr_mysql_data:
+  nuget_cache:
