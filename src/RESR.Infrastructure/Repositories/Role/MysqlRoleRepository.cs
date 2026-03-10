@@ -90,6 +90,42 @@ public sealed class MySqlRoleRepository : IRoleRepository
         return list;
     }
 
+    public async Task<bool> AddPermissionToRoleAsync(int idRole, int idPermission, CancellationToken ct)
+    {
+        const string sql = """
+        INSERT IGNORE INTO `role_permission` (`id_role`, `id_permission`)
+        VALUES (@idRole, @idPermission)
+        """;
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
+        cmd.Parameters.AddWithValue("@idPermission", idPermission);
+
+        var rows = await cmd.ExecuteNonQueryAsync(ct);
+        return rows > 0;
+    }
+
+    public async Task<bool> RemovePermissionFromRoleAsync(int idRole, int idPermission, CancellationToken ct)
+    {
+        const string sql = """
+        DELETE FROM `role_permission`
+        WHERE id_role = @idRole AND id_permission = @idPermission
+        """;
+
+        await using var conn = new MySqlConnection(_cs);
+        await conn.OpenAsync(ct);
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
+        cmd.Parameters.AddWithValue("@idPermission", idPermission);
+
+        var rows = await cmd.ExecuteNonQueryAsync(ct);
+        return rows > 0;
+    }
+
     private Role MapRole(DbDataReader reader) =>
         _roleFactory.Create(
             Convert.ToInt32(reader["id_role"]),

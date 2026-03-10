@@ -5,11 +5,11 @@ using Microsoft.OpenApi;
 using RESR.Core;
 using RESR.Core.Security.Token;
 using RESR.Infrastructure;
+using RESR.WebAPI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddWebApiServices();
 
 builder.Services.AddInfrastructure(builder.Configuration)
                 .AddCoreServices(builder.Configuration);
@@ -31,7 +31,8 @@ builder.Services
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateIssuerSigningKey = true,
-            ValidateLifetime = true,
+            ValidateLifetime = false,
+            RequireExpirationTime = false,
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = signingKey,
