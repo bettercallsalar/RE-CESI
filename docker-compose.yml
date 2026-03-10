@@ -22,6 +22,7 @@ services:
           "localhost",
           "-p${MYSQL_ROOT_PASSWORD}",
         ]
+      start_period: 30s
       interval: 5s
       timeout: 5s
       retries: 30
@@ -78,7 +79,12 @@ services:
       - /work/tests/RESR.Core.Tests/bin
       - /work/tests/RESR.Core.Tests/obj
     working_dir: /work/src/RESR.WebAPI
-    command: ["dotnet", "watch", "run", "--urls", "http://+:8080"]
+    command:
+      [
+        "bash",
+        "-lc",
+        "dotnet restore /work/src/RESR.sln && dotnet watch run --urls http://+:8080",
+      ]
 
 volumes:
   resr_mysql_data:
