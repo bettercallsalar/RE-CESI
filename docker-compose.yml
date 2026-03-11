@@ -81,7 +81,7 @@ services:
       [
         "bash",
         "-lc",
-        "dotnet restore /work/src/RESR.sln && dotnet watch run --urls http://+:8080",
+        "dotnet restore /work/src/RESR.WebAPI/RESR.WebAPI.csproj && dotnet watch --project /work/src/RESR.WebAPI/RESR.WebAPI.csproj run --no-restore --urls http://+:8080",
       ]
 
 volumes:
