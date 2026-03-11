@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using RESR.MAUI.Services;
 
 namespace RESR.MAUI;
 
@@ -14,6 +15,14 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
+
+		builder.Services.AddSingleton<AppShell>();
+		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = new Uri("http://localhost:5270/");
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
 
 #if DEBUG
 		builder.Logging.AddDebug();

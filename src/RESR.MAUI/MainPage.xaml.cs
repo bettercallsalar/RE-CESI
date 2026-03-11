@@ -1,23 +1,69 @@
-﻿namespace RESR.MAUI;
+﻿using RESR.MAUI.Services;
+
+namespace RESR.MAUI;
 
 public partial class MainPage : ContentPage
 {
-	int count = 0;
+	private readonly IUsersApiClient _usersApiClient;
+	private CancellationTokenSource? _loadCts;
 
-	public MainPage()
+	public MainPage(IUsersApiClient usersApiClient)
 	{
+		_usersApiClient = usersApiClient;
 		InitializeComponent();
 	}
 
-	private void OnCounterClicked(object? sender, EventArgs e)
+	private async void OnLoadClicked(object? sender, EventArgs e)
 	{
-		count++;
+		if (_loadCts is not null)
+		{
+			StatusLabel.Text = "Chargement deja en cours...";
+			return;
+		}
 
-		if (count == 1)
-			CounterBtn.Text = $"Clicked {count} time";
-		else
-			CounterBtn.Text = $"Clicked {count} times";
+		_loadCts = new CancellationTokenSource();
+		SetLoadingState(true);
 
-		SemanticScreenReader.Announce(CounterBtn.Text);
+		try
+		{
+			var users = await _usersApiClient.GetUsersAsync(_loadCts.Token);
+			UsersCollection.ItemsSource = users;
+			StatusLabel.Text = $"{users.Count} user(s) charges.";
+		}
+		catch (ApiException ex)
+		{
+			StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}): {ex.Message}";
+		}
+		catch (TimeoutException ex)
+		{
+			StatusLabel.Text = ex.Message;
+		}
+		catch (OperationCanceledException)
+		{
+			StatusLabel.Text = "Requete annulee.";
+		}
+		catch (Exception ex)
+		{
+			StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+		}
+		finally
+		{
+			_loadCts.Dispose();
+			_loadCts = null;
+			SetLoadingState(false);
+		}
+	}
+
+	protected override void OnDisappearing()
+	{
+		_loadCts?.Cancel();
+		base.OnDisappearing();
+	}
+
+	private void SetLoadingState(bool isLoading)
+	{
+		LoadButton.IsEnabled = !isLoading;
+		LoadingIndicator.IsRunning = isLoading;
+		LoadingIndicator.IsVisible = isLoading;
 	}
 }

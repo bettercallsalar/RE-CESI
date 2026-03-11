@@ -1,16 +1,20 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RESR.MAUI;
 
 public partial class App : Application
 {
-	public App()
+	private readonly IServiceProvider _services;
+
+	public App(IServiceProvider services)
 	{
+		_services = services;
 		InitializeComponent();
 	}
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new AppShell());
+		var shell = _services.GetRequiredService<AppShell>();
+		return new Window(shell);
 	}
 }
