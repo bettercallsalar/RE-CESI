@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
+using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
@@ -39,6 +41,10 @@ public static class DependencyInjection
                 connectionString,
                 sp.GetRequiredService<IPermissionFactory>()
             )
+        );
+
+        services.AddScoped<ICategoryRepository>(_ =>
+            new MySqlCategoryRepository(connectionString)
         );
 
         return services;

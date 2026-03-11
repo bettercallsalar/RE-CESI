@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RESR.Core.Controllers.Categories;
 using RESR.Core.Controllers.Permissions;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Roles;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<ICategoryService, CategoryService>();
 
         return services;
     }
