@@ -8,7 +8,7 @@ public sealed record RegisterUserCommand(
     DateOnly? BirthDate,
     string? Bio,
     int IdDepartment,
-    int IdRole
+    int IdRole = 1 // Default to "User" role, can be changed later by an admin
 );
 
 public sealed record UpdateUserCommand(

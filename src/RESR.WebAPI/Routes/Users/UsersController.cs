@@ -60,7 +60,7 @@ public sealed class UsersController : ControllerBase
         try
         {
             var id = await _service.RegisterAsync(
-                new RegisterUserCommand(req.Username, req.Email, req.Password, req.FirstName, req.BirthDate, req.Bio, req.IdDepartment, req.IdRole),
+                new RegisterUserCommand(req.Username, req.Email, req.Password, req.FirstName, req.BirthDate, req.Bio, req.IdDepartment),
                 ct
             );
 
@@ -84,8 +84,8 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermissionOrSelf("idUser")]
-    [HttpPatch("{idUser:int}/verification")]
+    //[AuthorizePermissionOrSelf("idUser")]
+    [HttpPatch("/verification/{idUser:int}")]
     public async Task<ActionResult<UserResponse>> SetVerification([FromRoute] int idUser, CancellationToken ct)
     {
         try

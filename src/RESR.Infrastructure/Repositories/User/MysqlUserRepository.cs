@@ -1,8 +1,8 @@
+using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Models.Users;
-using MySql.Data.MySqlClient;
 using System.Data.Common;
 using System.Text;
 
@@ -10,18 +10,12 @@ namespace RESR.Infrastructure.Users;
 
 public sealed class MySqlUserRepository : IUserRepository
 {
-    private readonly Func<DbConnection> _connectionFactory;
+    private readonly string _cs;
     private readonly IUserFactory _userFactory;
 
     public MySqlUserRepository(string connectionString, IUserFactory userFactory)
     {
-        _connectionFactory = () => new MySqlConnection(connectionString);
-        _userFactory = userFactory;
-    }
-
-    internal MySqlUserRepository(Func<DbConnection> connectionFactory, IUserFactory userFactory)
-    {
-        _connectionFactory = connectionFactory;
+        _cs = connectionString;
         _userFactory = userFactory;
     }
 
@@ -33,12 +27,11 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE id_user = @id_user AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@id_user", idUser);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@id_user", idUser);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? Map(reader) : null;
@@ -52,12 +45,11 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE email = @email AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@email", email);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@email", email);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? Map(reader) : null;
@@ -71,12 +63,11 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE username = @username AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@username", username);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@username", username);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? Map(reader) : null;
@@ -93,16 +84,16 @@ public sealed class MySqlUserRepository : IUserRepository
 
         var list = new List<User>();
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
+        await using var cmd = new MySqlCommand { Connection = conn };
         AppendListingFilters(sql, cmd, filters);
         sql.AppendLine("ORDER BY id_user DESC");
         sql.AppendLine("LIMIT @limit OFFSET @offset");
         cmd.CommandText = sql.ToString();
-        AddParameter(cmd, "@limit", pageSize);
-        AddParameter(cmd, "@offset", offset);
+        cmd.Parameters.AddWithValue("@limit", pageSize);
+        cmd.Parameters.AddWithValue("@offset", offset);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
 
         while (await reader.ReadAsync(ct))
@@ -119,10 +110,10 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE 1 = 1
         """);
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
+        await using var cmd = new MySqlCommand { Connection = conn };
         AppendListingFilters(sql, cmd, filters);
         cmd.CommandText = sql.ToString();
         var result = await cmd.ExecuteScalarAsync(ct);
@@ -137,21 +128,20 @@ public sealed class MySqlUserRepository : IUserRepository
         SELECT LAST_INSERT_ID();
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@username", user.Username);
-        AddParameter(cmd, "@first_name", user.FirstName);
-        AddParameter(cmd, "@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
-        AddParameter(cmd, "@bio", (object?)user.Bio ?? DBNull.Value);
-        AddParameter(cmd, "@email", user.Email);
-        AddParameter(cmd, "@hashed_password", user.HashedPassword);
-        AddParameter(cmd, "@is_verified", user.IsVerified);
-        AddParameter(cmd, "@deleted_at", (object?)user.DeletedAt ?? DBNull.Value);
-        AddParameter(cmd, "@id_department", user.IdDepartment);
-        AddParameter(cmd, "@id_role", user.IdRole);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@username", user.Username);
+        cmd.Parameters.AddWithValue("@first_name", user.FirstName);
+        cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@email", user.Email);
+        cmd.Parameters.AddWithValue("@hashed_password", user.HashedPassword);
+        cmd.Parameters.AddWithValue("@is_verified", user.IsVerified);
+        cmd.Parameters.AddWithValue("@deleted_at", (object?)user.DeletedAt ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_department", user.IdDepartment);
+        cmd.Parameters.AddWithValue("@id_role", user.IdRole);
 
         var id = await cmd.ExecuteScalarAsync(ct);
         return Convert.ToInt32(id);
@@ -178,20 +168,18 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE id_user = @id_user AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var updateCmd = conn.CreateCommand();
-        updateCmd.CommandText = updateSql;
+        await using var updateCmd = new MySqlCommand(updateSql, conn);
         AddPatchParameters(updateCmd, user);
 
         var rows = await updateCmd.ExecuteNonQueryAsync(ct);
         if (rows == 0)
             throw new InvalidOperationException("User not found");
 
-        await using var selectCmd = conn.CreateCommand();
-        selectCmd.CommandText = selectSql;
-        AddParameter(selectCmd, "@id_user", user.IdUser);
+        await using var selectCmd = new MySqlCommand(selectSql, conn);
+        selectCmd.Parameters.AddWithValue("@id_user", user.IdUser);
 
         await using var reader = await selectCmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct)
@@ -207,12 +195,11 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE id_user = @id_user AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@id_user", idUser);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@id_user", idUser);
 
         var rows = await cmd.ExecuteNonQueryAsync(ct);
         return rows > 0;
@@ -232,21 +219,19 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE id_user = @id_user AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var updateCmd = conn.CreateCommand();
-        updateCmd.CommandText = updateSql;
-        AddParameter(updateCmd, "@id_user", idUser);
-        AddParameter(updateCmd, "@is_verified", isVerified);
+        await using var updateCmd = new MySqlCommand(updateSql, conn);
+        updateCmd.Parameters.AddWithValue("@id_user", idUser);
+        updateCmd.Parameters.AddWithValue("@is_verified", isVerified);
 
         var rows = await updateCmd.ExecuteNonQueryAsync(ct);
         if (rows == 0)
             throw new InvalidOperationException("User not found");
 
-        await using var selectCmd = conn.CreateCommand();
-        selectCmd.CommandText = selectSql;
-        AddParameter(selectCmd, "@id_user", idUser);
+        await using var selectCmd = new MySqlCommand(selectSql, conn);
+        selectCmd.Parameters.AddWithValue("@id_user", idUser);
 
         await using var reader = await selectCmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct)
@@ -290,31 +275,30 @@ public sealed class MySqlUserRepository : IUserRepository
         WHERE email = @email AND hashed_password = @hashed_password AND deleted_at IS NULL
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@email", email);
-        AddParameter(cmd, "@hashed_password", passwordHash);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@hashed_password", passwordHash);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? Map(reader) : null;
     }
 
-    private static void AddPatchParameters(DbCommand cmd, UpdateUserCommand user)
+    private static void AddPatchParameters(MySqlCommand cmd, UpdateUserCommand user)
     {
-        AddParameter(cmd, "@id_user", user.IdUser);
-        AddParameter(cmd, "@username", (object?)user.Username ?? DBNull.Value);
-        AddParameter(cmd, "@first_name", (object?)user.FirstName ?? DBNull.Value);
-        AddParameter(cmd, "@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
-        AddParameter(cmd, "@bio", (object?)user.Bio ?? DBNull.Value);
-        AddParameter(cmd, "@email", (object?)user.Email ?? DBNull.Value);
-        AddParameter(cmd, "@id_department", (object?)user.IdDepartment ?? DBNull.Value);
-        AddParameter(cmd, "@id_role", (object?)user.IdRole ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_user", user.IdUser);
+        cmd.Parameters.AddWithValue("@username", (object?)user.Username ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@first_name", (object?)user.FirstName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+        cmd.Parameters.AddWithValue("@bio", (object?)user.Bio ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@email", (object?)user.Email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_department", (object?)user.IdDepartment ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id_role", (object?)user.IdRole ?? DBNull.Value);
     }
 
-    private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, UserListingFilters filters)
+    private static void AppendListingFilters(StringBuilder sql, MySqlCommand cmd, UserListingFilters filters)
     {
         if (!filters.IncludeDeleted)
             sql.AppendLine("  AND deleted_at IS NULL");
@@ -329,26 +313,26 @@ public sealed class MySqlUserRepository : IUserRepository
                 OR bio LIKE @keyword
               )
             """);
-            AddParameter(cmd, "@keyword", $"%{filters.Keyword}%");
+            cmd.Parameters.AddWithValue("@keyword", $"%{filters.Keyword}%");
         }
 
         if (filters.BirthDate is not null)
         {
             sql.AppendLine("  AND birth_date = @birth_date");
-            AddParameter(cmd, "@birth_date", filters.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
+            cmd.Parameters.AddWithValue("@birth_date", filters.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         }
 
         if (filters.IsVerified is not null)
         {
             sql.AppendLine("  AND is_verified = @is_verified");
-            AddParameter(cmd, "@is_verified", filters.IsVerified.Value);
+            cmd.Parameters.AddWithValue("@is_verified", filters.IsVerified.Value);
         }
 
         AddIntInFilter(sql, cmd, filters.DepartmentIds, "id_department", "dep");
         AddIntInFilter(sql, cmd, filters.RoleIds, "id_role", "role");
     }
 
-    private static void AddIntInFilter(StringBuilder sql, DbCommand cmd, IReadOnlyList<int>? values, string columnName, string parameterPrefix)
+    private static void AddIntInFilter(StringBuilder sql, MySqlCommand cmd, IReadOnlyList<int>? values, string columnName, string parameterPrefix)
     {
         if (values is null || values.Count == 0)
             return;
@@ -361,16 +345,8 @@ public sealed class MySqlUserRepository : IUserRepository
 
             var parameterName = $"@{parameterPrefix}{i}";
             sql.Append(parameterName);
-            AddParameter(cmd, parameterName, values[i]);
+            cmd.Parameters.AddWithValue(parameterName, values[i]);
         }
         sql.AppendLine(")");
-    }
-
-    private static void AddParameter(DbCommand cmd, string name, object? value)
-    {
-        var param = cmd.CreateParameter();
-        param.ParameterName = name;
-        param.Value = value ?? DBNull.Value;
-        cmd.Parameters.Add(param);
     }
 }

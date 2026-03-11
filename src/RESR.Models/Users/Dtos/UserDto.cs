@@ -7,8 +7,7 @@ public sealed record RegisterUserRequest(
     string FirstName,
     DateOnly? BirthDate,
     string? Bio,
-    int IdDepartment,
-    int IdRole
+    int IdDepartment
 );
 
 public sealed record UpdateUserRequest(

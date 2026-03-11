@@ -37,8 +37,5 @@ public sealed class RegisterUserRequestValidator : AbstractValidator<RegisterUse
 
         RuleFor(x => x.IdDepartment)
             .GreaterThan(0);
-
-        RuleFor(x => x.IdRole)
-            .GreaterThan(0);
     }
 }

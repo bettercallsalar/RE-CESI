@@ -1,25 +1,19 @@
+using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
 using RESR.Models.Permissions;
-using MySql.Data.MySqlClient;
 using System.Data.Common;
 
 namespace RESR.Infrastructure.Permissions;
 
 public sealed class MySqlPermissionRepository : IPermissionRepository
 {
-    private readonly Func<DbConnection> _connectionFactory;
+    private readonly string _cs;
     private readonly IPermissionFactory _permissionFactory;
 
     public MySqlPermissionRepository(string connectionString, IPermissionFactory permissionFactory)
     {
-        _connectionFactory = () => new MySqlConnection(connectionString);
-        _permissionFactory = permissionFactory;
-    }
-
-    internal MySqlPermissionRepository(Func<DbConnection> connectionFactory, IPermissionFactory permissionFactory)
-    {
-        _connectionFactory = connectionFactory;
+        _cs = connectionString;
         _permissionFactory = permissionFactory;
     }
 
@@ -33,11 +27,10 @@ public sealed class MySqlPermissionRepository : IPermissionRepository
 
         var list = new List<Permission>();
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
+        await using var cmd = new MySqlCommand(sql, conn);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
 
         while (await reader.ReadAsync(ct))
@@ -54,12 +47,11 @@ public sealed class MySqlPermissionRepository : IPermissionRepository
         WHERE id_permission = @idPermission
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@idPermission", idPermission);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idPermission", idPermission);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? Map(reader) : null;
@@ -71,12 +63,4 @@ public sealed class MySqlPermissionRepository : IPermissionRepository
             Convert.ToString(reader["name"]) ?? string.Empty,
             reader["description"] == DBNull.Value ? null : Convert.ToString(reader["description"])
         );
-
-    private static void AddParameter(DbCommand cmd, string name, object? value)
-    {
-        var param = cmd.CreateParameter();
-        param.ParameterName = name;
-        param.Value = value ?? DBNull.Value;
-        cmd.Parameters.Add(param);
-    }
 }

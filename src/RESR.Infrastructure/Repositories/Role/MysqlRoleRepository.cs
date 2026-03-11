@@ -1,16 +1,16 @@
+using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
-using MySql.Data.MySqlClient;
 using System.Data.Common;
 
 namespace RESR.Infrastructure.Roles;
 
 public sealed class MySqlRoleRepository : IRoleRepository
 {
-    private readonly Func<DbConnection> _connectionFactory;
+    private readonly string _cs;
     private readonly IRoleFactory _roleFactory;
     private readonly IPermissionFactory _permissionFactory;
 
@@ -20,18 +20,7 @@ public sealed class MySqlRoleRepository : IRoleRepository
         IPermissionFactory permissionFactory
     )
     {
-        _connectionFactory = () => new MySqlConnection(connectionString);
-        _roleFactory = roleFactory;
-        _permissionFactory = permissionFactory;
-    }
-
-    internal MySqlRoleRepository(
-        Func<DbConnection> connectionFactory,
-        IRoleFactory roleFactory,
-        IPermissionFactory permissionFactory
-    )
-    {
-        _connectionFactory = connectionFactory;
+        _cs = connectionString;
         _roleFactory = roleFactory;
         _permissionFactory = permissionFactory;
     }
@@ -46,11 +35,10 @@ public sealed class MySqlRoleRepository : IRoleRepository
 
         var list = new List<Role>();
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
+        await using var cmd = new MySqlCommand(sql, conn);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
 
         while (await reader.ReadAsync(ct))
@@ -67,12 +55,11 @@ public sealed class MySqlRoleRepository : IRoleRepository
         WHERE id_role = @idRole
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@idRole", idRole);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         return await reader.ReadAsync(ct) ? MapRole(reader) : null;
@@ -90,12 +77,11 @@ public sealed class MySqlRoleRepository : IRoleRepository
 
         var list = new List<Permission>();
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@idRole", idRole);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
@@ -111,13 +97,12 @@ public sealed class MySqlRoleRepository : IRoleRepository
         VALUES (@idRole, @idPermission)
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@idRole", idRole);
-        AddParameter(cmd, "@idPermission", idPermission);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
+        cmd.Parameters.AddWithValue("@idPermission", idPermission);
 
         var rows = await cmd.ExecuteNonQueryAsync(ct);
         return rows > 0;
@@ -130,13 +115,12 @@ public sealed class MySqlRoleRepository : IRoleRepository
         WHERE id_role = @idRole AND id_permission = @idPermission
         """;
 
-        await using var conn = _connectionFactory();
+        await using var conn = new MySqlConnection(_cs);
         await conn.OpenAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
-        AddParameter(cmd, "@idRole", idRole);
-        AddParameter(cmd, "@idPermission", idPermission);
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@idRole", idRole);
+        cmd.Parameters.AddWithValue("@idPermission", idPermission);
 
         var rows = await cmd.ExecuteNonQueryAsync(ct);
         return rows > 0;
@@ -155,12 +139,4 @@ public sealed class MySqlRoleRepository : IRoleRepository
             Convert.ToString(reader["name"]) ?? string.Empty,
             reader["description"] == DBNull.Value ? null : Convert.ToString(reader["description"])
         );
-
-    private static void AddParameter(DbCommand cmd, string name, object? value)
-    {
-        var param = cmd.CreateParameter();
-        param.ParameterName = name;
-        param.Value = value ?? DBNull.Value;
-        cmd.Parameters.Add(param);
-    }
 }
