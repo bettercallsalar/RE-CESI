@@ -1,0 +1,47 @@
+name: Coverage
+
+on:
+  pull_request:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/RESR.sln
+
+      - name: Test With Coverage
+        run: dotnet test src/RESR.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+
+      - name: Install ReportGenerator
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Generate Coverage Summary
+        run: reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coverage" -reporttypes:"TextSummary" -filefilters:"-**/Program.cs;-**/*DependencyInjection*.cs;-**/Security/**;-**/Microsoft.AspNetCore.OpenApi.SourceGenerators/**;-**/*OpenApi*.generated.cs;-**/obj/**"
+
+      - name: Enforce Coverage Threshold (80%)
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          summary = Path('coverage/Summary.txt').read_text()
+          match = re.search(r"Line coverage:\s+([0-9.]+)%", summary)
+          if not match:
+              raise SystemExit("Line coverage not found in summary")
+
+          value = float(match.group(1))
+          print(f"Line coverage: {value}%")
+          if value < 80.0:
+              raise SystemExit("Coverage below 80%")
+          PY

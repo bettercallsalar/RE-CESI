@@ -76,8 +76,6 @@ services:
       - /work/src/RESR.Models/obj
       - /work/src/RESR.Infrastructure/bin
       - /work/src/RESR.Infrastructure/obj
-      - /work/tests/RESR.Core.Tests/bin
-      - /work/tests/RESR.Core.Tests/obj
     working_dir: /work/src/RESR.WebAPI
     command:
       [

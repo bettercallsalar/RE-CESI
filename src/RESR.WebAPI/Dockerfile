@@ -11,7 +11,6 @@ COPY src/RESR.Models/RESR.Models.csproj ./src/RESR.Models/
 COPY src/RESR.Core/RESR.Core.csproj ./src/RESR.Core/
 COPY src/RESR.Infrastructure/RESR.Infrastructure.csproj ./src/RESR.Infrastructure/
 COPY src/RESR.WebAPI/RESR.WebAPI.csproj ./src/RESR.WebAPI/
-COPY tests/RESR.Core.Tests/RESR.Core.Tests.csproj ./tests/RESR.Core.Tests/
 
 RUN dotnet restore ./src/RESR.WebAPI/RESR.WebAPI.csproj /m:1 /p:RestoreDisableParallel=true
 
