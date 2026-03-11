@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RESR.Infrastructure.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RESR.WebAPI.Tests", "..\tests\RESR.WebAPI.Tests\RESR.WebAPI.Tests.csproj", "{2737C0AA-5C0C-4B13-B2D3-77D917AE08E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RESR.Models.Tests", "..\tests\RESR.Models.Tests\RESR.Models.Tests.csproj", "{A38612DC-66DE-4081-BB8C-303E89911019}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{2737C0AA-5C0C-4B13-B2D3-77D917AE08E5}.Release|x64.Build.0 = Release|Any CPU
 		{2737C0AA-5C0C-4B13-B2D3-77D917AE08E5}.Release|x86.ActiveCfg = Release|Any CPU
 		{2737C0AA-5C0C-4B13-B2D3-77D917AE08E5}.Release|x86.Build.0 = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|x64.Build.0 = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Debug|x86.Build.0 = Debug|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|x64.ActiveCfg = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|x64.Build.0 = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|x86.ActiveCfg = Release|Any CPU
+		{A38612DC-66DE-4081-BB8C-303E89911019}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
