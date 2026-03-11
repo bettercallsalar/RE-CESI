@@ -1,11 +1,18 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RESR.Core.Controllers.Departments.Ports;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using RESR.Core.Controllers.Categories.Factories;
+using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
+using RESR.Core.Controllers.Departments.Factories;
+using RESR.Infrastructure.Departments;
+using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
@@ -18,6 +25,9 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Missing connection string DefaultConnection.");
+
+        // Ensure category factory is available even if Core DI isn't wired as expected.
+        services.TryAddScoped<ICategoryFactory, CategoryFactory>();
 
         services.AddScoped<IUserRepository>(sp =>
             new MySqlUserRepository(
@@ -38,6 +48,20 @@ public static class DependencyInjection
             new MySqlPermissionRepository(
                 connectionString,
                 sp.GetRequiredService<IPermissionFactory>()
+            )
+        );
+
+        services.AddScoped<IDepartmentRepository>(sp =>
+            new MySqlDepartmentRepository(
+                connectionString,
+                sp.GetRequiredService<IDepartmentFactory>()
+            )
+        );
+
+        services.AddScoped<ICategoryRepository>(_ =>
+            new MySqlCategoryRepository(
+                connectionString,
+                _.GetRequiredService<ICategoryFactory>()
             )
         );
 
