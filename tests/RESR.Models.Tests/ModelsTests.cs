@@ -1,3 +1,4 @@
+using RESR.Models.Departments;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
@@ -68,6 +69,21 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Department_AllowsPropertyAssignment()
+    {
+        var department = new Department
+        {
+            IdDepartment = 42,
+            Name = "Engineering",
+            Code = 101
+        };
+
+        Assert.Equal(42, department.IdDepartment);
+        Assert.Equal("Engineering", department.Name);
+        Assert.Equal(101, department.Code);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
@@ -99,6 +115,16 @@ public sealed class ModelsTests
         Assert.Equal("P", permission.Name);
         Assert.Equal("R", role.Name);
         Assert.Single(role.Permissions);
+    }
+
+    [Fact]
+    public void DepartmentResponse_ExposesAllProperties()
+    {
+        var response = new DepartmentResponse(7, "Support", 501);
+
+        Assert.Equal(7, response.IdDepartment);
+        Assert.Equal("Support", response.Name);
+        Assert.Equal(501, response.Code);
     }
 
     [Fact]
