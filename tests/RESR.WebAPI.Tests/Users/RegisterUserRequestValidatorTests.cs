@@ -16,8 +16,7 @@ public sealed class RegisterUserRequestValidatorTests
             "Jean",
             new DateOnly(2000, 1, 1),
             "bio",
-            1,
-            2
+            1
         );
 
         var result = validator.Validate(request);
@@ -36,7 +35,6 @@ public sealed class RegisterUserRequestValidatorTests
             "1",
             null,
             new string('a', 501),
-            0,
             0
         );
 

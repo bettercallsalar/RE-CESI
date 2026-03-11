@@ -70,7 +70,7 @@ public sealed class ModelsTests
     [Fact]
     public void UserDtos_AssignValues()
     {
-        var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1, 2);
+        var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
         var update = new UpdateUserRequest("u", "e", "f", null, "b", 1, 2);
         var updateOwn = new UpdateOwnProfileRequest("u", "e", "f", null, "b", 1);
         var verification = new SetUserVerificationRequest(true);

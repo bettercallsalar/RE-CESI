@@ -100,8 +100,7 @@ public sealed class UsersControllerTests
             "User",
             null,
             null,
-            1,
-            2
+            1
         ), CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result);
@@ -122,8 +121,7 @@ public sealed class UsersControllerTests
             "User",
             null,
             null,
-            1,
-            2
+            1
         ), CancellationToken.None);
 
         Assert.IsType<ConflictObjectResult>(result);
@@ -143,8 +141,7 @@ public sealed class UsersControllerTests
             "User",
             null,
             null,
-            1,
-            2
+            1
         ), CancellationToken.None);
 
         Assert.IsType<BadRequestObjectResult>(result);
