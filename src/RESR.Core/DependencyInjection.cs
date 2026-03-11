@@ -10,6 +10,8 @@ using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
 using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
+using RESR.Core.Controllers.Departments;
+using RESR.Core.Controllers.Departments.Factories;
 
 namespace RESR.Core;
 
@@ -26,11 +28,13 @@ public static class DependencyInjection
         services.AddScoped<IUserFactory, UserFactory>();
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();
+        services.AddScoped<IDepartmentFactory, DepartmentFactory>();
 
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IDepartmentService, DepartmentService>();
 
         return services;
     }
