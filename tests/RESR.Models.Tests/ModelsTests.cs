@@ -2,6 +2,7 @@ using RESR.Models.Departments;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
+using RESR.Models.Categories;
 
 namespace RESR.Models.Tests;
 
@@ -84,6 +85,19 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Category_AllowsPropertyAssignment()
+    {
+        var category = new Category
+        {
+            IdCategory = 1,
+            Name = "Atelier"
+        };
+
+        Assert.Equal(1, category.IdCategory);
+        Assert.Equal("Atelier", category.Name);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
@@ -125,6 +139,15 @@ public sealed class ModelsTests
         Assert.Equal(7, response.IdDepartment);
         Assert.Equal("Support", response.Name);
         Assert.Equal(501, response.Code);
+    }
+
+    [Fact]
+    public void CategoryDto_AssignsValues()
+    {
+        var response = new CategoryResponse(5, "Conference");
+
+        Assert.Equal(5, response.IdCategory);
+        Assert.Equal("Conference", response.Name);
     }
 
     [Fact]
