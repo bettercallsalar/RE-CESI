@@ -1,6 +1,7 @@
 
 using System.Data.Common;
 using MySql.Data.MySqlClient;
+using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Models.Categories;
 
@@ -9,15 +10,18 @@ namespace RESR.Infrastructure.Categories;
 public sealed class MySqlCategoryRepository : ICategoryRepository
 {
     private readonly Func<DbConnection> _connectionFactory;
+    private readonly ICategoryFactory _categoryFactory;
 
-    public MySqlCategoryRepository(string connectionString)
+    public MySqlCategoryRepository(string connectionString, ICategoryFactory categoryFactory)
     {
         _connectionFactory = () => new MySqlConnection(connectionString);
+        _categoryFactory = categoryFactory;
     }
 
-    internal MySqlCategoryRepository(Func<DbConnection> connectionFactory)
+    internal MySqlCategoryRepository(Func<DbConnection> connectionFactory, ICategoryFactory categoryFactory)
     {
         _connectionFactory = connectionFactory;
+        _categoryFactory = categoryFactory;
     }
 
     public async Task<IReadOnlyList<Category>> GetAllAsync(CancellationToken ct)
@@ -72,11 +76,10 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
     }
 
     private Category Map(DbDataReader reader) =>
-        new Category
-        {
-            IdCategory = reader.GetInt32(reader.GetOrdinal("id_category")),
-            Name = reader.GetString(reader.GetOrdinal("name"))
-        };
+        _categoryFactory.Create(
+            reader.GetInt32(reader.GetOrdinal("id_category")),
+            reader.GetString(reader.GetOrdinal("name"))
+        );
 
 
 }

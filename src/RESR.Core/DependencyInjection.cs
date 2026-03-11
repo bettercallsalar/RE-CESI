@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RESR.Core.Controllers.Categories;
+using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Permissions;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Roles;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();
 
+        services.AddScoped<ICategoryFactory, CategoryFactory>();
         services.AddScoped<IUserFactory, UserFactory>();
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();

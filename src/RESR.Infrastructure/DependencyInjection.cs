@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
@@ -20,6 +22,9 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Missing connection string DefaultConnection.");
+
+        // Ensure category factory is available even if Core DI isn't wired as expected.
+        services.TryAddScoped<ICategoryFactory, CategoryFactory>();
 
         services.AddScoped<IUserRepository>(sp =>
             new MySqlUserRepository(
@@ -44,7 +49,10 @@ public static class DependencyInjection
         );
 
         services.AddScoped<ICategoryRepository>(_ =>
-            new MySqlCategoryRepository(connectionString)
+            new MySqlCategoryRepository(
+                connectionString,
+                _.GetRequiredService<ICategoryFactory>()
+            )
         );
 
         return services;
