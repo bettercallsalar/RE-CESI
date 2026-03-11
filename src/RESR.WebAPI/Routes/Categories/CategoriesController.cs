@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Categories;
 using RESR.Models.Categories;
+using RESR.WebAPI.Security;
 
 namespace RESR.WebAPI.Routes.Categories;
 
@@ -20,7 +21,7 @@ public sealed class CategoriesController : ControllerBase
         return Ok(categories.Select(ToResponse).ToList());
     }
 
-    [Authorize]
+    [AuthorizePermission]
     [HttpGet("{idCategory:int}")]
     public async Task<ActionResult<CategoryResponse>> GetById([FromRoute] int idCategory, CancellationToken ct)
     {
