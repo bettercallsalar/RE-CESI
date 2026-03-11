@@ -12,6 +12,10 @@ using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Departments;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Articles;
+using RESR.Core.Controllers.Articles.Factories;
+using RESR.Core.Controllers.Events;
+using RESR.Core.Controllers.Events.Factories;
 
 namespace RESR.Core;
 
@@ -29,12 +33,16 @@ public static class DependencyInjection
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();
         services.AddScoped<IDepartmentFactory, DepartmentFactory>();
+        services.AddScoped<IArticleFactory, ArticleFactory>();
+        services.AddScoped<IEventFactory, EventFactory>();
 
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IArticleService, ArticleService>();
+        services.AddScoped<IEventService, EventService>();
 
         return services;
     }

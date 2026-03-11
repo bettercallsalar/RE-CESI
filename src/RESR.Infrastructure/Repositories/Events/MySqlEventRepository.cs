@@ -1,0 +1,266 @@
+using System.Data.Common;
+using MySql.Data.MySqlClient;
+using RESR.Core.Controllers.Events;
+using RESR.Core.Controllers.Events.Factories;
+using RESR.Core.Controllers.Events.Ports;
+using RESR.Models.Resources;
+
+namespace RESR.Infrastructure.Events;
+
+public sealed class MySqlEventRepository : IEventRepository
+{
+    private readonly Func<DbConnection> _connectionFactory;
+    private readonly IEventFactory _eventFactory;
+
+    public MySqlEventRepository(string connectionString, IEventFactory eventFactory)
+    {
+        _connectionFactory = () => new MySqlConnection(connectionString);
+        _eventFactory = eventFactory;
+    }
+
+    internal MySqlEventRepository(Func<DbConnection> connectionFactory, IEventFactory eventFactory)
+    {
+        _connectionFactory = connectionFactory;
+        _eventFactory = eventFactory;
+    }
+
+    public async Task<IReadOnlyList<Event>> GetAllAsync(CancellationToken ct)
+    {
+        const string sql = """
+        SELECT
+            r.id_ressource,
+            r.title,
+            r.description,
+            r.visibility,
+            r.created_at,
+            r.modified_at,
+            r.deleted_at,
+            r.id_user,
+            r.id_category,
+            e.id_event,
+            e.subtitle,
+            e.start_date,
+            e.end_date,
+            e.adress,
+            e.id_department
+        FROM event e
+        INNER JOIN resource r ON r.id_ressource = e.id_ressource
+        WHERE r.deleted_at IS NULL
+        ORDER BY r.id_ressource DESC
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+
+        var events = new List<Event>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            events.Add(Map(reader));
+
+        return events;
+    }
+
+    public async Task<Event?> GetByResourceIdAsync(int idResource, CancellationToken ct)
+    {
+        const string sql = """
+        SELECT
+            r.id_ressource,
+            r.title,
+            r.description,
+            r.visibility,
+            r.created_at,
+            r.modified_at,
+            r.deleted_at,
+            r.id_user,
+            r.id_category,
+            e.id_event,
+            e.subtitle,
+            e.start_date,
+            e.end_date,
+            e.adress,
+            e.id_department
+        FROM event e
+        INNER JOIN resource r ON r.id_ressource = e.id_ressource
+        WHERE r.id_ressource = @id_ressource
+          AND r.deleted_at IS NULL
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@id_ressource", idResource);
+
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct) ? Map(reader) : null;
+    }
+
+    public async Task<int> CreateAsync(CreateEventCommand cmd, CancellationToken ct)
+    {
+        const string insertResourceSql = """
+        INSERT INTO resource (title, description, type, visibility, created_at, modified_at, deleted_at, id_user, id_category)
+        VALUES (@title, @description, 'event', @visibility, NOW(), NULL, NULL, @id_user, @id_category);
+        SELECT LAST_INSERT_ID();
+        """;
+
+        const string insertEventSql = """
+        INSERT INTO event (subtitle, start_date, end_date, adress, id_department, id_ressource)
+        VALUES (@subtitle, @start_date, @end_date, @adress, @id_department, @id_ressource)
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var resourceCmd = conn.CreateCommand();
+        resourceCmd.CommandText = insertResourceSql;
+        AddParameter(resourceCmd, "@title", cmd.Title);
+        AddParameter(resourceCmd, "@description", (object?)cmd.Description ?? DBNull.Value);
+        AddParameter(resourceCmd, "@visibility", ToDbVisibility(cmd.Visibility));
+        AddParameter(resourceCmd, "@id_user", cmd.IdUser);
+        AddParameter(resourceCmd, "@id_category", cmd.IdCategory);
+
+        var idResourceObj = await resourceCmd.ExecuteScalarAsync(ct);
+        var idResource = Convert.ToInt32(idResourceObj);
+
+        await using var eventCmd = conn.CreateCommand();
+        eventCmd.CommandText = insertEventSql;
+        AddParameter(eventCmd, "@subtitle", (object?)cmd.Subtitle ?? DBNull.Value);
+        AddParameter(eventCmd, "@start_date", cmd.StartDate);
+        AddParameter(eventCmd, "@end_date", (object?)cmd.EndDate ?? DBNull.Value);
+        AddParameter(eventCmd, "@adress", (object?)cmd.Address ?? DBNull.Value);
+        AddParameter(eventCmd, "@id_department", (object?)cmd.IdDepartment ?? DBNull.Value);
+        AddParameter(eventCmd, "@id_ressource", idResource);
+        await eventCmd.ExecuteNonQueryAsync(ct);
+
+        return idResource;
+    }
+
+    public async Task<Event?> PatchAsync(UpdateEventCommand cmd, CancellationToken ct)
+    {
+        const string updateResourceSql = """
+        UPDATE resource
+        SET
+            title = COALESCE(@title, title),
+            description = COALESCE(@description, description),
+            visibility = COALESCE(@visibility, visibility),
+            id_category = COALESCE(@id_category, id_category),
+            modified_at = NOW()
+        WHERE id_ressource = @id_ressource
+          AND type = 'event'
+          AND deleted_at IS NULL
+        """;
+
+        const string updateEventSql = """
+        UPDATE event
+        SET
+            subtitle = COALESCE(@subtitle, subtitle),
+            start_date = COALESCE(@start_date, start_date),
+            end_date = COALESCE(@end_date, end_date),
+            adress = COALESCE(@adress, adress),
+            id_department = COALESCE(@id_department, id_department)
+        WHERE id_ressource = @id_ressource
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var resourceCmd = conn.CreateCommand();
+        resourceCmd.CommandText = updateResourceSql;
+        AddPatchResourceParameters(resourceCmd, cmd);
+        var affectedResources = await resourceCmd.ExecuteNonQueryAsync(ct);
+        if (affectedResources == 0)
+            return null;
+
+        await using var eventCmd = conn.CreateCommand();
+        eventCmd.CommandText = updateEventSql;
+        AddPatchEventParameters(eventCmd, cmd);
+        await eventCmd.ExecuteNonQueryAsync(ct);
+
+        return await GetByResourceIdAsync(cmd.IdResource, ct);
+    }
+
+    public async Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct)
+    {
+        const string sql = """
+        UPDATE resource
+        SET deleted_at = NOW()
+        WHERE id_ressource = @id_ressource
+          AND type = 'event'
+          AND deleted_at IS NULL
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@id_ressource", idResource);
+
+        var rows = await cmd.ExecuteNonQueryAsync(ct);
+        return rows > 0;
+    }
+
+    private Event Map(DbDataReader reader)
+    {
+        return _eventFactory.CreateFromPersistence(
+            idResource: Convert.ToInt32(reader["id_ressource"]),
+            idEvent: Convert.ToInt32(reader["id_event"]),
+            title: Convert.ToString(reader["title"]) ?? string.Empty,
+            description: reader["description"] == DBNull.Value ? null : Convert.ToString(reader["description"]),
+            visibility: ParseVisibility(Convert.ToString(reader["visibility"])),
+            createdAt: Convert.ToDateTime(reader["created_at"]),
+            modifiedAt: reader["modified_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["modified_at"]),
+            deletedAt: reader["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["deleted_at"]),
+            idUser: Convert.ToInt32(reader["id_user"]),
+            idCategory: Convert.ToInt32(reader["id_category"]),
+            subtitle: reader["subtitle"] == DBNull.Value ? null : Convert.ToString(reader["subtitle"]),
+            startDate: Convert.ToDateTime(reader["start_date"]),
+            endDate: reader["end_date"] == DBNull.Value ? null : Convert.ToDateTime(reader["end_date"]),
+            address: reader["adress"] == DBNull.Value ? null : Convert.ToString(reader["adress"]),
+            idDepartment: reader["id_department"] == DBNull.Value ? null : Convert.ToInt32(reader["id_department"])
+        );
+    }
+
+    private static void AddPatchResourceParameters(DbCommand cmd, UpdateEventCommand @event)
+    {
+        AddParameter(cmd, "@id_ressource", @event.IdResource);
+        AddParameter(cmd, "@title", (object?)@event.Title ?? DBNull.Value);
+        AddParameter(cmd, "@description", (object?)@event.Description ?? DBNull.Value);
+        AddParameter(cmd, "@visibility", @event.Visibility is null ? DBNull.Value : ToDbVisibility(@event.Visibility.Value));
+        AddParameter(cmd, "@id_category", (object?)@event.IdCategory ?? DBNull.Value);
+    }
+
+    private static void AddPatchEventParameters(DbCommand cmd, UpdateEventCommand @event)
+    {
+        AddParameter(cmd, "@id_ressource", @event.IdResource);
+        AddParameter(cmd, "@subtitle", (object?)@event.Subtitle ?? DBNull.Value);
+        AddParameter(cmd, "@start_date", (object?)@event.StartDate ?? DBNull.Value);
+        AddParameter(cmd, "@end_date", (object?)@event.EndDate ?? DBNull.Value);
+        AddParameter(cmd, "@adress", (object?)@event.Address ?? DBNull.Value);
+        AddParameter(cmd, "@id_department", (object?)@event.IdDepartment ?? DBNull.Value);
+    }
+
+    private static ResourceVisibility ParseVisibility(string? visibility)
+    {
+        return visibility?.Equals("private", StringComparison.OrdinalIgnoreCase) == true
+            ? ResourceVisibility.PRIVATE
+            : ResourceVisibility.PUBLIC;
+    }
+
+    private static string ToDbVisibility(ResourceVisibility visibility)
+    {
+        return visibility == ResourceVisibility.PRIVATE ? "private" : "public";
+    }
+
+    private static void AddParameter(DbCommand cmd, string name, object? value)
+    {
+        var parameter = cmd.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        cmd.Parameters.Add(parameter);
+    }
+}

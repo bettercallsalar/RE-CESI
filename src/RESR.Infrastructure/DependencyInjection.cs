@@ -11,11 +11,17 @@ using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Articles.Factories;
+using RESR.Core.Controllers.Articles.Ports;
+using RESR.Core.Controllers.Events.Factories;
+using RESR.Core.Controllers.Events.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
+using RESR.Infrastructure.Articles;
+using RESR.Infrastructure.Events;
 
 namespace RESR.Infrastructure;
 
@@ -62,6 +68,20 @@ public static class DependencyInjection
             new MySqlCategoryRepository(
                 connectionString,
                 _.GetRequiredService<ICategoryFactory>()
+            )
+        );
+
+        services.AddScoped<IArticleRepository>(sp =>
+            new MySqlArticleRepository(
+                connectionString,
+                sp.GetRequiredService<IArticleFactory>()
+            )
+        );
+
+        services.AddScoped<IEventRepository>(sp =>
+            new MySqlEventRepository(
+                connectionString,
+                sp.GetRequiredService<IEventFactory>()
             )
         );
 
