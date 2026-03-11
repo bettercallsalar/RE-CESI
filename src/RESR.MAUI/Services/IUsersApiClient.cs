@@ -4,5 +4,7 @@ namespace RESR.MAUI.Services;
 
 public interface IUsersApiClient
 {
-    Task<IReadOnlyList<UserResponse>> GetUsersAsync(CancellationToken ct);
+    Task RegisterAsync(RegisterUserRequest request, CancellationToken ct);
+    Task LoginAsync(Login login, CancellationToken ct);
+    Task<PaginatedUsersResponse> GetUsersAsync(CancellationToken ct);
 }

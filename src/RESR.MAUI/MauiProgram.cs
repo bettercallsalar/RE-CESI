@@ -18,9 +18,10 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<AppShell>();
 		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddSingleton<IApiSession, ApiSession>();
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
 		{
-			httpClient.BaseAddress = new Uri("http://localhost:5270/");
+			httpClient.BaseAddress = new Uri("http://localhost:8080/");
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
 
