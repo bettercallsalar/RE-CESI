@@ -1,0 +1,62 @@
+Summary
+  Generated on: 11/03/2026 - 09:24:25
+  Coverage date: 11/03/2026 - 09:21:06 - 11/03/2026 - 09:23:53
+  Parser: MultiReport (12x Cobertura)
+  Assemblies: 4
+  Classes: 34
+  Files: 24
+  Line coverage: 97.8%
+  Covered lines: 781
+  Uncovered lines: 17
+  Coverable lines: 798
+  Total lines: 1570
+  Branch coverage: 93.3% (282 of 302)
+  Covered branches: 282
+  Total branches: 302
+  Method coverage: 98.3% (179 of 182)
+  Full method coverage: 98.3% (179 of 182)
+  Covered methods: 179
+  Fully covered methods: 179
+  Total methods: 182
+
+RESR.Core                                                             100%
+  RESR.Core.Controllers.Permissions.Factories.PermissionFactory       100%
+  RESR.Core.Controllers.Permissions.PermissionService                 100%
+  RESR.Core.Controllers.Roles.Factories.RoleFactory                   100%
+  RESR.Core.Controllers.Roles.RoleService                             100%
+  RESR.Core.Controllers.Users.Factories.UserFactory                   100%
+  RESR.Core.Controllers.Users.RegisterUserCommand                     100%
+  RESR.Core.Controllers.Users.SetUserVerificationCommand              100%
+  RESR.Core.Controllers.Users.UpdateUserCommand                       100%
+  RESR.Core.Controllers.Users.UserService                             100%
+  RESR.Core.Errors.ConflictException                                  100%
+  RESR.Core.Errors.NotFoundException                                  100%
+  RESR.Core.Errors.ValidationException                                100%
+
+RESR.Infrastructure                                                  94.6%
+  RESR.Infrastructure.Permissions.MySqlPermissionRepository          88.8%
+  RESR.Infrastructure.Roles.MySqlRoleRepository                      88.7%
+  RESR.Infrastructure.Users.MySqlUserRepository                        98%
+
+RESR.Models                                                           100%
+  RESR.Models.Permissions.Permission                                  100%
+  RESR.Models.Permissions.PermissionResponse                          100%
+  RESR.Models.Roles.Role                                              100%
+  RESR.Models.Roles.RoleResponse                                      100%
+  RESR.Models.Users.Login                                             100%
+  RESR.Models.Users.PaginatedUsersResponse                            100%
+  RESR.Models.Users.RegisterUserRequest                               100%
+  RESR.Models.Users.SetUserVerificationRequest                        100%
+  RESR.Models.Users.UpdateOwnProfileRequest                           100%
+  RESR.Models.Users.UpdateUserRequest                                 100%
+  RESR.Models.Users.User                                              100%
+  RESR.Models.Users.UserListingFilters                                100%
+  RESR.Models.Users.UserResponse                                      100%
+
+RESR.WebAPI                                                           100%
+  RESR.WebAPI.Routes.Permissions.PermissionsController                100%
+  RESR.WebAPI.Routes.Roles.RolesController                            100%
+  RESR.WebAPI.Routes.Users.LoginController                            100%
+  RESR.WebAPI.Routes.Users.UsersController                            100%
+  RESR.WebAPI.Routes.Users.Validators.RegisterUserRequestValidator    100%
+  RESR.WebAPI.Routes.Users.Validators.UpdateUserRequestValidator      100%
