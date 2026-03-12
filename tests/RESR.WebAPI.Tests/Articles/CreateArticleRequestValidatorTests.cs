@@ -13,7 +13,6 @@ public sealed class CreateArticleRequestValidatorTests
             "Article title",
             "Description",
             "PUBLIC",
-            1,
             2,
             "Content");
 
@@ -31,12 +30,11 @@ public sealed class CreateArticleRequestValidatorTests
             null,
             "hidden",
             0,
-            0,
             "");
 
         var result = validator.Validate(request);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.Count >= 5);
+        Assert.True(result.Errors.Count >= 4);
     }
 }

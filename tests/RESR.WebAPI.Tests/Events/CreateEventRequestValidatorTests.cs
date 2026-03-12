@@ -13,7 +13,6 @@ public sealed class CreateEventRequestValidatorTests
             "Event title",
             "Description",
             "PRIVATE",
-            1,
             2,
             "Subtitle",
             new DateTime(2026, 3, 1),
@@ -35,7 +34,6 @@ public sealed class CreateEventRequestValidatorTests
             null,
             "hidden",
             0,
-            0,
             null,
             new DateTime(2026, 3, 2),
             new DateTime(2026, 3, 1),
@@ -45,6 +43,6 @@ public sealed class CreateEventRequestValidatorTests
         var result = validator.Validate(request);
 
         Assert.False(result.IsValid);
-        Assert.True(result.Errors.Count >= 5);
+        Assert.True(result.Errors.Count >= 4);
     }
 }

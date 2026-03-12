@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Articles;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
 using RESR.Models.Resources;
 using RESR.WebAPI.Security;
 
@@ -8,11 +9,15 @@ namespace RESR.WebAPI.Routes.Articles;
 
 [ApiController]
 [Route("api/articles")]
-public sealed class ArticlesController : ControllerBase
+public sealed class ArticlesController : AuthenticatedResourceControllerBase
 {
     private readonly IArticleService _service;
 
-    public ArticlesController(IArticleService service) => _service = service;
+    public ArticlesController(IArticleService service, ITokenService tokenService)
+        : base(tokenService)
+    {
+        _service = service;
+    }
 
     private const int MaxPageSize = 100;
 
@@ -95,6 +100,9 @@ public sealed class ArticlesController : ControllerBase
     public async Task<ActionResult> Create([FromBody] CreateArticleRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
         try
         {
@@ -103,7 +111,7 @@ public sealed class ArticlesController : ControllerBase
                     req.Title,
                     req.Description,
                     visibility,
-                    req.IdUser,
+                    idUser,
                     req.IdCategory,
                     req.Content),
                 ct);
@@ -123,6 +131,10 @@ public sealed class ArticlesController : ControllerBase
         [FromBody] UpdateArticleRequest req,
         CancellationToken ct)
     {
+        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
+        if (ownershipResult is not null)
+            return ownershipResult;
+
         ResourceVisibility? visibility = req.Visibility is null
             ? null
             : Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
@@ -155,6 +167,10 @@ public sealed class ArticlesController : ControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
+        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
+        if (ownershipResult is not null)
+            return ownershipResult;
+
         var deleted = await _service.SoftDeleteAsync(idResource, ct);
         return deleted ? NoContent() : NotFound();
     }

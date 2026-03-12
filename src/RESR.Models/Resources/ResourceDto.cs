@@ -4,7 +4,6 @@ public sealed record CreateArticleRequest(
     string Title,
     string? Description,
     string Visibility,
-    int IdUser,
     int IdCategory,
     string Content
 );
@@ -58,7 +57,6 @@ public sealed record CreateEventRequest(
     string Title,
     string? Description,
     string Visibility,
-    int IdUser,
     int IdCategory,
     string? Subtitle,
     DateTime StartDate,

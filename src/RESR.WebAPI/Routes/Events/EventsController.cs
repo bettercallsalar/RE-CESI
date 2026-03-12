@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Events;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
 using RESR.Models.Resources;
 using RESR.WebAPI.Security;
 
@@ -8,12 +9,16 @@ namespace RESR.WebAPI.Routes.Events;
 
 [ApiController]
 [Route("api/events")]
-public sealed class EventsController : ControllerBase
+public sealed class EventsController : AuthenticatedResourceControllerBase
 {
     private readonly IEventService _service;
     private const int MaxPageSize = 100;
 
-    public EventsController(IEventService service) => _service = service;
+    public EventsController(IEventService service, ITokenService tokenService)
+        : base(tokenService)
+    {
+        _service = service;
+    }
 
     [HttpGet]
     public async Task<ActionResult<PaginatedEventsResponse>> GetAll(
@@ -49,6 +54,7 @@ public sealed class EventsController : ControllerBase
         return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
     }
 
+    [AuthorizePermissionOrSelf("idUser", PermissionNames.ModerateContent)]
     [HttpGet("{idResource:int}")]
     public async Task<ActionResult<EventResponse>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
@@ -56,11 +62,14 @@ public sealed class EventsController : ControllerBase
         return @event is null ? NotFound() : Ok(ToResponse(@event));
     }
 
-    [AuthorizePermission]
+    [AuthorizePermission(PermissionNames.CreateResource)]
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateEventRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
         try
         {
@@ -69,7 +78,7 @@ public sealed class EventsController : ControllerBase
                     req.Title,
                     req.Description,
                     visibility,
-                    req.IdUser,
+                    idUser,
                     req.IdCategory,
                     req.Subtitle,
                     req.StartDate,
@@ -94,6 +103,10 @@ public sealed class EventsController : ControllerBase
         [FromBody] UpdateEventRequest req,
         CancellationToken ct)
     {
+        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
+        if (ownershipResult is not null)
+            return ownershipResult;
+
         ResourceVisibility? visibility = req.Visibility is null
             ? null
             : Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
@@ -130,6 +143,10 @@ public sealed class EventsController : ControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
+        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
+        if (ownershipResult is not null)
+            return ownershipResult;
+
         var deleted = await _service.SoftDeleteAsync(idResource, ct);
         return deleted ? NoContent() : NotFound();
     }

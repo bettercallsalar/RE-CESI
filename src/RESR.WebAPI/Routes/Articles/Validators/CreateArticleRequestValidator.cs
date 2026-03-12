@@ -20,9 +20,6 @@ public sealed class CreateArticleRequestValidator : AbstractValidator<CreateArti
             .Must(BeValidVisibility)
             .WithMessage("Visibility must be PUBLIC or PRIVATE.");
 
-        RuleFor(x => x.IdUser)
-            .GreaterThan(0);
-
         RuleFor(x => x.IdCategory)
             .GreaterThan(0);
 
