@@ -108,6 +108,18 @@ public sealed class CommentsControllerTests
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
+    [Fact]
+    public async Task DeleteForModeration_ReturnsNoContent_WhenSuccess()
+    {
+        var controller = CreateController(out var service, userId: 9);
+        service.Setup(s => s.DeleteAsync(5, 9, true, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await controller.DeleteForModeration(5, CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
     private static CommentsController CreateController(
         out Mock<ICommentService> service,
         int? userId = null,

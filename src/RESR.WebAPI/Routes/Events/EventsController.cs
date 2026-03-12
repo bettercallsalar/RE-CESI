@@ -54,8 +54,24 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
     }
 
-    [AuthorizePermissionOrSelf("idUser", PermissionNames.ModerateContent)]
-    [HttpGet("{idResource:int}")]
+    [HttpGet("me/{idResource:int}")]
+    public async Task<ActionResult<EventResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
+        var @event = await _service.GetByResourceIdAsync(idResource, ct);
+        if (@event is null)
+            return NotFound();
+        if (@event.IdUser != idUser)
+            return Forbid();
+
+        return Ok(ToResponse(@event));
+    }
+
+    [AuthorizePermission(PermissionNames.ModerateContent)]
+    [HttpGet("moderation/{idResource:int}")]
     public async Task<ActionResult<EventResponse>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
         var @event = await _service.GetByResourceIdAsync(idResource, ct);
@@ -88,7 +104,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     ),
                 ct);
 
-            return CreatedAtAction(nameof(GetByResourceId), new { idResource }, new { idResource });
+            return CreatedAtAction(nameof(GetOwnByResourceId), new { idResource }, new { idResource });
         }
         catch (ValidationException ex)
         {

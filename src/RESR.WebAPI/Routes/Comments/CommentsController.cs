@@ -109,7 +109,6 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizeCommentOwnerOrPermission("idComment", PermissionNames.DeleteComment)]
     [HttpDelete("{idComment:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idComment, CancellationToken ct)
     {
@@ -119,11 +118,34 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
 
         try
         {
-            var canDeleteOtherUsersComments =
-                HttpContext.Items.TryGetValue(CommentOwnerOrPermissionAuthorizationFilter.CanDeleteOtherUsersCommentsItemKey, out var value) &&
-                value is true;
+            await _service.DeleteAsync(idComment, currentUserId, canDeleteOtherUsersComments: false, ct);
+            return NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
 
-            await _service.DeleteAsync(idComment, currentUserId, canDeleteOtherUsersComments, ct);
+    [AuthorizePermission(PermissionNames.DeleteComment)]
+    [HttpDelete("moderation/{idComment:int}")]
+    public async Task<ActionResult> DeleteForModeration([FromRoute] int idComment, CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        if (authResult is not null)
+            return authResult;
+
+        try
+        {
+            await _service.DeleteAsync(idComment, currentUserId, canDeleteOtherUsersComments: true, ct);
             return NoContent();
         }
         catch (NotFoundException ex)

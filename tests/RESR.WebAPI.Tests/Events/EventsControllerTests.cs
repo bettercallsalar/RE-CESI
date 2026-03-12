@@ -63,6 +63,29 @@ public sealed class EventsControllerTests
     }
 
     [Fact]
+    public async Task GetOwnByResourceId_ReturnsForbid_WhenTokenUserDoesNotOwnEvent()
+    {
+        var service = new Mock<IEventService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Event { IdResource = 1, IdUser = 9, Title = "Forum", Visibility = ResourceVisibility.PRIVATE, CreatedAt = DateTime.UtcNow, IdCategory = 2 });
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("1");
+        var controller = new EventsController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+
+        var result = await controller.GetOwnByResourceId(1, CancellationToken.None);
+
+        Assert.IsType<ForbidResult>(result.Result);
+    }
+
+    [Fact]
     public async Task Create_ReturnsCreatedAtAction_WhenValid()
     {
         var service = new Mock<IEventService>();
@@ -96,7 +119,7 @@ public sealed class EventsControllerTests
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result);
-        Assert.Equal(nameof(controller.GetByResourceId), created.ActionName);
+        Assert.Equal(nameof(controller.GetOwnByResourceId), created.ActionName);
         service.Verify(s => s.CreateAsync(
             It.Is<CreateEventCommand>(cmd => cmd.IdUser == 8 && cmd.IdCategory == 2),
             It.IsAny<CancellationToken>()),

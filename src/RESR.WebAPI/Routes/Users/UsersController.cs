@@ -50,10 +50,21 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
         return Ok(new PaginatedUsersResponse(items, page, pageSize, totalCount, totalPages));
     }
 
-    [AuthorizePermissionOrSelf("idUser", PermissionNames.ManageUsers)]
+    [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpGet("{idUser:int}")]
     public async Task<ActionResult<UserResponse>> GetById([FromRoute] int idUser, CancellationToken ct)
     {
+        var user = await _service.GetByIdAsync(idUser, ct);
+        return user is null ? NotFound() : Ok(ToResponse(user));
+    }
+
+    [HttpGet("me")]
+    public async Task<ActionResult<UserResponse>> GetOwnProfile(CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
         var user = await _service.GetByIdAsync(idUser, ct);
         return user is null ? NotFound() : Ok(ToResponse(user));
     }
@@ -166,10 +177,13 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermissionOrSelf("idUser")]
-    [HttpDelete("{idUser:int}")]
-    public async Task<ActionResult> SoftDelete([FromRoute] int idUser, CancellationToken ct)
+    [HttpDelete("me")]
+    public async Task<ActionResult> SoftDelete(CancellationToken ct)
     {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
         var ok = await _service.SoftDeleteAsync(idUser, ct);
         return ok ? NoContent() : NotFound();
     }

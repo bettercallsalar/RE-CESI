@@ -92,6 +92,19 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task GetOwnProfile_ReturnsOk_WhenTokenUserExists()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser());
+
+        var result = await controller.GetOwnProfile(CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<UserResponse>(ok.Value);
+        Assert.Equal(1, response.IdUser);
+    }
+
+    [Fact]
     public async Task Register_ReturnsCreated_WhenSuccess()
     {
         var controller = CreateController(out var service);
@@ -313,10 +326,10 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task SoftDelete_ReturnsNoContent_WhenDeleted()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.SoftDeleteAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        var result = await controller.SoftDelete(1, CancellationToken.None);
+        var result = await controller.SoftDelete(CancellationToken.None);
 
         Assert.IsType<NoContentResult>(result);
     }
@@ -324,10 +337,10 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task SoftDelete_ReturnsNotFound_WhenMissing()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.SoftDeleteAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-        var result = await controller.SoftDelete(1, CancellationToken.None);
+        var result = await controller.SoftDelete(CancellationToken.None);
 
         Assert.IsType<NotFoundResult>(result);
     }
