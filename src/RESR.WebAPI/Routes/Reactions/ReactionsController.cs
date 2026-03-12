@@ -32,25 +32,24 @@ public sealed class ReactionsController : ControllerBase
         }
     }
 
-    [AuthorizePermission]
+    [AuthorizePermissionOrQuerySelf("idUser", PermissionNames.ViewOtherUserReactions)]
     [HttpGet("user")]
     public async Task<ActionResult<UserReactionsResponse>> GetByUser([FromQuery] int? idUser, CancellationToken ct)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-            return Unauthorized(new { message = "Invalid token or unauthorized access." });
-
-        var targetUserId = idUser ?? currentUserId;
-        if (targetUserId != currentUserId &&
-            !User.GetCurrentPermissions().Contains(PermissionNames.ViewOtherUserReactions))
+        var targetUserId = idUser;
+        if (!targetUserId.HasValue)
         {
-            return Forbid();
+            if (!User.TryGetCurrentUserId(out var currentUserId))
+                return Unauthorized(new { message = "Invalid token or unauthorized access." });
+
+            targetUserId = currentUserId;
         }
 
         try
         {
-            var reactions = await _service.GetByUserIdAsync(targetUserId, ct);
+            var reactions = await _service.GetByUserIdAsync(targetUserId.Value, ct);
             var items = reactions.Select(ToResponse).ToList();
-            return Ok(new UserReactionsResponse(targetUserId, items.Count, items));
+            return Ok(new UserReactionsResponse(targetUserId.Value, items.Count, items));
         }
         catch (NotFoundException ex)
         {

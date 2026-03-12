@@ -56,16 +56,6 @@ public sealed class ReactionsControllerTests
     }
 
     [Fact]
-    public async Task GetByUser_ReturnsForbid_WhenQueryTargetsAnotherUserWithoutPermission()
-    {
-        var controller = CreateController(out _, userId: 2);
-
-        var result = await controller.GetByUser(4, CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result.Result);
-    }
-
-    [Fact]
     public async Task GetByUser_ReturnsOtherUserReactions_WhenPermissionIsPresent()
     {
         var controller = CreateController(
@@ -82,6 +72,20 @@ public sealed class ReactionsControllerTests
         Assert.Equal(4, response.IdUser);
         Assert.Single(response.Items);
         Assert.Equal("user_4", response.Items[0].User.Username);
+    }
+
+    [Fact]
+    public async Task GetByUser_UsesExplicitIdUser_WhenProvided()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.GetByUserIdAsync(4, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Reaction> { BuildReaction(idReaction: 8, idUser: 4) });
+
+        var result = await controller.GetByUser(4, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<UserReactionsResponse>(ok.Value);
+        Assert.Equal(4, response.IdUser);
     }
 
     [Fact]
