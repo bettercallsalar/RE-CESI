@@ -4,6 +4,7 @@ using RESR.Core.Controllers.Events;
 using RESR.Core.Controllers.Events.Factories;
 using RESR.Infrastructure.Events;
 using RESR.Infrastructure.Tests.DbFakes;
+using RESR.Models.Departments;
 using RESR.Models.Resources;
 
 namespace RESR.Infrastructure.Tests.Events;
@@ -99,6 +100,7 @@ public sealed class MySqlEventRepositoryTests
         Assert.Equal("Conference", @event.Title);
         Assert.Equal(ResourceVisibility.PUBLIC, @event.Visibility);
         Assert.False(@event.IsApproved);
+        Assert.Equal(75, @event.Department!.IdDepartment);
     }
 
     [Fact]
@@ -214,6 +216,8 @@ public sealed class MySqlEventRepositoryTests
         table.Columns.Add("end_date", typeof(DateTime));
         table.Columns.Add("adress", typeof(string));
         table.Columns.Add("id_department", typeof(int));
+        table.Columns.Add("department_name", typeof(string));
+        table.Columns.Add("department_code", typeof(int));
 
         foreach (var row in rows)
             table.Rows.Add(row.Select(value => value ?? DBNull.Value).ToArray());
@@ -254,6 +258,8 @@ public sealed class MySqlEventRepositoryTests
         startDate,
         endDate,
         address,
-        idDepartment
+        idDepartment,
+        idDepartment is null ? null : $"Department {idDepartment}",
+        idDepartment is null ? null : idDepartment * 10
     };
 }

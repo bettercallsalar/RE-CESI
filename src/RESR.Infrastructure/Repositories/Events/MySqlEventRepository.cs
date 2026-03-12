@@ -4,6 +4,7 @@ using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Events;
 using RESR.Core.Controllers.Events.Factories;
 using RESR.Core.Controllers.Events.Ports;
+using RESR.Models.Departments;
 using RESR.Models.Resources;
 
 namespace RESR.Infrastructure.Events;
@@ -45,9 +46,12 @@ public sealed class MySqlEventRepository : IEventRepository
             e.start_date,
             e.end_date,
             e.adress,
-            e.id_department
+            e.id_department,
+            d.name AS department_name,
+            d.code AS department_code
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
+        LEFT JOIN department d ON d.id_department = e.id_department
         WHERE r.deleted_at IS NULL
         """);
 
@@ -109,9 +113,12 @@ public sealed class MySqlEventRepository : IEventRepository
             e.start_date,
             e.end_date,
             e.adress,
-            e.id_department
+            e.id_department,
+            d.name AS department_name,
+            d.code AS department_code
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
+        LEFT JOIN department d ON d.id_department = e.id_department
         WHERE r.id_ressource = @id_ressource
           AND r.deleted_at IS NULL
         """;
@@ -275,9 +282,25 @@ public sealed class MySqlEventRepository : IEventRepository
             startDate: Convert.ToDateTime(reader["start_date"]),
             endDate: reader["end_date"] == DBNull.Value ? null : Convert.ToDateTime(reader["end_date"]),
             address: reader["adress"] == DBNull.Value ? null : Convert.ToString(reader["adress"]),
-            idDepartment: reader["id_department"] == DBNull.Value ? null : Convert.ToInt32(reader["id_department"]),
+            department: MapDepartment(reader),
             isApproved: Convert.ToBoolean(reader["is_approved"])
         );
+    }
+
+    private static Department? MapDepartment(DbDataReader reader)
+    {
+        if (reader["id_department"] == DBNull.Value)
+            return null;
+
+        if (reader["department_name"] == DBNull.Value || reader["department_code"] == DBNull.Value)
+            throw new InvalidOperationException("Event department data is incomplete. Run latest DB migrations.");
+
+        return new Department
+        {
+            IdDepartment = Convert.ToInt32(reader["id_department"]),
+            Name = Convert.ToString(reader["department_name"]) ?? string.Empty,
+            Code = Convert.ToInt32(reader["department_code"])
+        };
     }
 
     private static void AddPatchResourceParameters(DbCommand cmd, UpdateEventCommand @event)

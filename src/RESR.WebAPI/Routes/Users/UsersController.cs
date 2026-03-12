@@ -176,7 +176,7 @@ public sealed class UsersController : ControllerBase
         u.BirthDate,
         u.Bio,
         u.IsVerified,
-        u.IdDepartment,
+        u.Department,
         u.IdRole
     );
 }

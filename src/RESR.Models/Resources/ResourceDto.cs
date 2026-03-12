@@ -1,3 +1,5 @@
+using RESR.Models.Departments;
+
 namespace RESR.Models.Resources;
 
 public sealed record CreateArticleRequest(
@@ -92,7 +94,7 @@ public sealed record EventResponse(
     DateTime StartDate,
     DateTime? EndDate,
     string? Address,
-    int? IdDepartment,
+    Department? Department,
     bool IsApproved
 );
 

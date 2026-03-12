@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Events;
+using RESR.Core.Errors;
 using RESR.Core.Security.Token;
+using RESR.Models.Departments;
 using RESR.Models.Resources;
 using RESR.WebAPI.Routes.Events;
 
@@ -33,7 +35,7 @@ public sealed class EventsControllerTests
                     StartDate = new DateTime(2026, 4, 1),
                     EndDate = null,
                     Address = null,
-                    IdDepartment = 67
+                    Department = new Department { IdDepartment = 67, Name = "Department 67", Code = 670 }
                 }
             }, 1));
         var controller = new EventsController(service.Object, tokenService.Object);
@@ -106,27 +108,7 @@ public sealed class EventsControllerTests
     {
         var service = new Mock<IEventService>();
         var tokenService = new Mock<ITokenService>();
-        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Event
-            {
-                IdResource = 6,
-                IdEvent = 3,
-                Title = "Forum",
-                Description = null,
-                Visibility = ResourceVisibility.PUBLIC,
-                CreatedAt = DateTime.UtcNow,
-                ModifiedAt = null,
-                DeletedAt = null,
-                IdUser = 1,
-                IdCategory = 2,
-                IsApproved = true,
-                Subtitle = "Sub",
-                StartDate = new DateTime(2026, 4, 1),
-                EndDate = null,
-                Address = "Paris",
-                IdDepartment = 75
-            });
-        service.Setup(s => s.SoftDeleteAsync(6, It.IsAny<CancellationToken>()))
+        service.Setup(s => s.SoftDeleteAsync(6, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
         tokenService.Setup(s => s.ValidateToken("jwt-token"))
             .Returns(true);
@@ -151,24 +133,8 @@ public sealed class EventsControllerTests
     {
         var service = new Mock<IEventService>();
         var tokenService = new Mock<ITokenService>();
-        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Event
-            {
-                IdResource = 6,
-                IdEvent = 3,
-                Title = "Forum",
-                Description = null,
-                Visibility = ResourceVisibility.PUBLIC,
-                CreatedAt = DateTime.UtcNow,
-                IdUser = 99,
-                IdCategory = 2,
-                IsApproved = true,
-                Subtitle = "Sub",
-                StartDate = new DateTime(2026, 4, 1),
-                EndDate = null,
-                Address = "Paris",
-                IdDepartment = 75
-            });
+        service.Setup(s => s.UpdateAsync(It.IsAny<UpdateEventCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ForbiddenException("Forbidden"));
         tokenService.Setup(s => s.ValidateToken("jwt-token"))
             .Returns(true);
         tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
@@ -185,7 +151,10 @@ public sealed class EventsControllerTests
         var result = await controller.Update(6, new UpdateEventRequest(Title: "Updated"), CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
-        service.Verify(s => s.UpdateAsync(It.IsAny<UpdateEventCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateEventCommand>(cmd => cmd.IdResource == 6 && cmd.IdUser == 1),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -211,7 +180,7 @@ public sealed class EventsControllerTests
                 StartDate = new DateTime(2026, 4, 1),
                 EndDate = null,
                 Address = "Paris",
-                IdDepartment = 75
+                Department = new Department { IdDepartment = 75, Name = "Department 75", Code = 750 }
             });
 
         var controller = new EventsController(service.Object, tokenService.Object);
@@ -220,5 +189,6 @@ public sealed class EventsControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<EventResponse>(ok.Value);
         Assert.True(response.IsApproved);
+        Assert.Equal(75, response.Department!.IdDepartment);
     }
 }

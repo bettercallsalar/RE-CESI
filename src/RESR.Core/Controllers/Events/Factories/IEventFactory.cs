@@ -1,3 +1,4 @@
+using RESR.Models.Departments;
 using RESR.Models.Resources;
 
 namespace RESR.Core.Controllers.Events.Factories;
@@ -19,7 +20,7 @@ public interface IEventFactory
         DateTime startDate,
         DateTime? endDate,
         string? address,
-        int? idDepartment,
+        Department? department,
         bool isApproved
     );
 }

@@ -62,7 +62,7 @@ public sealed class EventServiceTests
         var service = new EventService(repo.Object);
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            service.UpdateAsync(new UpdateEventCommand(404, Title: "x"), CancellationToken.None));
+            service.UpdateAsync(new UpdateEventCommand(404, 1, Title: "x"), CancellationToken.None));
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class EventServiceTests
         var service = new EventService(repo.Object);
 
         await Assert.ThrowsAsync<ValidationException>(() =>
-            service.UpdateAsync(new UpdateEventCommand(8, EndDate: new DateTime(2026, 1, 9)), CancellationToken.None));
+            service.UpdateAsync(new UpdateEventCommand(8, 1, EndDate: new DateTime(2026, 1, 9)), CancellationToken.None));
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public sealed class EventServiceTests
             .ReturnsAsync(BuildEvent(title: "Updated"));
         var service = new EventService(repo.Object);
 
-        var result = await service.UpdateAsync(new UpdateEventCommand(10, Title: " Updated "), CancellationToken.None);
+        var result = await service.UpdateAsync(new UpdateEventCommand(10, 1, Title: " Updated "), CancellationToken.None);
 
         Assert.Equal("Updated", result.Title);
     }
@@ -97,9 +97,10 @@ public sealed class EventServiceTests
     {
         var repo = new Mock<IEventRepository>();
         repo.Setup(r => r.SoftDeleteAsync(3, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        repo.Setup(r => r.GetByResourceIdAsync(3, It.IsAny<CancellationToken>())).ReturnsAsync(BuildEvent());
         var service = new EventService(repo.Object);
 
-        var deleted = await service.SoftDeleteAsync(3, CancellationToken.None);
+        var deleted = await service.SoftDeleteAsync(3, 1, CancellationToken.None);
 
         Assert.True(deleted);
     }
@@ -137,6 +138,6 @@ public sealed class EventServiceTests
             StartDate = start ?? new DateTime(2026, 1, 10),
             EndDate = end ?? new DateTime(2026, 1, 11),
             Address = null,
-            IdDepartment = null
+            Department = null
         };
 }

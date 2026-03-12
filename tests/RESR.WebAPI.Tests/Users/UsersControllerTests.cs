@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Users;
+using RESR.Models.Departments;
 using RESR.Core.Errors;
 using RESR.Models.Users;
 using RESR.WebAPI.Routes.Users;
@@ -85,6 +86,7 @@ public sealed class UsersControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<UserResponse>(ok.Value);
         Assert.Equal(1, response.IdUser);
+        Assert.Equal(1, response.Department.IdDepartment);
     }
 
     [Fact]
@@ -326,7 +328,7 @@ public sealed class UsersControllerTests
         Email = email,
         FirstName = firstName,
         IsVerified = isVerified,
-        IdDepartment = idDepartment,
+        Department = new Department { IdDepartment = idDepartment, Name = $"Department {idDepartment}", Code = idDepartment * 10 },
         IdRole = idRole,
         BirthDate = birthDate,
         Bio = bio,

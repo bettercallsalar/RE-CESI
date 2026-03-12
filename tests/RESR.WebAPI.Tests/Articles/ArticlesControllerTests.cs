@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Articles;
+using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Resources;
 using RESR.WebAPI.Routes.Articles;
@@ -93,21 +94,7 @@ public sealed class ArticlesControllerTests
     {
         var service = new Mock<IArticleService>();
         var tokenService = new Mock<ITokenService>();
-        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Article
-            {
-                IdResource = 6,
-                IdArticle = 3,
-                Title = "T",
-                Description = null,
-                Visibility = ResourceVisibility.PUBLIC,
-                CreatedAt = DateTime.UtcNow,
-                IdUser = 7,
-                IdCategory = 2,
-                Content = "Body",
-                IsApproved = false
-            });
-        service.Setup(s => s.SoftDeleteAsync(6, It.IsAny<CancellationToken>()))
+        service.Setup(s => s.SoftDeleteAsync(6, 7, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         tokenService.Setup(s => s.ValidateToken("jwt-token"))
             .Returns(true);
@@ -132,20 +119,8 @@ public sealed class ArticlesControllerTests
     {
         var service = new Mock<IArticleService>();
         var tokenService = new Mock<ITokenService>();
-        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Article
-            {
-                IdResource = 6,
-                IdArticle = 3,
-                Title = "T",
-                Description = null,
-                Visibility = ResourceVisibility.PUBLIC,
-                CreatedAt = DateTime.UtcNow,
-                IdUser = 99,
-                IdCategory = 2,
-                Content = "Body",
-                IsApproved = false
-            });
+        service.Setup(s => s.UpdateAsync(It.IsAny<UpdateArticleCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ForbiddenException("Forbidden"));
         tokenService.Setup(s => s.ValidateToken("jwt-token"))
             .Returns(true);
         tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
@@ -163,7 +138,10 @@ public sealed class ArticlesControllerTests
         var result = await controller.Update(6, new UpdateArticleRequest(Title: "Updated"), CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
-        service.Verify(s => s.UpdateAsync(It.IsAny<UpdateArticleCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateArticleCommand>(cmd => cmd.IdResource == 6 && cmd.IdUser == 7),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

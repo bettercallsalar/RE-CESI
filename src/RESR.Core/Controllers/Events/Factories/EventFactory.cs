@@ -1,3 +1,4 @@
+using RESR.Models.Departments;
 using RESR.Models.Resources;
 
 namespace RESR.Core.Controllers.Events.Factories;
@@ -19,7 +20,7 @@ public sealed class EventFactory : IEventFactory
         DateTime startDate,
         DateTime? endDate,
         string? address,
-        int? idDepartment,
+        Department? department,
         bool isApproved)
     {
         return new Event
@@ -39,7 +40,7 @@ public sealed class EventFactory : IEventFactory
             StartDate = startDate,
             EndDate = endDate,
             Address = address,
-            IdDepartment = idDepartment
+            Department = department
         };
     }
 }

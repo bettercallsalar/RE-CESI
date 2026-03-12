@@ -1,3 +1,4 @@
+using RESR.Models.Departments;
 using RESR.Models.Users;
 
 namespace RESR.Core.Controllers.Users.Factories;
@@ -11,7 +12,7 @@ public interface IUserFactory
         string firstName,
         DateOnly? birthDate,
         string? bio,
-        int idDepartment,
+        Department department,
         int idRole
     );
 
@@ -25,7 +26,7 @@ public interface IUserFactory
         string? bio,
         bool isVerified,
         DateTime? deletedAt,
-        int idDepartment,
+        Department department,
         int idRole
     );
 }

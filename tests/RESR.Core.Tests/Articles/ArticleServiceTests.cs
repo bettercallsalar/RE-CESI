@@ -71,7 +71,7 @@ public sealed class ArticleServiceTests
         var service = new ArticleService(repo.Object);
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            service.UpdateAsync(new UpdateArticleCommand(999, Title: "x"), CancellationToken.None));
+            service.UpdateAsync(new UpdateArticleCommand(999, 1, Title: "x"), CancellationToken.None));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class ArticleServiceTests
         var service = new ArticleService(repo.Object);
 
         await Assert.ThrowsAsync<ValidationException>(() =>
-            service.UpdateAsync(new UpdateArticleCommand(4, Content: "   "), CancellationToken.None));
+            service.UpdateAsync(new UpdateArticleCommand(4, 1, Content: "   "), CancellationToken.None));
     }
 
     [Fact]
@@ -91,9 +91,10 @@ public sealed class ArticleServiceTests
     {
         var repo = new Mock<IArticleRepository>();
         repo.Setup(r => r.SoftDeleteAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        repo.Setup(r => r.GetByResourceIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildArticle());
         var service = new ArticleService(repo.Object);
 
-        var deleted = await service.SoftDeleteAsync(5, CancellationToken.None);
+        var deleted = await service.SoftDeleteAsync(5, 1, CancellationToken.None);
 
         Assert.True(deleted);
     }

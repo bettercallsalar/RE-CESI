@@ -134,6 +134,10 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
         catch (ValidationException ex)
         {
             return BadRequest(new { message = ex.Message });
@@ -148,8 +152,15 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         if (authResult is not null)
             return authResult;
 
-        var deleted = await _service.SoftDeleteAsync(idResource, idUser, ct);
-        return deleted ? NoContent() : NotFound();
+        try
+        {
+            var deleted = await _service.SoftDeleteAsync(idResource, idUser, ct);
+            return deleted ? NoContent() : NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
     }
 
     [AuthorizePermission(PermissionNames.ApproveArticle)]
@@ -194,7 +205,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             @event.StartDate,
             @event.EndDate,
             @event.Address,
-            @event.IdDepartment,
+            @event.Department,
             @event.IsApproved
         );
     }
