@@ -1,5 +1,6 @@
 using RESR.Models.Departments;
 using RESR.Models.Follows;
+using RESR.Models.Comments;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
@@ -127,6 +128,28 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Comment_AllowsPropertyAssignment()
+    {
+        var comment = new Comment
+        {
+            IdComment = 5,
+            Content = "Hello",
+            CreatedAt = new DateTime(2026, 3, 11, 12, 0, 0, DateTimeKind.Utc),
+            ModifiedAt = new DateTime(2026, 3, 11, 13, 0, 0, DateTimeKind.Utc),
+            DeletedAt = null,
+            IdResource = 9,
+            IdUser = 3,
+            IdParentComment = 1
+        };
+
+        Assert.Equal(5, comment.IdComment);
+        Assert.Equal("Hello", comment.Content);
+        Assert.Equal(9, comment.IdResource);
+        Assert.Equal(3, comment.IdUser);
+        Assert.Equal(1, comment.IdParentComment);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
@@ -161,6 +184,32 @@ public sealed class ModelsTests
         Assert.Equal("user", user.Username);
         Assert.Single(paginated.Items);
         Assert.Equal(1, paginated.TotalCount);
+    }
+
+    [Fact]
+    public void CommentDtos_AssignValues()
+    {
+        var create = new CreateCommentRequest("Hello", 1);
+        var update = new UpdateCommentRequest("Updated");
+        var response = new CommentResponse(
+            7,
+            "Hello",
+            new DateTime(2026, 3, 11, 12, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 3, 11, 13, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc),
+            10,
+            2,
+            1
+        );
+
+        Assert.Equal("Hello", create.Content);
+        Assert.Equal(1, create.IdParentComment);
+        Assert.Equal("Updated", update.Content);
+        Assert.Equal(7, response.IdComment);
+        Assert.Equal(new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc), response.DeletedAt);
+        Assert.Equal(10, response.IdResource);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal(1, response.IdParentComment);
     }
 
     [Fact]
