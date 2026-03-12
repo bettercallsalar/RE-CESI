@@ -11,7 +11,6 @@ using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Controllers.Departments.Factories;
-using RESR.Core.Controllers.Follows.Factories;
 using RESR.Core.Controllers.Follows.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Categories;
@@ -70,8 +69,7 @@ public static class DependencyInjection
 
         services.AddScoped<IFollowsRepository>(sp =>
             new MySqlFollowsRepository(
-                connectionString,
-                sp.GetRequiredService<IFollowsFactory>()
+                connectionString
             )
         );
 

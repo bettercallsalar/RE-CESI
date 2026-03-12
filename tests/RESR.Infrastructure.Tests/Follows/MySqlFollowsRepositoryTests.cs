@@ -1,6 +1,5 @@
 using System.Data;
 using System.Data.Common;
-using RESR.Core.Controllers.Follows.Factories;
 using RESR.Infrastructure.Follows;
 using RESR.Infrastructure.Tests.DbFakes;
 using RESR.Models.Follows;
@@ -94,7 +93,7 @@ public sealed class MySqlFollowsRepositoryTests
     private static MySqlFollowsRepository CreateRepo(params FakeDbCommand[] commands)
     {
         DbConnection ConnectionFactory() => new FakeDbConnection(commands);
-        return new MySqlFollowsRepository(ConnectionFactory, new FollowsFactory());
+        return new MySqlFollowsRepository(ConnectionFactory);
     }
 
     private static FakeDbCommand ReaderCommand(DataTable table)

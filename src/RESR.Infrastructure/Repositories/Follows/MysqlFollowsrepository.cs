@@ -1,5 +1,4 @@
 using MySql.Data.MySqlClient;
-using RESR.Core.Controllers.Follows.Factories;
 using RESR.Core.Controllers.Follows.Ports;
 using RESR.Models.Follows;
 using System.Data.Common;
@@ -10,18 +9,15 @@ public sealed class MySqlFollowsRepository : IFollowsRepository
 {
     private readonly Func<DbConnection> _connectionFactory;
 
-    private readonly IFollowsFactory _followsFactory;
 
-    public MySqlFollowsRepository(string connectionString, IFollowsFactory followsFactory)
+    public MySqlFollowsRepository(string connectionString)
     {
         _connectionFactory = () => new MySqlConnection(connectionString);
-        _followsFactory = followsFactory;
     }
 
-    internal MySqlFollowsRepository(Func<DbConnection> connectionFactory, IFollowsFactory followsFactory)
+    internal MySqlFollowsRepository(Func<DbConnection> connectionFactory)
     {
         _connectionFactory = connectionFactory;
-        _followsFactory = followsFactory;
     }
 
     public async Task<IReadOnlyList<FollowUser>> GetAllFollowersAsync(int idUser, CancellationToken ct)
@@ -114,10 +110,6 @@ public sealed class MySqlFollowsRepository : IFollowsRepository
         return rows > 0;
     }
 
-    private Follow Map(DbDataReader reader) =>
-        _followsFactory.Create(
-            Convert.ToInt32(reader["id_follower"]),
-            Convert.ToInt32(reader["id_following"]));
 
     private static FollowUser MapUser(DbDataReader reader) =>
         new()

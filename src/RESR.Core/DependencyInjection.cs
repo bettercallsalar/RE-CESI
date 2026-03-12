@@ -13,7 +13,6 @@ using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Departments;
 using RESR.Core.Controllers.Departments.Factories;
 using RESR.Core.Controllers.Follows;
-using RESR.Core.Controllers.Follows.Factories;
 
 namespace RESR.Core;
 
@@ -31,8 +30,6 @@ public static class DependencyInjection
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();
         services.AddScoped<IDepartmentFactory, DepartmentFactory>();
-        services.AddScoped<IFollowsFactory, FollowsFactory>();
-
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
