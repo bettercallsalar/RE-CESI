@@ -14,6 +14,7 @@ using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Departments;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Follows;
 
 namespace RESR.Core;
 
@@ -39,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IFollowsService, FollowsService>();
 
         return services;
     }

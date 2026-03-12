@@ -7,13 +7,12 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     DOTNET_EnableDiagnostics=0
 
-COPY src/RESR.sln ./src/RESR.sln
 COPY src/RESR.Models/RESR.Models.csproj ./src/RESR.Models/
 COPY src/RESR.Core/RESR.Core.csproj ./src/RESR.Core/
 COPY src/RESR.Infrastructure/RESR.Infrastructure.csproj ./src/RESR.Infrastructure/
 COPY src/RESR.WebAPI/RESR.WebAPI.csproj ./src/RESR.WebAPI/
 
-RUN dotnet restore ./src/RESR.sln /m:1 /p:RestoreDisableParallel=true
+RUN dotnet restore ./src/RESR.WebAPI/RESR.WebAPI.csproj /m:1 /p:RestoreDisableParallel=true
 
 COPY . .
 RUN dotnet publish ./src/RESR.WebAPI/RESR.WebAPI.csproj \
