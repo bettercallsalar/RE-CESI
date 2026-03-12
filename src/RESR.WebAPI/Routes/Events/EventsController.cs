@@ -103,9 +103,9 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         [FromBody] UpdateEventRequest req,
         CancellationToken ct)
     {
-        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
-        if (ownershipResult is not null)
-            return ownershipResult;
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
         ResourceVisibility? visibility = req.Visibility is null
             ? null
@@ -116,6 +116,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             var @event = await _service.UpdateAsync(
                 new UpdateEventCommand(
                     idResource,
+                    idUser,
                     req.Title,
                     req.Description,
                     visibility,
@@ -143,11 +144,11 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
-        if (ownershipResult is not null)
-            return ownershipResult;
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
-        var deleted = await _service.SoftDeleteAsync(idResource, ct);
+        var deleted = await _service.SoftDeleteAsync(idResource, idUser, ct);
         return deleted ? NoContent() : NotFound();
     }
 

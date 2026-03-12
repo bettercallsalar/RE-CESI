@@ -50,6 +50,10 @@ public sealed class EventService : IEventService
 
     public async Task<Event> UpdateAsync(UpdateEventCommand cmd, CancellationToken ct)
     {
+        var existingEvent = await _repo.GetByResourceIdAsync(cmd.IdResource, ct) ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
+        if (existingEvent?.IdUser != cmd.IdUser)
+            throw new ForbiddenException("You do not have permission to update this event.");
+
         if (cmd.IdResource <= 0)
             throw new ValidationException("IdResource must be greater than 0.");
 
@@ -88,7 +92,14 @@ public sealed class EventService : IEventService
             ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
     }
 
-    public Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct) => _repo.SoftDeleteAsync(idResource, ct);
+    public async Task<bool> SoftDeleteAsync(int idResource, int idUser, CancellationToken ct)
+    {
+        var existingEvent = await _repo.GetByResourceIdAsync(idResource, ct) ?? throw new NotFoundException($"Event resource {idResource} not found.");
+        if (existingEvent?.IdUser != idUser)
+            throw new ForbiddenException("You do not have permission to delete this event.");
+
+        return await _repo.SoftDeleteAsync(idResource, ct);
+    }
 
     private static string? NormalizeOptional(string? value)
     {

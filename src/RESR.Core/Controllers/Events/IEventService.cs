@@ -9,5 +9,5 @@ public interface IEventService
     Task<int> CreateAsync(CreateEventCommand cmd, CancellationToken ct);
     Task<Event> UpdateAsync(UpdateEventCommand cmd, CancellationToken ct);
     Task<Event> SetApprovalAsync(SetEventApprovalCommand cmd, CancellationToken ct);
-    Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct);
+    Task<bool> SoftDeleteAsync(int idResource, int idUser, CancellationToken ct);
 }

@@ -9,5 +9,5 @@ public interface IArticleService
     Task<int> CreateAsync(CreateArticleCommand cmd, CancellationToken ct);
     Task<Article> UpdateAsync(UpdateArticleCommand cmd, CancellationToken ct);
     Task<Article> SetApprovalAsync(SetArticleApprovalCommand cmd, CancellationToken ct);
-    Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct);
+    Task<bool> SoftDeleteAsync(int idResource, int idUser, CancellationToken ct);
 }

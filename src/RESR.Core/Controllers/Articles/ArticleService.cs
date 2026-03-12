@@ -47,10 +47,13 @@ public sealed class ArticleService : IArticleService
 
     public async Task<Article> UpdateAsync(UpdateArticleCommand cmd, CancellationToken ct)
     {
+        var existing = await _repo.GetByResourceIdAsync(cmd.IdResource, ct);
+        if (existing?.IdUser != cmd.IdUser)
+            throw new ForbiddenException("You do not have permission to update this article.");
+
         if (cmd.IdResource <= 0)
             throw new ValidationException("IdResource must be greater than 0.");
 
-        var existing = await _repo.GetByResourceIdAsync(cmd.IdResource, ct);
         if (existing is null)
             throw new NotFoundException($"Article resource {cmd.IdResource} not found.");
 
@@ -81,7 +84,14 @@ public sealed class ArticleService : IArticleService
             ?? throw new NotFoundException($"Article resource {cmd.IdResource} not found.");
     }
 
-    public Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct) => _repo.SoftDeleteAsync(idResource, ct);
+    public Task<bool> SoftDeleteAsync(int idResource, int idUser, CancellationToken ct)
+    {
+        var existingResource = _repo.GetByResourceIdAsync(idResource, ct) ?? throw new NotFoundException($"Article resource {idResource} not found.");
+        if (existingResource.Result?.IdUser != idUser)
+            throw new ForbiddenException("You do not have permission to delete this article.");
+
+        return _repo.SoftDeleteAsync(idResource, ct);
+    }
 
     private static string? NormalizeOptional(string? value)
     {

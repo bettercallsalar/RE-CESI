@@ -17,6 +17,7 @@ public sealed record CreateEventCommand(
 
 public sealed record UpdateEventCommand(
     int IdResource,
+    int IdUser,
     string? Title = null,
     string? Description = null,
     ResourceVisibility? Visibility = null,

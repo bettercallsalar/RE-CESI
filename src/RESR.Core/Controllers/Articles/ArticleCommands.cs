@@ -13,6 +13,7 @@ public sealed record CreateArticleCommand(
 
 public sealed record UpdateArticleCommand(
     int IdResource,
+    int IdUser,
     string? Title = null,
     string? Description = null,
     ResourceVisibility? Visibility = null,

@@ -32,21 +32,4 @@ public abstract class AuthenticatedResourceControllerBase : ControllerBase
 
         return null;
     }
-
-    protected async Task<ActionResult?> RequireResourceOwnerAsync<TResource>(
-        int idResource,
-        Func<int, CancellationToken, Task<TResource?>> getResourceAsync,
-        CancellationToken ct)
-        where TResource : Resource
-    {
-        var authResult = RequireAuthenticatedUser(out var tokenUserId);
-        if (authResult is not null)
-            return authResult;
-
-        var resource = await getResourceAsync(idResource, ct);
-        if (resource is null)
-            return NotFound();
-
-        return resource.IdUser == tokenUserId ? null : Forbid();
-    }
 }

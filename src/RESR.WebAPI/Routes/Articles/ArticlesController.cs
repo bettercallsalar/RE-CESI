@@ -131,9 +131,9 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         [FromBody] UpdateArticleRequest req,
         CancellationToken ct)
     {
-        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
-        if (ownershipResult is not null)
-            return ownershipResult;
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
         ResourceVisibility? visibility = req.Visibility is null
             ? null
@@ -143,12 +143,13 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         {
             var article = await _service.UpdateAsync(
                 new UpdateArticleCommand(
-                    idResource,
-                    req.Title,
-                    req.Description,
-                    visibility,
-                    req.IdCategory,
-                    req.Content),
+                    IdResource: idResource,
+                    IdUser: idUser,
+                    Title: req.Title,
+                    Description: req.Description,
+                    Visibility: visibility,
+                    IdCategory: req.IdCategory,
+                    Content: req.Content),
                 ct);
 
             return Ok(ToResponse(article));
@@ -167,11 +168,12 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var ownershipResult = await RequireResourceOwnerAsync(idResource, _service.GetByResourceIdAsync, ct);
-        if (ownershipResult is not null)
-            return ownershipResult;
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
 
-        var deleted = await _service.SoftDeleteAsync(idResource, ct);
+
+        var deleted = await _service.SoftDeleteAsync(idResource, idUser, ct);
         return deleted ? NoContent() : NotFound();
     }
 
