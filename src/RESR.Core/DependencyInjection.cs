@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RESR.Core.Controllers.Comments;
+using RESR.Core.Controllers.Comments.Factories;
 using RESR.Core.Controllers.Categories;
 using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Permissions;
@@ -25,11 +27,13 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, TokenService>();
 
         services.AddScoped<ICategoryFactory, CategoryFactory>();
+        services.AddScoped<ICommentFactory, CommentFactory>();
         services.AddScoped<IUserFactory, UserFactory>();
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();
         services.AddScoped<IDepartmentFactory, DepartmentFactory>();
 
+        services.AddScoped<ICommentService, CommentService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();
