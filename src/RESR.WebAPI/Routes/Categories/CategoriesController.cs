@@ -58,9 +58,9 @@ public sealed class CategoriesController : AuthenticatedResourceControllerBase
         var result = await _service.AddToUserAsync(idUser, idCategory, ct);
         return result switch
         {
-            AddToUserResult.Added => Ok(new { message = "Category added to user's favorites" }),
-            AddToUserResult.AlreadyExists => Conflict(new { message = "Category is already in user's favorites" }),
-            AddToUserResult.NotFound => NotFound(new { message = "Category not found" }),
+            AddToUserResult.Added => NoContent(),
+            AddToUserResult.AlreadyExists => Conflict(),
+            AddToUserResult.NotFound => NotFound(),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
     }
@@ -74,7 +74,7 @@ public sealed class CategoriesController : AuthenticatedResourceControllerBase
             return authResult;
 
         var success = await _service.RemoveFromUserAsync(idUser, idCategory, ct);
-        return success ? Ok(new { message = "Category removed from user's favorites" }) : NotFound(new { message = "Category not found in user's favorites" });
+        return success ? NoContent() : NotFound();
     }
 
     private static CategoryResponse ToResponse(Category category) =>

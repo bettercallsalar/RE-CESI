@@ -105,7 +105,7 @@ public sealed class CommentServiceTests
         repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildComment(idComment: 5, idUser: 2));
         repo.Setup(r => r.SoftDeleteAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        await service.DeleteAsync(5, 2, new HashSet<string>(StringComparer.OrdinalIgnoreCase), CancellationToken.None);
+        await service.DeleteAsync(5, 2, canDeleteOtherUsersComments: false, CancellationToken.None);
 
         repo.Verify(r => r.SoftDeleteAsync(5, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -117,11 +117,7 @@ public sealed class CommentServiceTests
         repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildComment(idComment: 5, idUser: 9));
         repo.Setup(r => r.SoftDeleteAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        await service.DeleteAsync(
-            5,
-            2,
-            new HashSet<string>(new[] { "DeleteComment" }, StringComparer.OrdinalIgnoreCase),
-            CancellationToken.None);
+        await service.DeleteAsync(5, 2, canDeleteOtherUsersComments: true, CancellationToken.None);
 
         repo.Verify(r => r.SoftDeleteAsync(5, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -133,7 +129,7 @@ public sealed class CommentServiceTests
         repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildComment(idComment: 5, idUser: 9));
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            service.DeleteAsync(5, 2, new HashSet<string>(StringComparer.OrdinalIgnoreCase), CancellationToken.None));
+            service.DeleteAsync(5, 2, canDeleteOtherUsersComments: false, CancellationToken.None));
     }
 
     private static CommentService CreateService(out Mock<ICommentRepository> repo, out Mock<ICommentFactory> factory)

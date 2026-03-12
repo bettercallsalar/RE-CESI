@@ -18,6 +18,9 @@ public abstract class AuthenticatedResourceControllerBase : ControllerBase
     {
         idUser = default;
 
+        if (HttpContext?.Request is null)
+            return Unauthorized(new { message = "Missing or invalid Authorization header." });
+
         var authHeader = HttpContext.Request.Headers.Authorization.ToString();
         if (!authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             return Unauthorized(new { message = "Missing or invalid Authorization header." });

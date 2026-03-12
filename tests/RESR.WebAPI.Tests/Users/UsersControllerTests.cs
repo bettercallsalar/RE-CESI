@@ -250,6 +250,31 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task UpdateOwnProfile_UsesTokenUserId()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(username: "new"));
+
+        await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateUserCommand>(cmd => cmd.IdUser == 1 && cmd.Username == "new"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateOwnProfile_ReturnsUnauthorized_WhenTokenMissing()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
     public async Task UpdateOwnProfile_ReturnsNotFound_WhenMissing()
     {
         var controller = CreateAuthenticatedController(out var service);

@@ -1,10 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Comments;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
 using RESR.Models.Comments;
 using RESR.WebAPI.Routes.Comments;
 
@@ -53,33 +52,10 @@ public sealed class CommentsControllerTests
 
         var created = Assert.IsType<CreatedAtActionResult>(result.Result);
         Assert.Equal(nameof(CommentsController.GetById), created.ActionName);
-    }
-
-    [Fact]
-    public async Task Create_ReturnsCreated_WhenUserIdIsMappedToNameIdentifier()
-    {
-        var service = new Mock<ICommentService>();
-        service.Setup(s => s.CreateAsync(It.IsAny<CreateCommentCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BuildComment());
-
-        var controller = new CommentsController(service.Object)
-        {
-            ControllerContext = new ControllerContext
-            {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(
-                        new ClaimsIdentity(
-                            new[] { new Claim(ClaimTypes.NameIdentifier, "2") },
-                            "test"))
-                }
-            }
-        };
-
-        var result = await controller.Create(4, new CreateCommentRequest("Hello"), CancellationToken.None);
-
-        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
-        Assert.Equal(nameof(CommentsController.GetById), created.ActionName);
+        service.Verify(s => s.CreateAsync(
+            It.Is<CreateCommentCommand>(cmd => cmd.IdResource == 4 && cmd.IdUser == 2 && cmd.Content == "Hello"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -102,13 +78,17 @@ public sealed class CommentsControllerTests
         var result = await controller.Update(5, new UpdateCommentRequest("Updated"), CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateCommentCommand>(cmd => cmd.IdComment == 5 && cmd.ActorUserId == 2 && cmd.Content == "Updated"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
     public async Task Delete_ReturnsNoContent_WhenSuccess()
     {
-        var controller = CreateController(out var service, userId: 2, permissions: new[] { "DeleteComment" });
-        service.Setup(s => s.DeleteAsync(5, 2, It.IsAny<IReadOnlySet<string>>(), It.IsAny<CancellationToken>()))
+        var controller = CreateController(out var service, userId: 2);
+        service.Setup(s => s.DeleteAsync(5, 2, false, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var result = await controller.Delete(5, CancellationToken.None);
@@ -120,7 +100,7 @@ public sealed class CommentsControllerTests
     public async Task Delete_ReturnsBadRequest_WhenValidationFails()
     {
         var controller = CreateController(out var service, userId: 2);
-        service.Setup(s => s.DeleteAsync(0, 2, It.IsAny<IReadOnlySet<string>>(), It.IsAny<CancellationToken>()))
+        service.Setup(s => s.DeleteAsync(0, 2, false, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ValidationException("Bad"));
 
         var result = await controller.Delete(0, CancellationToken.None);
@@ -134,25 +114,31 @@ public sealed class CommentsControllerTests
         IEnumerable<string>? permissions = null)
     {
         service = new Mock<ICommentService>();
-        var controller = new CommentsController(service.Object);
+        var tokenService = new Mock<ITokenService>();
+        var controller = new CommentsController(service.Object, tokenService.Object);
 
         if (userId.HasValue || permissions is not null)
         {
-            var claims = new List<Claim>();
-
-            if (userId.HasValue)
-                claims.Add(new Claim(JwtRegisteredClaimNames.Sub, userId.Value.ToString()));
-
-            if (permissions is not null)
-                claims.AddRange(permissions.Select(permission => new Claim("permission", permission)));
-
             controller.ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext
-                {
-                    User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"))
-                }
+                HttpContext = new DefaultHttpContext()
             };
+            controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+
+            if (userId.HasValue)
+            {
+                tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+                tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
+                    .Returns(userId.Value.ToString());
+            }
+
+            if (permissions is not null)
+            {
+                controller.HttpContext.User = new System.Security.Claims.ClaimsPrincipal(
+                    new System.Security.Claims.ClaimsIdentity(
+                        permissions.Select(permission => new System.Security.Claims.Claim("permission", permission)),
+                        "test"));
+            }
         }
 
         return controller;
