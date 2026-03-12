@@ -9,6 +9,37 @@ namespace RESR.WebAPI.Tests.Articles;
 public sealed class ArticlesControllerTests
 {
     [Fact]
+    public async Task GetAll_ReturnsPaginatedResponse()
+    {
+        var service = new Mock<IArticleService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Article>
+            {
+                new()
+                {
+                    IdResource = 1,
+                    IdArticle = 2,
+                    Title = "T",
+                    Description = null,
+                    Visibility = ResourceVisibility.PUBLIC,
+                    CreatedAt = DateTime.UtcNow,
+                    IdUser = 1,
+                    IdCategory = 2,
+                    Content = "Body",
+                    IsApproved = false
+                }
+            }, 1));
+        var controller = new ArticlesController(service.Object);
+
+        var result = await controller.GetAll(ct: CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PaginatedArticlesResponse>(ok.Value);
+        Assert.Single(response.Items);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
     public async Task GetByResourceId_ReturnsNotFound_WhenMissing()
     {
         var service = new Mock<IArticleService>();
@@ -72,7 +103,7 @@ public sealed class ArticlesControllerTests
             });
 
         var controller = new ArticlesController(service.Object);
-        var result = await controller.SetApproval(6, new SetArticleApprovalRequest(true), CancellationToken.None);
+        var result = await controller.SetApproval(6, new SetResourceApprovalRequest(true), CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<ArticleResponse>(ok.Value);

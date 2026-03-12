@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Text;
 using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Events;
 using RESR.Core.Controllers.Events.Factories;
@@ -24,13 +25,15 @@ public sealed class MySqlEventRepository : IEventRepository
         _eventFactory = eventFactory;
     }
 
-    public async Task<IReadOnlyList<Event>> GetAllAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<Event>> GetPaginatedAsync(int page, int pageSize, EventListingFilters filters, CancellationToken ct)
     {
-        const string sql = """
+        var offset = (page - 1) * pageSize;
+        var sql = new StringBuilder("""
         SELECT
             r.id_ressource,
             r.title,
             r.description,
+            r.is_approved,
             r.visibility,
             r.created_at,
             r.modified_at,
@@ -46,14 +49,18 @@ public sealed class MySqlEventRepository : IEventRepository
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
         WHERE r.deleted_at IS NULL
-        ORDER BY r.id_ressource DESC
-        """;
+        """);
 
         await using var conn = _connectionFactory();
         await conn.OpenAsync(ct);
 
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
+        AppendListingFilters(sql, cmd, filters);
+        sql.AppendLine("ORDER BY r.id_ressource DESC");
+        sql.AppendLine("LIMIT @limit OFFSET @offset");
+        cmd.CommandText = sql.ToString();
+        AddParameter(cmd, "@limit", pageSize);
+        AddParameter(cmd, "@offset", offset);
 
         var events = new List<Event>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -63,6 +70,26 @@ public sealed class MySqlEventRepository : IEventRepository
         return events;
     }
 
+    public async Task<int> CountAsync(EventListingFilters filters, CancellationToken ct)
+    {
+        var sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM event e
+        INNER JOIN resource r ON r.id_ressource = e.id_ressource
+        WHERE r.deleted_at IS NULL
+        """);
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        AppendListingFilters(sql, cmd, filters);
+        cmd.CommandText = sql.ToString();
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return Convert.ToInt32(result);
+    }
+
     public async Task<Event?> GetByResourceIdAsync(int idResource, CancellationToken ct)
     {
         const string sql = """
@@ -70,6 +97,7 @@ public sealed class MySqlEventRepository : IEventRepository
             r.id_ressource,
             r.title,
             r.description,
+            r.is_approved,
             r.visibility,
             r.created_at,
             r.modified_at,
@@ -102,8 +130,8 @@ public sealed class MySqlEventRepository : IEventRepository
     public async Task<int> CreateAsync(CreateEventCommand cmd, CancellationToken ct)
     {
         const string insertResourceSql = """
-        INSERT INTO resource (title, description, type, visibility, created_at, modified_at, deleted_at, id_user, id_category)
-        VALUES (@title, @description, 'event', @visibility, NOW(), NULL, NULL, @id_user, @id_category);
+        INSERT INTO resource (title, description, type, is_approved, visibility, created_at, modified_at, deleted_at, id_user, id_category)
+        VALUES (@title, @description, 'event', 0, @visibility, NOW(), NULL, NULL, @id_user, @id_category);
         SELECT LAST_INSERT_ID();
         """;
 
@@ -183,6 +211,32 @@ public sealed class MySqlEventRepository : IEventRepository
         return await GetByResourceIdAsync(cmd.IdResource, ct);
     }
 
+    public async Task<Event?> SetApprovalAsync(SetEventApprovalCommand cmd, CancellationToken ct)
+    {
+        const string updateResourceSql = """
+        UPDATE resource
+        SET
+            is_approved = @is_approved,
+            modified_at = NOW()
+        WHERE id_ressource = @id_ressource
+          AND type = 'event'
+          AND deleted_at IS NULL
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var updateCmd = conn.CreateCommand();
+        updateCmd.CommandText = updateResourceSql;
+        AddParameter(updateCmd, "@id_ressource", cmd.IdResource);
+        AddParameter(updateCmd, "@is_approved", cmd.IsApproved);
+        var affectedRows = await updateCmd.ExecuteNonQueryAsync(ct);
+        if (affectedRows == 0)
+            return null;
+
+        return await GetByResourceIdAsync(cmd.IdResource, ct);
+    }
+
     public async Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct)
     {
         const string sql = """
@@ -221,7 +275,8 @@ public sealed class MySqlEventRepository : IEventRepository
             startDate: Convert.ToDateTime(reader["start_date"]),
             endDate: reader["end_date"] == DBNull.Value ? null : Convert.ToDateTime(reader["end_date"]),
             address: reader["adress"] == DBNull.Value ? null : Convert.ToString(reader["adress"]),
-            idDepartment: reader["id_department"] == DBNull.Value ? null : Convert.ToInt32(reader["id_department"])
+            idDepartment: reader["id_department"] == DBNull.Value ? null : Convert.ToInt32(reader["id_department"]),
+            isApproved: Convert.ToBoolean(reader["is_approved"])
         );
     }
 
@@ -242,6 +297,64 @@ public sealed class MySqlEventRepository : IEventRepository
         AddParameter(cmd, "@end_date", (object?)@event.EndDate ?? DBNull.Value);
         AddParameter(cmd, "@adress", (object?)@event.Address ?? DBNull.Value);
         AddParameter(cmd, "@id_department", (object?)@event.IdDepartment ?? DBNull.Value);
+    }
+
+    private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, EventListingFilters filters)
+    {
+        if (filters.Keyword is not null)
+        {
+            sql.AppendLine("""
+              AND (
+                r.title LIKE @keyword
+                OR r.description LIKE @keyword
+                OR e.subtitle LIKE @keyword
+                OR e.adress LIKE @keyword
+              )
+            """);
+            AddParameter(cmd, "@keyword", $"%{filters.Keyword}%");
+        }
+
+        if (filters.Visibility is not null)
+        {
+            sql.AppendLine("  AND r.visibility = @visibility");
+            AddParameter(cmd, "@visibility", ToDbVisibility(filters.Visibility.Value));
+        }
+
+        if (filters.IdUser is not null)
+        {
+            sql.AppendLine("  AND r.id_user = @id_user");
+            AddParameter(cmd, "@id_user", filters.IdUser.Value);
+        }
+
+        if (filters.IdCategory is not null)
+        {
+            sql.AppendLine("  AND r.id_category = @id_category");
+            AddParameter(cmd, "@id_category", filters.IdCategory.Value);
+        }
+
+        if (filters.IdDepartment is not null)
+        {
+            sql.AppendLine("  AND e.id_department = @id_department");
+            AddParameter(cmd, "@id_department", filters.IdDepartment.Value);
+        }
+
+        if (filters.IsApproved is not null)
+        {
+            sql.AppendLine("  AND r.is_approved = @is_approved");
+            AddParameter(cmd, "@is_approved", filters.IsApproved.Value);
+        }
+
+        if (filters.StartFrom is not null)
+        {
+            sql.AppendLine("  AND e.start_date >= @start_from");
+            AddParameter(cmd, "@start_from", filters.StartFrom.Value);
+        }
+
+        if (filters.StartTo is not null)
+        {
+            sql.AppendLine("  AND e.start_date <= @start_to");
+            AddParameter(cmd, "@start_to", filters.StartTo.Value);
+        }
     }
 
     private static ResourceVisibility ParseVisibility(string? visibility)

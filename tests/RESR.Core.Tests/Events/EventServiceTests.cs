@@ -9,6 +9,29 @@ namespace RESR.Core.Tests.Events;
 public sealed class EventServiceTests
 {
     [Fact]
+    public async Task GetPaginatedAsync_NormalizesKeywordAndReturnsCount()
+    {
+        var repo = new Mock<IEventRepository>();
+        EventListingFilters? captured = null;
+        repo.Setup(r => r.GetPaginatedAsync(1, 10, It.IsAny<EventListingFilters>(), It.IsAny<CancellationToken>()))
+            .Callback<int, int, EventListingFilters, CancellationToken>((_, _, filters, _) => captured = filters)
+            .ReturnsAsync(new List<Event>());
+        repo.Setup(r => r.CountAsync(It.IsAny<EventListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(4);
+        var service = new EventService(repo.Object);
+
+        var (_, totalCount) = await service.GetPaginatedAsync(
+            1,
+            10,
+            new EventListingFilters("  forum  ", null, null, null, null, null, null, null),
+            CancellationToken.None);
+
+        Assert.Equal(4, totalCount);
+        Assert.NotNull(captured);
+        Assert.Equal("forum", captured!.Keyword);
+    }
+
+    [Fact]
     public async Task CreateAsync_Throws_WhenEndDateBeforeStartDate()
     {
         var repo = new Mock<IEventRepository>();
@@ -81,6 +104,21 @@ public sealed class EventServiceTests
         Assert.True(deleted);
     }
 
+    [Fact]
+    public async Task SetApprovalAsync_DelegatesToRepository()
+    {
+        var repo = new Mock<IEventRepository>();
+        var approved = BuildEvent();
+        approved.IsApproved = true;
+        repo.Setup(r => r.SetApprovalAsync(new SetEventApprovalCommand(9, true), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(approved);
+        var service = new EventService(repo.Object);
+
+        var @event = await service.SetApprovalAsync(new SetEventApprovalCommand(9, true), CancellationToken.None);
+
+        Assert.True(@event.IsApproved);
+    }
+
     private static Event BuildEvent(string title = "Event", DateTime? start = null, DateTime? end = null) =>
         new()
         {
@@ -94,6 +132,7 @@ public sealed class EventServiceTests
             DeletedAt = null,
             IdUser = 1,
             IdCategory = 2,
+            IsApproved = false,
             Subtitle = null,
             StartDate = start ?? new DateTime(2026, 1, 10),
             EndDate = end ?? new DateTime(2026, 1, 11),

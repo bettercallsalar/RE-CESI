@@ -9,6 +9,41 @@ namespace RESR.WebAPI.Tests.Events;
 public sealed class EventsControllerTests
 {
     [Fact]
+    public async Task GetAll_ReturnsPaginatedResponse()
+    {
+        var service = new Mock<IEventService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<EventListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Event>
+            {
+                new()
+                {
+                    IdResource = 1,
+                    IdEvent = 2,
+                    Title = "Forum",
+                    Description = null,
+                    Visibility = ResourceVisibility.PUBLIC,
+                    CreatedAt = DateTime.UtcNow,
+                    IdUser = 1,
+                    IdCategory = 2,
+                    IsApproved = false,
+                    Subtitle = null,
+                    StartDate = new DateTime(2026, 4, 1),
+                    EndDate = null,
+                    Address = null,
+                    IdDepartment = 67
+                }
+            }, 1));
+        var controller = new EventsController(service.Object);
+
+        var result = await controller.GetAll(ct: CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PaginatedEventsResponse>(ok.Value);
+        Assert.Single(response.Items);
+        Assert.Equal(1, response.TotalCount);
+    }
+
+    [Fact]
     public async Task GetByResourceId_ReturnsNotFound_WhenMissing()
     {
         var service = new Mock<IEventService>();
@@ -58,5 +93,38 @@ public sealed class EventsControllerTests
         var result = await controller.Delete(6, CancellationToken.None);
 
         Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task SetApproval_ReturnsOk_WhenValid()
+    {
+        var service = new Mock<IEventService>();
+        service.Setup(s => s.SetApprovalAsync(It.IsAny<SetEventApprovalCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Event
+            {
+                IdResource = 6,
+                IdEvent = 3,
+                Title = "Forum",
+                Description = null,
+                Visibility = ResourceVisibility.PUBLIC,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = null,
+                DeletedAt = null,
+                IdUser = 1,
+                IdCategory = 2,
+                IsApproved = true,
+                Subtitle = "Sub",
+                StartDate = new DateTime(2026, 4, 1),
+                EndDate = null,
+                Address = "Paris",
+                IdDepartment = 75
+            });
+
+        var controller = new EventsController(service.Object);
+        var result = await controller.SetApproval(6, new SetResourceApprovalRequest(true), CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<EventResponse>(ok.Value);
+        Assert.True(response.IsApproved);
     }
 }

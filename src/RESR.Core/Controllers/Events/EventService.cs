@@ -10,7 +10,17 @@ public sealed class EventService : IEventService
 
     public EventService(IEventRepository repo) => _repo = repo;
 
-    public Task<IReadOnlyList<Event>> GetAllAsync(CancellationToken ct) => _repo.GetAllAsync(ct);
+    public async Task<(IReadOnlyList<Event> Events, int TotalCount)> GetPaginatedAsync(
+        int page,
+        int pageSize,
+        EventListingFilters filters,
+        CancellationToken ct)
+    {
+        var normalizedFilters = NormalizeListingFilters(filters);
+        var events = await _repo.GetPaginatedAsync(page, pageSize, normalizedFilters, ct);
+        var totalCount = await _repo.CountAsync(normalizedFilters, ct);
+        return (events, totalCount);
+    }
 
     public Task<Event?> GetByResourceIdAsync(int idResource, CancellationToken ct) => _repo.GetByResourceIdAsync(idResource, ct);
 
@@ -69,6 +79,15 @@ public sealed class EventService : IEventService
             ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
     }
 
+    public async Task<Event> SetApprovalAsync(SetEventApprovalCommand cmd, CancellationToken ct)
+    {
+        if (cmd.IdResource <= 0)
+            throw new ValidationException("IdResource must be greater than 0.");
+
+        return await _repo.SetApprovalAsync(cmd, ct)
+            ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
+    }
+
     public Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct) => _repo.SoftDeleteAsync(idResource, ct);
 
     private static string? NormalizeOptional(string? value)
@@ -77,5 +96,13 @@ public sealed class EventService : IEventService
             return null;
 
         return value.Trim();
+    }
+
+    private static EventListingFilters NormalizeListingFilters(EventListingFilters filters)
+    {
+        return filters with
+        {
+            Keyword = NormalizeOptional(filters.Keyword)
+        };
     }
 }

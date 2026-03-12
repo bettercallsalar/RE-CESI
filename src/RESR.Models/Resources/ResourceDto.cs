@@ -17,7 +17,7 @@ public sealed record UpdateArticleRequest(
     string? Content = null
 );
 
-public sealed record SetArticleApprovalRequest(
+public sealed record SetResourceApprovalRequest(
     bool IsApproved
 );
 
@@ -34,6 +34,24 @@ public sealed record ArticleResponse(
     int IdCategory,
     string Content,
     bool IsApproved
+);
+
+public sealed record PaginatedArticlesResponse(
+    IReadOnlyList<ArticleResponse> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages
+);
+
+public sealed record ArticleListingFilters(
+    string? Keyword,
+    ResourceVisibility? Visibility,
+    int? IdUser,
+    int? IdCategory,
+    bool? IsApproved,
+    DateTime? CreatedFrom,
+    DateTime? CreatedTo
 );
 
 public sealed record CreateEventRequest(
@@ -76,5 +94,25 @@ public sealed record EventResponse(
     DateTime StartDate,
     DateTime? EndDate,
     string? Address,
-    int? IdDepartment
+    int? IdDepartment,
+    bool IsApproved
+);
+
+public sealed record PaginatedEventsResponse(
+    IReadOnlyList<EventResponse> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages
+);
+
+public sealed record EventListingFilters(
+    string? Keyword,
+    ResourceVisibility? Visibility,
+    int? IdUser,
+    int? IdCategory,
+    int? IdDepartment,
+    bool? IsApproved,
+    DateTime? StartFrom,
+    DateTime? StartTo
 );

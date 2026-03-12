@@ -19,7 +19,8 @@ public sealed class EventFactory : IEventFactory
         DateTime startDate,
         DateTime? endDate,
         string? address,
-        int? idDepartment)
+        int? idDepartment,
+        bool isApproved)
     {
         return new Event
         {
@@ -27,6 +28,7 @@ public sealed class EventFactory : IEventFactory
             IdEvent = idEvent,
             Title = title,
             Description = description,
+            IsApproved = isApproved,
             Visibility = visibility,
             CreatedAt = createdAt,
             ModifiedAt = modifiedAt,

@@ -9,6 +9,29 @@ namespace RESR.Core.Tests.Articles;
 public sealed class ArticleServiceTests
 {
     [Fact]
+    public async Task GetPaginatedAsync_NormalizesKeywordAndReturnsCount()
+    {
+        var repo = new Mock<IArticleRepository>();
+        ArticleListingFilters? captured = null;
+        repo.Setup(r => r.GetPaginatedAsync(1, 10, It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .Callback<int, int, ArticleListingFilters, CancellationToken>((_, _, filters, _) => captured = filters)
+            .ReturnsAsync(new List<Article>());
+        repo.Setup(r => r.CountAsync(It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(3);
+        var service = new ArticleService(repo.Object);
+
+        var (_, totalCount) = await service.GetPaginatedAsync(
+            1,
+            10,
+            new ArticleListingFilters("  help  ", null, null, null, null, null, null),
+            CancellationToken.None);
+
+        Assert.Equal(3, totalCount);
+        Assert.NotNull(captured);
+        Assert.Equal("help", captured!.Keyword);
+    }
+
+    [Fact]
     public async Task CreateAsync_Throws_WhenTitleMissing()
     {
         var repo = new Mock<IArticleRepository>();

@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Text;
 using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Articles;
 using RESR.Core.Controllers.Articles.Factories;
@@ -24,13 +25,15 @@ public sealed class MySqlArticleRepository : IArticleRepository
         _articleFactory = articleFactory;
     }
 
-    public async Task<IReadOnlyList<Article>> GetAllAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<Article>> GetPaginatedAsync(int page, int pageSize, ArticleListingFilters filters, CancellationToken ct)
     {
-        const string sql = """
+        var offset = (page - 1) * pageSize;
+        var sql = new StringBuilder("""
         SELECT
             r.id_ressource,
             r.title,
             r.description,
+            r.is_approved,
             r.visibility,
             r.created_at,
             r.modified_at,
@@ -38,19 +41,22 @@ public sealed class MySqlArticleRepository : IArticleRepository
             r.id_user,
             r.id_category,
             a.id_article,
-            a.content,
-            a.is_approved
+            a.content
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
         WHERE r.deleted_at IS NULL
-        ORDER BY r.id_ressource DESC
-        """;
+        """);
 
         await using var conn = _connectionFactory();
         await conn.OpenAsync(ct);
 
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = sql;
+        AppendListingFilters(sql, cmd, filters);
+        sql.AppendLine("ORDER BY r.id_ressource DESC");
+        sql.AppendLine("LIMIT @limit OFFSET @offset");
+        cmd.CommandText = sql.ToString();
+        AddParameter(cmd, "@limit", pageSize);
+        AddParameter(cmd, "@offset", offset);
 
         var articles = new List<Article>();
         await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -60,6 +66,26 @@ public sealed class MySqlArticleRepository : IArticleRepository
         return articles;
     }
 
+    public async Task<int> CountAsync(ArticleListingFilters filters, CancellationToken ct)
+    {
+        var sql = new StringBuilder("""
+        SELECT COUNT(*)
+        FROM article a
+        INNER JOIN resource r ON r.id_ressource = a.id_ressource
+        WHERE r.deleted_at IS NULL
+        """);
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        AppendListingFilters(sql, cmd, filters);
+        cmd.CommandText = sql.ToString();
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return Convert.ToInt32(result);
+    }
+
     public async Task<Article?> GetByResourceIdAsync(int idResource, CancellationToken ct)
     {
         const string sql = """
@@ -67,6 +93,7 @@ public sealed class MySqlArticleRepository : IArticleRepository
             r.id_ressource,
             r.title,
             r.description,
+            r.is_approved,
             r.visibility,
             r.created_at,
             r.modified_at,
@@ -74,8 +101,7 @@ public sealed class MySqlArticleRepository : IArticleRepository
             r.id_user,
             r.id_category,
             a.id_article,
-            a.content,
-            a.is_approved
+            a.content
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
         WHERE r.id_ressource = @id_ressource
@@ -96,14 +122,14 @@ public sealed class MySqlArticleRepository : IArticleRepository
     public async Task<int> CreateAsync(CreateArticleCommand cmd, CancellationToken ct)
     {
         const string insertResourceSql = """
-        INSERT INTO resource (title, description, type, visibility, created_at, modified_at, deleted_at, id_user, id_category)
-        VALUES (@title, @description, 'article', @visibility, NOW(), NULL, NULL, @id_user, @id_category);
+        INSERT INTO resource (title, description, type, is_approved, visibility, created_at, modified_at, deleted_at, id_user, id_category)
+        VALUES (@title, @description, 'article', 0, @visibility, NOW(), NULL, NULL, @id_user, @id_category);
         SELECT LAST_INSERT_ID();
         """;
 
         const string insertArticleSql = """
-        INSERT INTO article (content, is_approved, id_ressource)
-        VALUES (@content, 0, @id_ressource)
+        INSERT INTO article (content, id_ressource)
+        VALUES (@content, @id_ressource)
         """;
 
         await using var conn = _connectionFactory();
@@ -173,12 +199,13 @@ public sealed class MySqlArticleRepository : IArticleRepository
     public async Task<Article?> SetApprovalAsync(SetArticleApprovalCommand cmd, CancellationToken ct)
     {
         const string updateArticleSql = """
-        UPDATE article a
-        INNER JOIN resource r ON r.id_ressource = a.id_ressource
-        SET a.is_approved = @is_approved
-        WHERE a.id_ressource = @id_ressource
-          AND r.type = 'article'
-          AND r.deleted_at IS NULL
+        UPDATE resource
+        SET
+            is_approved = @is_approved,
+            modified_at = NOW()
+        WHERE id_ressource = @id_ressource
+          AND type = 'article'
+          AND deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -241,6 +268,57 @@ public sealed class MySqlArticleRepository : IArticleRepository
         AddParameter(cmd, "@description", (object?)article.Description ?? DBNull.Value);
         AddParameter(cmd, "@visibility", article.Visibility is null ? DBNull.Value : ToDbVisibility(article.Visibility.Value));
         AddParameter(cmd, "@id_category", (object?)article.IdCategory ?? DBNull.Value);
+    }
+
+    private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, ArticleListingFilters filters)
+    {
+        if (filters.Keyword is not null)
+        {
+            sql.AppendLine("""
+              AND (
+                r.title LIKE @keyword
+                OR r.description LIKE @keyword
+                OR a.content LIKE @keyword
+              )
+            """);
+            AddParameter(cmd, "@keyword", $"%{filters.Keyword}%");
+        }
+
+        if (filters.Visibility is not null)
+        {
+            sql.AppendLine("  AND r.visibility = @visibility");
+            AddParameter(cmd, "@visibility", ToDbVisibility(filters.Visibility.Value));
+        }
+
+        if (filters.IdUser is not null)
+        {
+            sql.AppendLine("  AND r.id_user = @id_user");
+            AddParameter(cmd, "@id_user", filters.IdUser.Value);
+        }
+
+        if (filters.IdCategory is not null)
+        {
+            sql.AppendLine("  AND r.id_category = @id_category");
+            AddParameter(cmd, "@id_category", filters.IdCategory.Value);
+        }
+
+        if (filters.IsApproved is not null)
+        {
+            sql.AppendLine("  AND r.is_approved = @is_approved");
+            AddParameter(cmd, "@is_approved", filters.IsApproved.Value);
+        }
+
+        if (filters.CreatedFrom is not null)
+        {
+            sql.AppendLine("  AND r.created_at >= @created_from");
+            AddParameter(cmd, "@created_from", filters.CreatedFrom.Value);
+        }
+
+        if (filters.CreatedTo is not null)
+        {
+            sql.AppendLine("  AND r.created_at <= @created_to");
+            AddParameter(cmd, "@created_to", filters.CreatedTo.Value);
+        }
     }
 
     private static ResourceVisibility ParseVisibility(string? visibility)

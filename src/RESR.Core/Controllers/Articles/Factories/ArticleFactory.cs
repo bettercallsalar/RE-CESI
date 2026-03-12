@@ -24,14 +24,14 @@ public sealed class ArticleFactory : IArticleFactory
             IdArticle = idArticle,
             Title = title,
             Description = description,
+            IsApproved = isApproved,
             Visibility = visibility,
             CreatedAt = createdAt,
             ModifiedAt = modifiedAt,
             DeletedAt = deletedAt,
             IdUser = idUser,
             IdCategory = idCategory,
-            Content = content,
-            IsApproved = isApproved
+            Content = content
         };
     }
 }

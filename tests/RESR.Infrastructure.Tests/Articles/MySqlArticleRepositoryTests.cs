@@ -11,6 +11,59 @@ namespace RESR.Infrastructure.Tests.Articles;
 public sealed class MySqlArticleRepositoryTests
 {
     [Fact]
+    public async Task GetPaginatedAsync_AppliesFilters_AndReturnsRows()
+    {
+        var table = CreateArticleTable(Row(
+            idResource: 10,
+            idArticle: 7,
+            title: "Post",
+            description: "Desc",
+            visibility: "private",
+            createdAt: new DateTime(2026, 1, 1),
+            modifiedAt: null,
+            deletedAt: null,
+            idUser: 2,
+            idCategory: 3,
+            content: "Body",
+            isApproved: true
+        ));
+        var cmd = ReaderCommand(table);
+        var repo = CreateRepo(cmd);
+
+        var list = await repo.GetPaginatedAsync(
+            2,
+            5,
+            new ArticleListingFilters("post", ResourceVisibility.PRIVATE, 2, 3, true, new DateTime(2026, 1, 1), new DateTime(2026, 1, 31)),
+            CancellationToken.None);
+
+        Assert.Single(list);
+        var names = cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName).ToList();
+        Assert.Contains("@keyword", names);
+        Assert.Contains("@visibility", names);
+        Assert.Contains("@id_user", names);
+        Assert.Contains("@id_category", names);
+        Assert.Contains("@is_approved", names);
+        Assert.Contains("@created_from", names);
+        Assert.Contains("@created_to", names);
+        Assert.Contains("@limit", names);
+        Assert.Contains("@offset", names);
+    }
+
+    [Fact]
+    public async Task CountAsync_ReturnsCount()
+    {
+        var cmd = ScalarCommand(8);
+        var repo = CreateRepo(cmd);
+
+        var count = await repo.CountAsync(
+            new ArticleListingFilters("post", ResourceVisibility.PUBLIC, null, null, false, null, null),
+            CancellationToken.None);
+
+        Assert.Equal(8, count);
+        Assert.Contains("@keyword", cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName));
+    }
+
+    [Fact]
     public async Task GetByResourceIdAsync_ReturnsArticle_WhenFound()
     {
         var table = CreateArticleTable(Row(

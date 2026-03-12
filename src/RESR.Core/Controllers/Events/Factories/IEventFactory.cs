@@ -19,6 +19,7 @@ public interface IEventFactory
         DateTime startDate,
         DateTime? endDate,
         string? address,
-        int? idDepartment
+        int? idDepartment,
+        bool isApproved
     );
 }

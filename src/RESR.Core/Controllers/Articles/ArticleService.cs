@@ -10,7 +10,17 @@ public sealed class ArticleService : IArticleService
 
     public ArticleService(IArticleRepository repo) => _repo = repo;
 
-    public Task<IReadOnlyList<Article>> GetAllAsync(CancellationToken ct) => _repo.GetAllAsync(ct);
+    public async Task<(IReadOnlyList<Article> Articles, int TotalCount)> GetPaginatedAsync(
+        int page,
+        int pageSize,
+        ArticleListingFilters filters,
+        CancellationToken ct)
+    {
+        var normalizedFilters = NormalizeListingFilters(filters);
+        var articles = await _repo.GetPaginatedAsync(page, pageSize, normalizedFilters, ct);
+        var totalCount = await _repo.CountAsync(normalizedFilters, ct);
+        return (articles, totalCount);
+    }
 
     public Task<Article?> GetByResourceIdAsync(int idResource, CancellationToken ct) => _repo.GetByResourceIdAsync(idResource, ct);
 
@@ -79,5 +89,13 @@ public sealed class ArticleService : IArticleService
             return null;
 
         return value.Trim();
+    }
+
+    private static ArticleListingFilters NormalizeListingFilters(ArticleListingFilters filters)
+    {
+        return filters with
+        {
+            Keyword = NormalizeOptional(filters.Keyword)
+        };
     }
 }

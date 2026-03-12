@@ -11,14 +11,42 @@ namespace RESR.WebAPI.Routes.Events;
 public sealed class EventsController : ControllerBase
 {
     private readonly IEventService _service;
+    private const int MaxPageSize = 100;
 
     public EventsController(IEventService service) => _service = service;
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<EventResponse>>> GetAll(CancellationToken ct)
+    public async Task<ActionResult<PaginatedEventsResponse>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] int? idUser = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] int? idDepartment = null,
+        [FromQuery] DateTime? startFrom = null,
+        [FromQuery] DateTime? startTo = null,
+        CancellationToken ct = default)
     {
-        var events = await _service.GetAllAsync(ct);
-        return Ok(events.Select(ToResponse).ToList());
+        if (page <= 0 || pageSize <= 0 || idUser is <= 0 || idCategory is <= 0 || idDepartment is <= 0)
+            return BadRequest(new { message = "Page, PageSize, IdUser, IdCategory and IdDepartment must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new EventListingFilters(
+            Keyword: keyword,
+            Visibility: ResourceVisibility.PUBLIC,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IdDepartment: idDepartment,
+            IsApproved: true,
+            StartFrom: startFrom,
+            StartTo: startTo
+        );
+
+        var (events, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = events.Select(ToResponse).ToList();
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
     }
 
     [HttpGet("{idResource:int}")]
@@ -28,7 +56,7 @@ public sealed class EventsController : ControllerBase
         return @event is null ? NotFound() : Ok(ToResponse(@event));
     }
 
-    [AuthorizePermission(PermissionNames.CreateResource)]
+    [AuthorizePermission]
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateEventRequest req, CancellationToken ct)
     {
@@ -47,7 +75,8 @@ public sealed class EventsController : ControllerBase
                     req.StartDate,
                     req.EndDate,
                     req.Address,
-                    req.IdDepartment),
+                    req.IdDepartment
+                    ),
                 ct);
 
             return CreatedAtAction(nameof(GetByResourceId), new { idResource }, new { idResource });
@@ -105,6 +134,31 @@ public sealed class EventsController : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 
+    [AuthorizePermission(PermissionNames.ApproveArticle)]
+    [HttpPatch("{idResource:int}/approval")]
+    public async Task<ActionResult<EventResponse>> SetApproval(
+        [FromRoute] int idResource,
+        [FromBody] SetResourceApprovalRequest req,
+        CancellationToken ct)
+    {
+        try
+        {
+            var @event = await _service.SetApprovalAsync(
+                new SetEventApprovalCommand(idResource, req.IsApproved),
+                ct);
+
+            return Ok(ToResponse(@event));
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     private static EventResponse ToResponse(Event @event)
     {
         return new EventResponse(
@@ -122,7 +176,8 @@ public sealed class EventsController : ControllerBase
             @event.StartDate,
             @event.EndDate,
             @event.Address,
-            @event.IdDepartment
+            @event.IdDepartment,
+            @event.IsApproved
         );
     }
 }

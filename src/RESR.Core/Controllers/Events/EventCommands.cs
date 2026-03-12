@@ -27,3 +27,8 @@ public sealed record UpdateEventCommand(
     string? Address = null,
     int? IdDepartment = null
 );
+
+public sealed record SetEventApprovalCommand(
+    int IdResource,
+    bool IsApproved
+);

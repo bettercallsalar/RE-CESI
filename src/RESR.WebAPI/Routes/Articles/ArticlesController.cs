@@ -14,11 +14,73 @@ public sealed class ArticlesController : ControllerBase
 
     public ArticlesController(IArticleService service) => _service = service;
 
+    private const int MaxPageSize = 100;
+
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ArticleResponse>>> GetAll(CancellationToken ct)
+    public async Task<ActionResult<PaginatedArticlesResponse>> GetAll(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] int? idUser = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] DateTime? createdFrom = null,
+        [FromQuery] DateTime? createdTo = null,
+        CancellationToken ct = default)
     {
-        var articles = await _service.GetAllAsync(ct);
-        return Ok(articles.Select(ToResponse).ToList());
+        if (page <= 0 || pageSize <= 0 || idUser is <= 0 || idCategory is <= 0)
+            return BadRequest(new { message = "Page, PageSize, IdUser and IdCategory must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new ArticleListingFilters(
+            Keyword: keyword,
+            Visibility: ResourceVisibility.PUBLIC,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IsApproved: true,
+            CreatedFrom: createdFrom,
+            CreatedTo: createdTo
+        );
+
+        var (articles, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = articles.Select(ToResponse).ToList();
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedArticlesResponse(items, page, pageSize, totalCount, totalPages));
+    }
+
+    [AuthorizePermissionOrSelf("idUser")]
+    [HttpGet("{idUser:int}/my-articles")]
+    public async Task<ActionResult<PaginatedArticlesResponse>> GetMyArticles(
+        [FromRoute] int idUser,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] ResourceVisibility? visibility = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] bool? isApproved = null,
+        [FromQuery] DateTime? createdFrom = null,
+        [FromQuery] DateTime? createdTo = null,
+        CancellationToken ct = default)
+    {
+        if (page <= 0 || pageSize <= 0 || idCategory is <= 0)
+            return BadRequest(new { message = "Page, PageSize and IdCategory must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new ArticleListingFilters(
+            Keyword: keyword,
+            Visibility: visibility,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IsApproved: isApproved,
+            CreatedFrom: createdFrom,
+            CreatedTo: createdTo
+        );
+
+        var (articles, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = articles.Select(ToResponse).ToList();
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedArticlesResponse(items, page, pageSize, totalCount, totalPages));
     }
 
     [HttpGet("{idResource:int}")]
@@ -101,7 +163,7 @@ public sealed class ArticlesController : ControllerBase
     [HttpPatch("{idResource:int}/approval")]
     public async Task<ActionResult<ArticleResponse>> SetApproval(
         [FromRoute] int idResource,
-        [FromBody] SetArticleApprovalRequest req,
+        [FromBody] SetResourceApprovalRequest req,
         CancellationToken ct)
     {
         try
