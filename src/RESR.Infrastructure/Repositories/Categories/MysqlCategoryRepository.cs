@@ -4,6 +4,7 @@ using MySql.Data.MySqlClient;
 using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Models.Categories;
+using RESR.Core.Controllers.Categories;
 
 namespace RESR.Infrastructure.Categories;
 
@@ -73,6 +74,71 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
         }
 
         return null;
+    }
+
+    public async Task<AddToUserResult> AddToUserAsync(int idCategory, CancellationToken ct)
+    {
+        const string sql = """
+            INSERT INTO `user_category` (id_user, id_category)
+            VALUES (@idUser, @idCategory)
+            """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+
+        var idUserParam = cmd.CreateParameter();
+        idUserParam.ParameterName = "@idUser";
+        idUserParam.Value = 1; // TODO: get from context
+        cmd.Parameters.Add(idUserParam);
+
+        var idCategoryParam = cmd.CreateParameter();
+        idCategoryParam.ParameterName = "@idCategory";
+        idCategoryParam.Value = idCategory;
+        cmd.Parameters.Add(idCategoryParam);
+
+        try
+        {
+            var rowsAffected = await cmd.ExecuteNonQueryAsync(ct);
+            return rowsAffected > 0 ? AddToUserResult.Added : AddToUserResult.NotFound;
+        }
+        catch (MySqlException ex) when (ex.Number == 1062) // Duplicate entry
+        {
+            return AddToUserResult.AlreadyExists;
+        }
+        catch (MySqlException ex) when (ex.Number == 1452) // FK constraint
+        {
+            return AddToUserResult.NotFound;
+        }
+    }
+
+    public async Task<bool> RemoveFromUserAsync(int idCategory, CancellationToken ct)
+    {
+        const string sql = """
+            DELETE FROM `user_category`
+            WHERE id_user = @idUser AND id_category = @idCategory
+            """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+
+        var idUserParam = cmd.CreateParameter();
+        idUserParam.ParameterName = "@idUser";
+        idUserParam.Value = 1; // TODO: get from context
+        cmd.Parameters.Add(idUserParam);
+
+        var idCategoryParam = cmd.CreateParameter();
+        idCategoryParam.ParameterName = "@idCategory";
+        idCategoryParam.Value = idCategory;
+        cmd.Parameters.Add(idCategoryParam);
+
+        var rowsAffected = await cmd.ExecuteNonQueryAsync(ct);
+        return rowsAffected > 0;
     }
 
     private Category Map(DbDataReader reader) =>
