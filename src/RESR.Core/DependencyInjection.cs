@@ -6,6 +6,8 @@ using RESR.Core.Controllers.Categories;
 using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Permissions;
 using RESR.Core.Controllers.Permissions.Factories;
+using RESR.Core.Controllers.Reactions;
+using RESR.Core.Controllers.Reactions.Factories;
 using RESR.Core.Controllers.Roles;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Security.Token;
@@ -29,12 +31,14 @@ public static class DependencyInjection
 
         services.AddScoped<ICategoryFactory, CategoryFactory>();
         services.AddScoped<ICommentFactory, CommentFactory>();
+        services.AddScoped<IReactionFactory, ReactionFactory>();
         services.AddScoped<IUserFactory, UserFactory>();
         services.AddScoped<IRoleFactory, RoleFactory>();
         services.AddScoped<IPermissionFactory, PermissionFactory>();
         services.AddScoped<IDepartmentFactory, DepartmentFactory>();
 
         services.AddScoped<ICommentService, CommentService>();
+        services.AddScoped<IReactionService, ReactionService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IPermissionService, PermissionService>();

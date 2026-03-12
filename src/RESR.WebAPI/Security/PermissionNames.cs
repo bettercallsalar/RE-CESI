@@ -17,4 +17,5 @@ public static class PermissionNames
     public const string DeleteComment = "DeleteComment";
     public const string DeleteOtherUserContent = "DeleteOtherUserContent";
     public const string FollowUser = "FollowUser";
+    public const string ViewOtherUserReactions = "ViewOtherUserReactions";
 }

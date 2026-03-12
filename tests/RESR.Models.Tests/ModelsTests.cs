@@ -2,6 +2,7 @@ using RESR.Models.Departments;
 using RESR.Models.Follows;
 using RESR.Models.Comments;
 using RESR.Models.Permissions;
+using RESR.Models.Reactions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
 using RESR.Models.Categories;
@@ -150,6 +151,27 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Reaction_AllowsPropertyAssignment()
+    {
+        var reaction = new Reaction
+        {
+            IdReaction = 3,
+            Name = ReactionNames.Love,
+            IdResource = 9,
+            IdUser = 4,
+            Username = "user4",
+            FirstName = "User Four"
+        };
+
+        Assert.Equal(3, reaction.IdReaction);
+        Assert.Equal(ReactionNames.Love, reaction.Name);
+        Assert.Equal(9, reaction.IdResource);
+        Assert.Equal(4, reaction.IdUser);
+        Assert.Equal("user4", reaction.Username);
+        Assert.Equal("User Four", reaction.FirstName);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
@@ -210,6 +232,26 @@ public sealed class ModelsTests
         Assert.Equal(10, response.IdResource);
         Assert.Equal(2, response.IdUser);
         Assert.Equal(1, response.IdParentComment);
+    }
+
+    [Fact]
+    public void ReactionDtos_AssignValues()
+    {
+        var create = new CreateReactionRequest(ReactionNames.Like);
+        var update = new UpdateReactionRequest(ReactionNames.Dislike);
+        var user = new ReactionUserResponse(2, "user2", "User Two");
+        var response = new ReactionResponse(8, ReactionNames.Love, 11, 2, user);
+        var userReactions = new UserReactionsResponse(2, 1, new List<ReactionResponse> { response });
+
+        Assert.Equal(ReactionNames.Like, create.Name);
+        Assert.Equal(ReactionNames.Dislike, update.Name);
+        Assert.Equal(8, response.IdReaction);
+        Assert.Equal(11, response.IdResource);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal("user2", response.User.Username);
+        Assert.Equal(2, userReactions.IdUser);
+        Assert.Equal(1, userReactions.TotalCount);
+        Assert.Single(userReactions.Items);
     }
 
     [Fact]
