@@ -2,6 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RESR.Core.Controllers.Departments.Ports;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using RESR.Core.Controllers.Comments.Factories;
+using RESR.Core.Controllers.Comments.Ports;
 using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
@@ -15,13 +17,14 @@ using RESR.Core.Controllers.Articles.Factories;
 using RESR.Core.Controllers.Articles.Ports;
 using RESR.Core.Controllers.Events.Factories;
 using RESR.Core.Controllers.Events.Ports;
+using RESR.Core.Controllers.Follows.Ports;
 using RESR.Infrastructure.Departments;
+using RESR.Infrastructure.Comments;
 using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
 using RESR.Infrastructure.Articles;
-using RESR.Infrastructure.Events;
 
 namespace RESR.Infrastructure;
 
@@ -34,6 +37,7 @@ public static class DependencyInjection
 
         // Ensure category factory is available even if Core DI isn't wired as expected.
         services.TryAddScoped<ICategoryFactory, CategoryFactory>();
+        services.TryAddScoped<ICommentFactory, CommentFactory>();
 
         services.AddScoped<IUserRepository>(sp =>
             new MySqlUserRepository(
@@ -82,6 +86,19 @@ public static class DependencyInjection
             new MySqlEventRepository(
                 connectionString,
                 sp.GetRequiredService<IEventFactory>()
+            )
+        );
+
+        services.AddScoped<IFollowsRepository>(sp =>
+            new MySqlFollowsRepository(
+                connectionString
+            )
+        );
+
+        services.AddScoped<ICommentRepository>(sp =>
+            new MySqlCommentRepository(
+                connectionString,
+                sp.GetRequiredService<ICommentFactory>()
             )
         );
 
