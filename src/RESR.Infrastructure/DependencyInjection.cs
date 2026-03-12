@@ -11,11 +11,13 @@ using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Follows.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
+using RESR.Infrastructure.Follows;
 
 namespace RESR.Infrastructure;
 
@@ -62,6 +64,12 @@ public static class DependencyInjection
             new MySqlCategoryRepository(
                 connectionString,
                 _.GetRequiredService<ICategoryFactory>()
+            )
+        );
+
+        services.AddScoped<IFollowsRepository>(sp =>
+            new MySqlFollowsRepository(
+                connectionString
             )
         );
 

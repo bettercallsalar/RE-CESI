@@ -1,4 +1,5 @@
 using RESR.Models.Departments;
+using RESR.Models.Follows;
 using RESR.Models.Permissions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
@@ -98,6 +99,34 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Follow_AllowsPropertyAssignment()
+    {
+        var follow = new Follow
+        {
+            IdFollower = 3,
+            IdFollowing = 9
+        };
+
+        Assert.Equal(3, follow.IdFollower);
+        Assert.Equal(9, follow.IdFollowing);
+    }
+
+    [Fact]
+    public void FollowUser_AllowsPropertyAssignment()
+    {
+        var followUser = new FollowUser
+        {
+            IdUser = 5,
+            Username = "user",
+            FirstName = "User"
+        };
+
+        Assert.Equal(5, followUser.IdUser);
+        Assert.Equal("user", followUser.Username);
+        Assert.Equal("User", followUser.FirstName);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
@@ -117,6 +146,21 @@ public sealed class ModelsTests
         Assert.Single(paginated.Items);
         Assert.Equal("k", filters.Keyword);
         Assert.Equal("e", login.Email);
+    }
+
+    [Fact]
+    public void FollowDtos_AssignValues()
+    {
+        var request = new FollowRequest(1, 2);
+        var response = new FollowResponse(1, 2);
+        var user = new FollowUserResponse(3, "user", "User");
+        var paginated = new PaginatedFollowUsersResponse(new List<FollowUserResponse> { user }, 1, 10, 1, 1);
+
+        Assert.Equal(1, request.IdFollower);
+        Assert.Equal(2, response.IdFollowing);
+        Assert.Equal("user", user.Username);
+        Assert.Single(paginated.Items);
+        Assert.Equal(1, paginated.TotalCount);
     }
 
     [Fact]
