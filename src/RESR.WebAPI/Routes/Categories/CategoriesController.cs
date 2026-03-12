@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Categories;
+using RESR.Core.Security.Token;
 using RESR.Models.Categories;
 using RESR.WebAPI.Security;
 
@@ -9,11 +10,15 @@ namespace RESR.WebAPI.Routes.Categories;
 
 [ApiController]
 [Route("api/categories")]
-public sealed class CategoriesController : ControllerBase
+public sealed class CategoriesController : AuthenticatedResourceControllerBase
 {
     private readonly ICategoryService _service;
 
-    public CategoriesController(ICategoryService service) => _service = service;
+    public CategoriesController(ICategoryService service, ITokenService tokenService)
+        : base(tokenService)
+    {
+        _service = service;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<CategoryResponse>>> GetAll(CancellationToken ct)
@@ -31,15 +36,31 @@ public sealed class CategoriesController : ControllerBase
     }
 
     [AuthorizePermission]
+    [HttpGet("favoriteCategory")]
+    public async Task<ActionResult<IReadOnlyList<CategoryResponse>>> GetFavoriteCategories(CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
+        var categories = await _service.GetFavoriteCategoriesAsync(idUser, ct);
+        return Ok(categories.Select(ToResponse).ToList());
+    }
+
+    [AuthorizePermission]
     [HttpPost("{idCategory:int}/favoriteCategory")]
     public async Task<ActionResult> AddToUser([FromRoute] int idCategory, CancellationToken ct)
     {
-        var result = await _service.AddToUserAsync(idCategory, ct);
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
+        var result = await _service.AddToUserAsync(idUser, idCategory, ct);
         return result switch
         {
-            AddToUserResult.Added => NoContent(),
-            AddToUserResult.AlreadyExists => Conflict(),
-            AddToUserResult.NotFound => NotFound(),
+            AddToUserResult.Added => Ok(new { message = "Category added to user's favorites" }),
+            AddToUserResult.AlreadyExists => Conflict(new { message = "Category is already in user's favorites" }),
+            AddToUserResult.NotFound => NotFound(new { message = "Category not found" }),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
     }
@@ -48,8 +69,12 @@ public sealed class CategoriesController : ControllerBase
     [HttpDelete("{idCategory:int}/favoriteCategory")]
     public async Task<ActionResult> RemoveFromUser([FromRoute] int idCategory, CancellationToken ct)
     {
-        var success = await _service.RemoveFromUserAsync(idCategory, ct);
-        return success ? NoContent() : NotFound();
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
+        var success = await _service.RemoveFromUserAsync(idUser, idCategory, ct);
+        return success ? Ok(new { message = "Category removed from user's favorites" }) : NotFound(new { message = "Category not found in user's favorites" });
     }
 
     private static CategoryResponse ToResponse(Category category) =>
