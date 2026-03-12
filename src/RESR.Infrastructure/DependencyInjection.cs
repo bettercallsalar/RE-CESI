@@ -25,6 +25,8 @@ using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
 using RESR.Infrastructure.Articles;
+using RESR.Infrastructure.Events;
+using RESR.Infrastructure.Follows;
 
 namespace RESR.Infrastructure;
 
