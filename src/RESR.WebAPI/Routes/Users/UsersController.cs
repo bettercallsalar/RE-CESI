@@ -3,17 +3,21 @@ using RESR.Core.Errors;
 using RESR.Core.Controllers.Users;
 using RESR.Models.Users;
 using RESR.WebAPI.Security;
+using RESR.Core.Security.Token;
 
 namespace RESR.WebAPI.Routes.Users;
 
 [Route("api/[controller]")]
 [ApiController]
-public sealed class UsersController : ControllerBase
+public sealed class UsersController : AuthenticatedResourceControllerBase
 {
     private readonly IUserService _service;
 
-    public UsersController(IUserService service) => _service = service;
-
+    public UsersController(IUserService service, ITokenService tokenService)
+        : base(tokenService)
+    {
+        _service = service;
+    }
     [AuthorizePermission(PermissionNames.ManageUsers)]
     [HttpGet]
     public async Task<ActionResult<PaginatedUsersResponse>> GetUsersPaginated(
@@ -124,10 +128,12 @@ public sealed class UsersController : ControllerBase
         }
     }
 
-    [AuthorizePermissionOrSelf("idUser")]
-    [HttpPatch("{idUser:int}/profile")]
-    public async Task<ActionResult> UpdateOwnProfile([FromRoute] int idUser, [FromBody] UpdateOwnProfileRequest req, CancellationToken ct)
+    [HttpPatch("modify-profile")]
+    public async Task<ActionResult> UpdateOwnProfile([FromBody] UpdateOwnProfileRequest req, CancellationToken ct)
     {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
         if (req.Username is null && req.Email is null && req.FirstName is null && req.BirthDate is null && req.Bio is null && req.IdDepartment is null)
             return BadRequest(new { message = "At least one field must be provided for update" });
         try
