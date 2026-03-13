@@ -1,5 +1,3 @@
-using Microsoft.Maui.Storage;
-
 namespace RESR.MAUI.Services;
 
 public sealed class ApiSession : IApiSession
@@ -9,7 +7,7 @@ public sealed class ApiSession : IApiSession
 
     public ApiSession()
     {
-        _token = Preferences.Get(TokenKey, null);
+        _token = PreferencesShim.Get(TokenKey, null);
     }
 
     public string? Token
@@ -21,11 +19,11 @@ public sealed class ApiSession : IApiSession
 
             if (string.IsNullOrWhiteSpace(value))
             {
-                Preferences.Remove(TokenKey);
+                PreferencesShim.Remove(TokenKey);
             }
             else
             {
-                Preferences.Set(TokenKey, value);
+                PreferencesShim.Set(TokenKey, value);
             }
         }
     }
@@ -34,4 +32,29 @@ public sealed class ApiSession : IApiSession
     {
         Token = null;
     }
+}
+
+internal static class PreferencesShim
+{
+#if ANDROID || IOS || MACCATALYST || WINDOWS || TIZEN || MAUI
+    public static string? Get(string key, string? defaultValue)
+        => Microsoft.Maui.Storage.Preferences.Get(key, defaultValue);
+
+    public static void Set(string key, string value)
+        => Microsoft.Maui.Storage.Preferences.Set(key, value);
+
+    public static void Remove(string key)
+        => Microsoft.Maui.Storage.Preferences.Remove(key);
+#else
+    private static readonly Dictionary<string, string?> Store = new();
+
+    public static string? Get(string key, string? defaultValue)
+        => Store.TryGetValue(key, out var value) ? value : defaultValue;
+
+    public static void Set(string key, string value)
+        => Store[key] = value;
+
+    public static void Remove(string key)
+        => Store.Remove(key);
+#endif
 }
