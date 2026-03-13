@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Follows;
@@ -81,6 +84,17 @@ public sealed class FollowsControllerTests
     }
 
     [Fact]
+    public async Task GetAllFollowing_ReturnsBadRequest_WhenPageSizeInvalid()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.GetAllFollowing(1, page: 1, pageSize: 0, CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
     public async Task GetAllFollowing_ReturnsOk_WithPagination()
     {
         var controller = CreateController(out var service);
@@ -100,6 +114,20 @@ public sealed class FollowsControllerTests
         Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.TotalPages);
         Assert.Single(response.Items);
+    }
+
+    [Fact]
+    public async Task GetAllFollowing_ReturnsZeroTotalPages_WhenEmpty()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.GetAllFollowingAsync(2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<FollowUser>());
+
+        var result = await controller.GetAllFollowing(2, page: 1, pageSize: 10, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PaginatedFollowUsersResponse>(ok.Value);
+        Assert.Equal(0, response.TotalPages);
     }
 
     [Fact]
@@ -160,6 +188,54 @@ public sealed class FollowsControllerTests
         var result = await controller.Delete(1, 2, CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_ReturnsTrue_WhenClaimPresent()
+    {
+        var controller = CreateController(out _);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new System.Security.Claims.ClaimsPrincipal(
+                    new System.Security.Claims.ClaimsIdentity(
+                        new[] { new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, "42") },
+                        "test"))
+            }
+        };
+
+        var method = typeof(FollowsController).GetMethod(
+            "TryGetCurrentUserId",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { 0 };
+        var result = (bool)method!.Invoke(controller, args)!;
+
+        Assert.True(result);
+        Assert.Equal(42, (int)args[0]!);
+    }
+
+    [Fact]
+    public void TryGetCurrentUserId_ReturnsFalse_WhenClaimMissing()
+    {
+        var controller = CreateController(out _);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        var method = typeof(FollowsController).GetMethod(
+            "TryGetCurrentUserId",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        var args = new object?[] { 0 };
+        var result = (bool)method!.Invoke(controller, args)!;
+
+        Assert.False(result);
+        Assert.Equal(0, (int)args[0]!);
     }
 
     private static FollowsController CreateController(out Mock<IFollowsService> service)
