@@ -1,3 +1,4 @@
+using RESR.Core.Controllers.Resources;
 using RESR.Models.Resources;
 
 namespace RESR.Core.Controllers.Events;
@@ -12,7 +13,8 @@ public sealed record CreateEventCommand(
     DateTime StartDate,
     DateTime? EndDate,
     string? Address,
-    int? IdDepartment
+    int? IdDepartment,
+    IReadOnlyList<ResourceFileUpload>? Files = null
 );
 
 public sealed record UpdateEventCommand(
@@ -26,7 +28,9 @@ public sealed record UpdateEventCommand(
     DateTime? StartDate = null,
     DateTime? EndDate = null,
     string? Address = null,
-    int? IdDepartment = null
+    int? IdDepartment = null,
+    IReadOnlyList<ResourceFileUpload>? Files = null,
+    bool ReplaceFiles = false
 );
 
 public sealed record SetEventApprovalCommand(

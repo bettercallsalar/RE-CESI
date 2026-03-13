@@ -6,19 +6,36 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  Image,
   Input,
   Select,
   Skeleton,
+  SimpleGrid,
   Stack,
   Text,
   Textarea
 } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { useCreateArticleForm } from "@/features/articles/hooks/useCreateArticleForm";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import { RichTextEditor } from "@/shared/ui/forms/RichTextEditor";
 
 export function CreateArticleForm() {
   const { values, categories, isLoadingCategories, isSubmitting, message, updateField, submit } = useCreateArticleForm();
+  const [previewUrls, setPreviewUrls] = useState<Array<{ name: string; url: string }>>([]);
+
+  useEffect(() => {
+    const nextUrls = values.images.map((image) => ({
+      name: image.name,
+      url: URL.createObjectURL(image)
+    }));
+
+    setPreviewUrls(nextUrls);
+
+    return () => {
+      nextUrls.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [values.images]);
 
   return (
     <Card bg="white" border="1px solid" borderColor="canvas.200" rounded={{ base: "12px", md: "16px" }} shadow="md">
@@ -98,6 +115,35 @@ export function CreateArticleForm() {
               placeholder="Rédigez ici le contenu complet de votre article"
               value={values.content}
             />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
+              Images
+            </FormLabel>
+            <Input
+              accept="image/*"
+              multiple
+              onChange={(event) => updateField("images", Array.from(event.target.files ?? []))}
+              p={1.5}
+              type="file"
+            />
+            <Text color="ink.500" fontSize={{ base: "13px", md: "14px" }} mt={2}>
+              Jusqu'à 6 images, 5 Mo maximum par image.
+            </Text>
+
+            {previewUrls.length > 0 ? (
+              <SimpleGrid columns={{ base: 2, md: 3 }} mt={4} spacing={4}>
+                {previewUrls.map((preview) => (
+                  <Box bg="white" border="1px solid" borderColor="canvas.200" key={preview.name} overflow="hidden" rounded="12px">
+                    <Image alt={preview.name} h="120px" objectFit="cover" src={preview.url} w="100%" />
+                    <Text color="ink.500" fontSize="12px" px={3} py={2} wordBreak="break-word">
+                      {preview.name}
+                    </Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            ) : null}
           </FormControl>
 
           {message ? <MessageBanner message={message.message} title={message.title} tone={message.tone} /> : null}

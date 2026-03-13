@@ -1,12 +1,15 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using RESR.Core;
 using RESR.Core.Errors;
+using RESR.Core.Controllers.Resources.Ports;
 using RESR.Core.Security.Token;
 using RESR.Infrastructure;
 using RESR.WebAPI;
+using RESR.WebAPI.Files;
 
 var builder = WebApplication.CreateBuilder(args);
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -26,6 +29,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddInfrastructure(builder.Configuration)
                 .AddCoreServices(builder.Configuration);
+builder.Services.AddScoped<IResourceFileStorage, LocalResourceFileStorage>();
 
 var jwtSecret = builder.Configuration[$"{JwtSettings.SectionName}:SecretKey"]
     ?? throw new InvalidOperationException("Missing JwtSettings:SecretKey.");
@@ -109,6 +113,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("Frontend");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 

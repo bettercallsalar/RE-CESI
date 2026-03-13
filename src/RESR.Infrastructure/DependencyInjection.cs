@@ -32,6 +32,8 @@ using RESR.Infrastructure.Articles;
 using RESR.Infrastructure.Events;
 using RESR.Infrastructure.Follows;
 using RESR.Infrastructure.Marks;
+using RESR.Infrastructure.Resources;
+using RESR.Core.Controllers.Resources.Ports;
 
 namespace RESR.Infrastructure;
 
@@ -88,6 +90,10 @@ public static class DependencyInjection
                 connectionString,
                 sp.GetRequiredService<IArticleFactory>()
             )
+        );
+
+        services.AddScoped<IResourceFileRepository>(_ =>
+            new MySqlResourceFileRepository(connectionString)
         );
 
         services.AddScoped<IEventRepository>(sp =>

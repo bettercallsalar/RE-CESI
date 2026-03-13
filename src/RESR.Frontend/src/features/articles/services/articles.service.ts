@@ -55,6 +55,19 @@ export const articlesService = {
     return httpClient.get<Category[]>("/api/categories");
   },
   createArticle(token: string, payload: CreateArticlePayload) {
-    return httpClient.post<{ idResource: number }>("/api/articles", payload, { token });
+    const formData = new FormData();
+    formData.append("title", payload.title);
+    if (payload.description) {
+      formData.append("description", payload.description);
+    }
+    formData.append("visibility", payload.visibility);
+    formData.append("idCategory", String(payload.idCategory));
+    formData.append("content", payload.content);
+
+    for (const image of payload.images) {
+      formData.append("images", image);
+    }
+
+    return httpClient.post<{ idResource: number }>("/api/articles", formData, { token });
   }
 };

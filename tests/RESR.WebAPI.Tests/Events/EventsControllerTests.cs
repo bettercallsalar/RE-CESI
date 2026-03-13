@@ -106,16 +106,18 @@ public sealed class EventsControllerTests
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
         var result = await controller.Create(
-            new CreateEventRequest(
-                "Title",
-                null,
-                "private",
-                2,
-                null,
-                new DateTime(2026, 1, 1),
-                new DateTime(2026, 1, 2),
-                "Paris",
-                75),
+            new CreateEventFormRequest
+            {
+                Title = "Title",
+                Description = null,
+                Visibility = "private",
+                IdCategory = 2,
+                Subtitle = null,
+                StartDate = new DateTime(2026, 1, 1),
+                EndDate = new DateTime(2026, 1, 2),
+                Address = "Paris",
+                IdDepartment = 75
+            },
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result);
@@ -171,7 +173,7 @@ public sealed class EventsControllerTests
         };
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
-        var result = await controller.Update(6, new UpdateEventRequest(Title: "Updated"), CancellationToken.None);
+        var result = await controller.Update(6, new UpdateEventFormRequest { Title = "Updated" }, CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
         service.Verify(s => s.UpdateAsync(

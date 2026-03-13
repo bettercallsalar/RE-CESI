@@ -25,4 +25,5 @@ public abstract class Resource
     public DateTime? DeletedAt { get; set; }
     public int IdUser { get; set; }
     public int IdCategory { get; set; }
+    public IReadOnlyList<ResourceFile> Files { get; set; } = Array.Empty<ResourceFile>();
 }

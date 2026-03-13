@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Articles;
+using RESR.Core.Controllers.Resources;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Resources;
@@ -97,7 +98,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
 
     [AuthorizePermission(PermissionNames.CreateResource)]
     [HttpPost]
-    public async Task<ActionResult> Create([FromBody] CreateArticleRequest req, CancellationToken ct)
+    public async Task<ActionResult> Create([FromForm] CreateArticleFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
         var authResult = RequireAuthenticatedUser(out var idUser);
@@ -113,7 +114,8 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
                     visibility,
                     idUser,
                     req.IdCategory,
-                    req.Content),
+                    req.Content,
+                    await ToUploadsAsync(req.Images, ct)),
                 ct);
 
             return CreatedAtAction(nameof(GetByResourceId), new { idResource }, new { idResource });
@@ -128,7 +130,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     [HttpPatch("{idResource:int}")]
     public async Task<ActionResult<ArticleResponse>> Update(
         [FromRoute] int idResource,
-        [FromBody] UpdateArticleRequest req,
+        [FromForm] UpdateArticleFormRequest req,
         CancellationToken ct)
     {
         var authResult = RequireAuthenticatedUser(out var idUser);
@@ -149,7 +151,9 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
                     Description: req.Description,
                     Visibility: visibility,
                     IdCategory: req.IdCategory,
-                    Content: req.Content),
+                    Content: req.Content,
+                    Files: await ToUploadsAsync(req.Images, ct),
+                    ReplaceFiles: req.ReplaceImages),
                 ct);
 
             return Ok(ToResponse(article));
@@ -226,7 +230,34 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
             article.IdUser,
             article.IdCategory,
             article.Content,
-            article.IsApproved
+            article.IsApproved,
+            article.Files.Select(ToFileResponse).ToList()
         );
+    }
+
+    private static ResourceFileResponse ToFileResponse(ResourceFile file) =>
+        new(file.IdFile, file.FileName, file.OriginalName, file.MimeType, file.Size, file.Path, file.CreatedAt);
+
+    private static async Task<IReadOnlyList<ResourceFileUpload>> ToUploadsAsync(IReadOnlyList<IFormFile>? files, CancellationToken ct)
+    {
+        if (files is null || files.Count == 0)
+            return Array.Empty<ResourceFileUpload>();
+
+        var uploads = new List<ResourceFileUpload>(files.Count);
+
+        foreach (var file in files.Where(file => file.Length > 0))
+        {
+            await using var stream = file.OpenReadStream();
+            using var memory = new MemoryStream();
+            await stream.CopyToAsync(memory, ct);
+
+            uploads.Add(new ResourceFileUpload(
+                file.FileName,
+                file.ContentType,
+                Convert.ToInt32(file.Length),
+                memory.ToArray()));
+        }
+
+        return uploads;
     }
 }
