@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Security.Token;
-using RESR.Models.Resources;
 
 namespace RESR.WebAPI.Security;
 
