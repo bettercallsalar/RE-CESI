@@ -42,6 +42,36 @@ public sealed class ArticleServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_Throws_WhenContentMissing()
+    {
+        var repo = new Mock<IArticleRepository>();
+        var service = new ArticleService(repo.Object);
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            service.CreateAsync(new CreateArticleCommand("title", null, ResourceVisibility.PUBLIC, 1, 1, "   "), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenIdUserInvalid()
+    {
+        var repo = new Mock<IArticleRepository>();
+        var service = new ArticleService(repo.Object);
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            service.CreateAsync(new CreateArticleCommand("title", null, ResourceVisibility.PUBLIC, 0, 1, "content"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenIdCategoryInvalid()
+    {
+        var repo = new Mock<IArticleRepository>();
+        var service = new ArticleService(repo.Object);
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            service.CreateAsync(new CreateArticleCommand("title", null, ResourceVisibility.PUBLIC, 1, 0, "content"), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task CreateAsync_NormalizesAndDelegates()
     {
         var repo = new Mock<IArticleRepository>();
@@ -60,6 +90,24 @@ public sealed class ArticleServiceTests
         Assert.Equal("title", captured!.Title);
         Assert.Equal("desc", captured.Description);
         Assert.Equal("body", captured.Content);
+    }
+
+    [Fact]
+    public async Task CreateAsync_NormalizesBlankDescriptionToNull()
+    {
+        var repo = new Mock<IArticleRepository>();
+        CreateArticleCommand? captured = null;
+        repo.Setup(r => r.CreateAsync(It.IsAny<CreateArticleCommand>(), It.IsAny<CancellationToken>()))
+            .Callback<CreateArticleCommand, CancellationToken>((cmd, _) => captured = cmd)
+            .ReturnsAsync(12);
+        var service = new ArticleService(repo.Object);
+
+        await service.CreateAsync(
+            new CreateArticleCommand("title", "   ", ResourceVisibility.PUBLIC, 1, 2, "body"),
+            CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Null(captured!.Description);
     }
 
     [Fact]

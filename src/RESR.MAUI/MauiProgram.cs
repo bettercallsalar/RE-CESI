@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Devices;
 using RESR.MAUI.Services;
 using RESR.MAUI.Pages.Auth;
+using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Profile;
 
@@ -25,6 +26,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
 		builder.Services.AddTransient<ProfilePage>();
+		builder.Services.AddTransient<CreateArticlePage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
 
 		var baseAddress = DeviceInfo.Platform == DevicePlatform.Android
@@ -37,6 +39,16 @@ public static class MauiProgram
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
 		builder.Services.AddHttpClient<IDepartmentsApiClient, DepartmentsApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = baseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<ICategoriesApiClient, CategoriesApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = baseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<IArticlesApiClient, ArticlesApiClient>(httpClient =>
 		{
 			httpClient.BaseAddress = baseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);

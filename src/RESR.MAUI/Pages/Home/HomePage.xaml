@@ -22,6 +22,11 @@
                 Text="Mon profil"
                 Clicked="OnGoToProfileClicked"
                 IsVisible="False"/>
+
+        <Button x:Name="CreateArticleButton"
+                Text="Créer un article"
+                Clicked="OnGoToCreateArticleClicked"
+                IsVisible="False"/>
     </VerticalStackLayout>
 
 </ContentPage>

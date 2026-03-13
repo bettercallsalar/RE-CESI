@@ -1,3 +1,4 @@
+using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Services;
 using RESR.Models.Users;
 
@@ -34,7 +35,7 @@ public partial class LoginPage : ContentPage
         {
             await _usersApiClient.LoginAsync(new Login(EmailEntry.Text.Trim(), PasswordEntry.Text), _loginCts.Token);
             StatusLabel.Text = "Login reussi.";
-            await Shell.Current.GoToAsync("..");
+            await Shell.Current.GoToAsync($"//{nameof(HomePage)}");
         }
         catch (ApiException ex)
         {
