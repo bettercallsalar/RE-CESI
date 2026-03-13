@@ -23,7 +23,7 @@ function SocialBadge({ label }: { label: string }) {
 
 export function SiteFooter() {
   return (
-    <SimpleGrid borderTop="1px solid" borderColor="blackAlpha.100" columns={{ base: 1, md: 2 }} gap={{ base: 8, md: 12 }} mt={{ base: 16, md: 20 }} pt={{ base: 8, md: 10 }}>
+    <SimpleGrid borderTop="1px solid" borderColor="canvas.200" columns={{ base: 1, md: 2 }} gap={{ base: 8, md: 12 }} mt={{ base: 16, md: 20 }} pt={{ base: 8, md: 10 }}>
       <Stack align={{ base: "center", md: "start" }} spacing={4}>
         <Text color="brand.500" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
           Nous suivre sur les réseaux sociaux

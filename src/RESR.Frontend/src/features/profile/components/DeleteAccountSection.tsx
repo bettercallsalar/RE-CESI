@@ -35,9 +35,9 @@ export function DeleteAccountSection({ isDeleting, message, onDelete }: DeleteAc
   }
 
   return (
-    <Stack bg="white" border="1px solid" borderColor="red.100" rounded="16px" spacing={5} p={{ base: 6, md: 8 }}>
+    <Stack bg="white" border="1px solid" borderColor="canvas.200" rounded="16px" spacing={5} p={{ base: 6, md: 8 }}>
       <Box>
-        <Heading color="red.600" fontSize={{ base: "24px", md: "28px" }}>
+        <Heading color="ink.800" fontSize={{ base: "24px", md: "28px" }}>
           Supprimer mon compte
         </Heading>
         <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }} mt={3}>
@@ -49,7 +49,7 @@ export function DeleteAccountSection({ isDeleting, message, onDelete }: DeleteAc
         <MessageBanner message={message.message} title={message.title} tone={message.tone} />
       ) : null}
 
-      <Button alignSelf="start" colorScheme="red" onClick={onOpen} variant="outline">
+      <Button alignSelf="start" onClick={onOpen} variant="outline">
         Supprimer définitivement
       </Button>
 
@@ -76,13 +76,15 @@ export function DeleteAccountSection({ isDeleting, message, onDelete }: DeleteAc
                 Annuler
               </Button>
               <Button
-                colorScheme="red"
+                bg="ink.800"
+                color="white"
                 isDisabled={!isConfirmed}
                 isLoading={isDeleting}
                 loadingText="Suppression"
                 onClick={() => {
                   void handleDelete();
                 }}
+                _hover={{ bg: "ink.800", opacity: 0.92 }}
               >
                 Supprimer
               </Button>

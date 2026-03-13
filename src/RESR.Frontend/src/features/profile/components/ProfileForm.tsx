@@ -49,7 +49,7 @@ export function ProfileForm() {
       <Card
         bg="white"
         border="1px solid"
-        borderColor="blackAlpha.100"
+        borderColor="canvas.200"
         rounded="16px"
         shadow="md">
         <CardBody p={{ base: 7, md: 8 }}>
@@ -80,8 +80,8 @@ export function ProfileForm() {
                   </FormLabel>
                   <Input
                     bg="white"
-                    borderColor="blackAlpha.300"
-                    color="ink.900"
+                    borderColor="canvas.200"
+                    color="ink.800"
                     value={values.firstName}
                     onChange={(event) =>
                       updateField("firstName", event.target.value)
@@ -99,8 +99,8 @@ export function ProfileForm() {
                   </FormLabel>
                   <Input
                     bg="white"
-                    borderColor="blackAlpha.300"
-                    color="ink.900"
+                    borderColor="canvas.200"
+                    color="ink.800"
                     value={values.username}
                     onChange={(event) =>
                       updateField("username", event.target.value)
@@ -118,8 +118,8 @@ export function ProfileForm() {
                   </FormLabel>
                   <Input
                     bg="white"
-                    borderColor="blackAlpha.300"
-                    color="ink.900"
+                    borderColor="canvas.200"
+                    color="ink.800"
                     type="email"
                     value={values.email}
                     onChange={(event) =>
@@ -138,8 +138,8 @@ export function ProfileForm() {
                   </FormLabel>
                   <Input
                     bg="white"
-                    borderColor="blackAlpha.300"
-                    color="ink.900"
+                    borderColor="canvas.200"
+                    color="ink.800"
                     type="date"
                     value={values.birthDate}
                     onChange={(event) =>
@@ -161,8 +161,8 @@ export function ProfileForm() {
                   ) : (
                     <Select
                       bg="white"
-                      borderColor="blackAlpha.300"
-                      color="ink.900"
+                      borderColor="canvas.200"
+                      color="ink.800"
                       value={values.idDepartment}
                       onChange={(event) =>
                         updateField("idDepartment", Number(event.target.value))
@@ -188,8 +188,8 @@ export function ProfileForm() {
                   </FormLabel>
                   <Textarea
                     bg="white"
-                    borderColor="blackAlpha.300"
-                    color="ink.900"
+                    borderColor="canvas.200"
+                    color="ink.800"
                     minH="160px"
                     placeholder="Présentez-vous en quelques lignes"
                     value={values.bio}

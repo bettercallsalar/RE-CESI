@@ -8,13 +8,13 @@ interface ShowcasePanelProps {
 export function ShowcasePanel({ title, minHeight = { base: "220px", md: "280px", lg: "320px" } }: ShowcasePanelProps) {
   return (
     <Stack spacing={3}>
-      <Heading color="ink.900" fontSize={{ base: "18px", sm: "20px", md: "22px" }} fontWeight="700">
+      <Heading color="ink.800" fontSize={{ base: "18px", sm: "20px", md: "22px" }} fontWeight="700">
         {title}
       </Heading>
       <Box
-        bg="#d8d8d8"
+        bg="canvas.200"
         border="1px solid"
-        borderColor="blackAlpha.100"
+        borderColor="canvas.200"
         minH={minHeight}
         position="relative"
         rounded={{ base: "10px", md: "12px" }}

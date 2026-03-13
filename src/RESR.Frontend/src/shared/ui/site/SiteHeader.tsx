@@ -65,7 +65,7 @@ function HeaderLink({
   href: string;
 }) {
   return (
-    <Link _hover={{ textDecoration: "none", color: "brand.600" }} color="brand.500" href={href}>
+    <Link _hover={{ textDecoration: "none", color: "ink.800" }} color="brand.500" href={href}>
       <HStack minH="44px" px={1} spacing={2.5}>
         <Text fontSize={{ base: "15px", xl: "16px" }} fontWeight="600">
           {label}
@@ -138,7 +138,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
             align={{ base: "stretch", sm: "flex-end" }}
             bg="white"
             border="1px solid"
-            borderColor="blackAlpha.100"
+            borderColor="canvas.200"
             mt={3}
             pt={3}
             px={{ base: 3, sm: 4 }}

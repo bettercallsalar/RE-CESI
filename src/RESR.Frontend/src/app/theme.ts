@@ -7,43 +7,43 @@ export const theme = extendTheme({
   },
   colors: {
     brand: {
-      50: "#f4f4ff",
-      100: "#dcdafc",
-      200: "#bcb7f8",
-      300: "#9992f1",
-      400: "#726ce2",
-      500: "#3d33a8",
-      600: "#2f2784",
-      700: "#221d60",
-      800: "#14123d",
-      900: "#08071b"
+      50: "#342B9A",
+      100: "#342B9A",
+      200: "#342B9A",
+      300: "#342B9A",
+      400: "#342B9A",
+      500: "#342B9A",
+      600: "#342B9A",
+      700: "#342B9A",
+      800: "#342B9A",
+      900: "#342B9A"
     },
     ink: {
-      50: "#f6f6f8",
-      100: "#dfdfe4",
-      200: "#c2c4ca",
-      300: "#9d9fa8",
-      400: "#717480",
-      500: "#4b4f5d",
-      600: "#333745",
-      700: "#232733",
-      800: "#151821",
-      900: "#090b10"
+      50: "#2C2C2C",
+      100: "#2C2C2C",
+      200: "#2C2C2C",
+      300: "#2C2C2C",
+      400: "#2C2C2C",
+      500: "#2C2C2C",
+      600: "#2C2C2C",
+      700: "#2C2C2C",
+      800: "#2C2C2C",
+      900: "#2C2C2C"
     },
     canvas: {
-      50: "#f7f6f4",
-      100: "#ece9e4",
-      200: "#dddad3"
+      50: "#FFFFFF",
+      100: "#FFFFFF",
+      200: "#D7D7D7"
     }
   },
   styles: {
     global: {
       body: {
         bg: "canvas.50",
-        color: "ink.900"
+        color: "ink.800"
       },
       "*:focus-visible": {
-        outline: "3px solid #726ce2",
+        outline: "3px solid #342B9A",
         outlineOffset: "2px"
       }
     }
@@ -64,27 +64,37 @@ export const theme = extendTheme({
           bg: "brand.500",
           color: "white",
           _disabled: {
-            bg: "brand.200",
-            color: "white",
+            bg: "canvas.200",
+            color: "ink.800",
             opacity: 1
           },
           _hover: {
-            bg: "brand.600"
+            bg: "brand.500",
+            opacity: 0.92
           }
         },
         ghost: {
-          color: "brand.500"
+          color: "brand.500",
+          _hover: {
+            bg: "white"
+          }
         },
         outline: {
           borderColor: "brand.500",
-          color: "brand.500"
+          color: "brand.500",
+          bg: "white",
+          _hover: {
+            bg: "white"
+          }
         }
       }
     },
     Card: {
       baseStyle: {
         container: {
-          borderRadius: "8px"
+          borderRadius: "8px",
+          bg: "white",
+          borderColor: "canvas.200"
         }
       }
     },
@@ -92,16 +102,21 @@ export const theme = extendTheme({
       baseStyle: {
         field: {
           bg: "white",
-          borderColor: "blackAlpha.300",
+          borderColor: "canvas.200",
           borderRadius: "4px",
-          color: "ink.900",
+          color: "ink.800",
           minH: "48px",
           fontSize: "16px",
           _placeholder: {
-            color: "ink.400"
+            color: "ink.800",
+            opacity: 0.7
           },
           _hover: {
-            borderColor: "ink.400"
+            borderColor: "ink.800"
+          },
+          _focusVisible: {
+            borderColor: "brand.500",
+            boxShadow: "0 0 0 1px #342B9A"
           }
         }
       }
@@ -110,17 +125,21 @@ export const theme = extendTheme({
       baseStyle: {
         field: {
           bg: "white",
-          borderColor: "blackAlpha.300",
+          borderColor: "canvas.200",
           borderRadius: "4px",
-          color: "ink.900",
+          color: "ink.800",
           minH: "48px",
           fontSize: "16px",
           _hover: {
-            borderColor: "ink.400"
+            borderColor: "ink.800"
+          },
+          _focusVisible: {
+            borderColor: "brand.500",
+            boxShadow: "0 0 0 1px #342B9A"
           }
         },
         icon: {
-          color: "ink.700"
+          color: "ink.800"
         }
       }
     },
@@ -128,14 +147,19 @@ export const theme = extendTheme({
       baseStyle: {
         borderRadius: "4px",
         bg: "white",
-        borderColor: "blackAlpha.300",
-        color: "ink.900",
+        borderColor: "canvas.200",
+        color: "ink.800",
         fontSize: "16px",
         _placeholder: {
-          color: "ink.400"
+          color: "ink.800",
+          opacity: 0.7
         },
         _hover: {
-          borderColor: "ink.400"
+          borderColor: "ink.800"
+        },
+        _focusVisible: {
+          borderColor: "brand.500",
+          boxShadow: "0 0 0 1px #342B9A"
         }
       }
     }

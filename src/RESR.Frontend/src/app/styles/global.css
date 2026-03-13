@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  background: #f7f6f4;
+  background: #ffffff;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
 }
 
@@ -17,7 +17,7 @@ body,
 
 body {
   min-height: 100vh;
-  background: #f7f6f4;
+  background: #ffffff;
 }
 
 a {

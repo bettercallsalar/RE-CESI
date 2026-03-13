@@ -21,7 +21,7 @@ export function LoginForm() {
     <Card
       bg="white"
       border="1px solid"
-      borderColor="blackAlpha.100"
+      borderColor="canvas.200"
       rounded={{ base: "12px", md: "16px" }}
       shadow="md">
       <CardBody p={{ base: 7, md: 8 }} color="ink.700">
@@ -35,7 +35,7 @@ export function LoginForm() {
             </Text>
           </Box>
 
-          <Divider borderColor="blackAlpha.200" />
+          <Divider borderColor="canvas.200" />
 
           <Stack
             as="form"
@@ -51,7 +51,7 @@ export function LoginForm() {
               <Input
                 autoComplete="email"
                 bg="white"
-                borderColor="blackAlpha.300"
+                borderColor="canvas.200"
                 fontSize={{ base: "16px", md: "17px" }}
                 type="email"
                 value={values.email}
@@ -67,7 +67,7 @@ export function LoginForm() {
               <Input
                 autoComplete="current-password"
                 bg="white"
-                borderColor="blackAlpha.300"
+                borderColor="canvas.200"
                 fontSize={{ base: "16px", md: "17px" }}
                 type="password"
                 value={values.password}
