@@ -89,7 +89,7 @@ public sealed class CommentService : ICommentService
         return await _repo.UpdateContentAsync(cmd.IdComment, NormalizeContent(cmd.Content), ct);
     }
 
-    public async Task DeleteAsync(int idComment, int actorUserId, IReadOnlySet<string> actorPermissions, CancellationToken ct)
+    public async Task DeleteAsync(int idComment, int actorUserId, bool canDeleteOtherUsersComments, CancellationToken ct)
     {
         if (idComment <= 0)
             throw new ValidationException("IdComment must be greater than 0");
@@ -105,7 +105,7 @@ public sealed class CommentService : ICommentService
 
         var canDelete =
             comment.IdUser == actorUserId ||
-            actorPermissions.Contains("DeleteComment");
+            canDeleteOtherUsersComments;
 
         if (!canDelete)
             throw new UnauthorizedAccessException("You are not allowed to delete this comment");

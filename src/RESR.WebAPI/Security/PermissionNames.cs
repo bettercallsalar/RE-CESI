@@ -8,6 +8,7 @@ public static class PermissionNames
     public const string ManageUsers = "ManageUsers";
     public const string ModerateContent = "ModerateContent";
     public const string ApproveArticle = "ApproveArticle";
+    public const string ApproveEvent = "ApproveEvent";
     public const string ManageCategories = "ManageCategories";
     public const string ManageDepartments = "ManageDepartments";
     public const string ViewAnalytics = "ViewAnalytics";

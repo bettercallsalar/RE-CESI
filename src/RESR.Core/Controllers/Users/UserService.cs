@@ -4,7 +4,9 @@ using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
+using RESR.Core.Controllers.Departments.Ports;
 using RESR.Models.Users;
+using RESR.Models.Departments;
 using RESR.Models.Permissions;
 namespace RESR.Core.Controllers.Users;
 
@@ -12,6 +14,7 @@ public sealed class UserService : IUserService
 {
     private readonly IUserRepository _repo;
     private readonly IRoleRepository _roleRepository;
+    private readonly IDepartmentRepository _departmentRepository;
     private readonly IUserFactory _userFactory;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokenService;
@@ -19,6 +22,7 @@ public sealed class UserService : IUserService
     public UserService(
         IUserRepository repo,
         IRoleRepository roleRepository,
+        IDepartmentRepository departmentRepository,
         IUserFactory userFactory,
         IPasswordHasher passwordHasher,
         ITokenService tokenService
@@ -26,6 +30,7 @@ public sealed class UserService : IUserService
     {
         _repo = repo;
         _roleRepository = roleRepository;
+        _departmentRepository = departmentRepository;
         _userFactory = userFactory;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
@@ -35,6 +40,7 @@ public sealed class UserService : IUserService
     {
         UserListingFilters normalizedFilters = NormalizeListingFilters(filters);
         IReadOnlyList<User> users = await _repo.GetUsersPaginatedAsync(page, pageSize, normalizedFilters, ct);
+
         int totalCount = await _repo.CountUsersAsync(normalizedFilters, ct);
         return (users, totalCount);
     }
@@ -61,7 +67,9 @@ public sealed class UserService : IUserService
         if (await _roleRepository.GetByIdAsync(cmd.IdRole, ct) is null)
             throw new ValidationException($"Role {cmd.IdRole} does not exist");
 
-        // TODO: check if department exists
+        Department department = await _departmentRepository.GetByIdAsync(cmd.IdDepartment, ct)
+            ?? throw new ValidationException($"Department {cmd.IdDepartment} does not exist");
+
         var user = _userFactory.CreateForRegistration(
             username,
             email,
@@ -69,7 +77,7 @@ public sealed class UserService : IUserService
             firstName,
             cmd.BirthDate,
             NormalizeOptional(cmd.Bio),
-            cmd.IdDepartment,
+            department,
             cmd.IdRole
         );
 
@@ -103,6 +111,18 @@ public sealed class UserService : IUserService
 
         if (cmd.IdRole is int idRole && idRole != user.IdRole && await _roleRepository.GetByIdAsync(idRole, ct) is null)
             throw new ValidationException($"Role {idRole} does not exist");
+
+        if (cmd.IdDepartment is int idDepartment)
+        {
+            if (idDepartment <= 0)
+                throw new ValidationException("IdDepartment must be greater than 0");
+
+            if (idDepartment != user.Department.IdDepartment &&
+                await _departmentRepository.GetByIdAsync(idDepartment, ct) is null)
+            {
+                throw new ValidationException($"Department {idDepartment} does not exist");
+            }
+        }
 
         var normalizedCommand = cmd with
         {

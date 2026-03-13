@@ -1,5 +1,7 @@
 using System.Data;
+using System.Data.Common;
 using RESR.Core.Controllers.Categories.Factories;
+using RESR.Core.Controllers.Categories;
 using RESR.Infrastructure.Categories;
 using RESR.Infrastructure.Tests.DbFakes;
 
@@ -48,6 +50,45 @@ public sealed class MySqlCategoryRepositoryTests
         Assert.Null(category);
     }
 
+    [Fact]
+    public async Task GetFavoriteCategoriesAsync_ReturnsUserFavorites()
+    {
+        var table = CreateCategoryTable(Row(3, "Salon"));
+        var cmd = ReaderCommand(table);
+        var repo = CreateRepo(cmd);
+
+        var categories = await repo.GetFavoriteCategoriesAsync(7, CancellationToken.None);
+
+        Assert.Single(categories);
+        Assert.Contains("@idUser", cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName));
+    }
+
+    [Fact]
+    public async Task AddToUserAsync_UsesProvidedUserId()
+    {
+        var cmd = NonQueryCommand(1);
+        var repo = CreateRepo(cmd);
+
+        var result = await repo.AddToUserAsync(7, 2, CancellationToken.None);
+
+        Assert.Equal(AddToUserResult.Added, result);
+        Assert.Contains(cmd.Parameters.Cast<DbParameter>(), p => p.ParameterName == "@idUser" && Equals(p.Value, 7));
+        Assert.Contains(cmd.Parameters.Cast<DbParameter>(), p => p.ParameterName == "@idCategory" && Equals(p.Value, 2));
+    }
+
+    [Fact]
+    public async Task RemoveFromUserAsync_UsesProvidedUserId()
+    {
+        var cmd = NonQueryCommand(1);
+        var repo = CreateRepo(cmd);
+
+        var removed = await repo.RemoveFromUserAsync(7, 2, CancellationToken.None);
+
+        Assert.True(removed);
+        Assert.Contains(cmd.Parameters.Cast<DbParameter>(), p => p.ParameterName == "@idUser" && Equals(p.Value, 7));
+        Assert.Contains(cmd.Parameters.Cast<DbParameter>(), p => p.ParameterName == "@idCategory" && Equals(p.Value, 2));
+    }
+
     private static MySqlCategoryRepository CreateRepo(params FakeDbCommand[] commands)
     {
         return new MySqlCategoryRepository(() => new FakeDbConnection(commands), new CategoryFactory());
@@ -58,6 +99,14 @@ public sealed class MySqlCategoryRepositoryTests
         return new FakeDbCommand
         {
             ExecuteReaderHandler = _ => table.CreateDataReader()
+        };
+    }
+
+    private static FakeDbCommand NonQueryCommand(int rows)
+    {
+        return new FakeDbCommand
+        {
+            ExecuteNonQueryHandler = _ => rows
         };
     }
 

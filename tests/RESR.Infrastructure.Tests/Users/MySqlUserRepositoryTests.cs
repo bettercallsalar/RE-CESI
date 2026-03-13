@@ -4,6 +4,7 @@ using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Infrastructure.Tests.DbFakes;
 using RESR.Infrastructure.Users;
+using RESR.Models.Departments;
 using RESR.Models.Users;
 
 namespace RESR.Infrastructure.Tests.Users;
@@ -42,7 +43,8 @@ public sealed class MySqlUserRepositoryTests
         Assert.Equal("hash", user.HashedPassword);
         Assert.True(user.IsVerified);
         Assert.Null(user.DeletedAt);
-        Assert.Equal(1, user.IdDepartment);
+        Assert.Equal(1, user.Department.IdDepartment);
+        Assert.Equal("Department 1", user.Department.Name);
         Assert.Equal(2, user.IdRole);
     }
 
@@ -175,7 +177,7 @@ public sealed class MySqlUserRepositoryTests
             FirstName = "New",
             BirthDate = new DateOnly(2001, 1, 1),
             Bio = null,
-            IdDepartment = 1,
+            Department = new Department { IdDepartment = 1, Name = "IT", Code = 10 },
             IdRole = 2,
             IsVerified = false,
             DeletedAt = null
@@ -328,6 +330,8 @@ public sealed class MySqlUserRepositoryTests
         table.Columns.Add("deleted_at", typeof(DateTime));
         table.Columns.Add("id_department", typeof(int));
         table.Columns.Add("id_role", typeof(int));
+        table.Columns.Add("department_name", typeof(string));
+        table.Columns.Add("department_code", typeof(int));
 
         foreach (var row in rows)
             table.Rows.Add(row.Select(value => value ?? DBNull.Value).ToArray());
@@ -359,6 +363,8 @@ public sealed class MySqlUserRepositoryTests
         isVerified,
         deletedAt,
         idDepartment,
-        idRole
+        idRole,
+        idDepartment is null ? null : $"Department {idDepartment}",
+        idDepartment is null ? null : idDepartment * 10
     };
 }

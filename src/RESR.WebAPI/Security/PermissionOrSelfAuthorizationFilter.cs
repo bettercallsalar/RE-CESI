@@ -38,19 +38,8 @@ public sealed class PermissionOrSelfAuthorizationFilter : IAuthorizationFilter
             return;
         }
 
-        JwtSecurityToken parsedToken;
-        try
-        {
-            parsedToken = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
-        }
-        catch
-        {
-            context.Result = new UnauthorizedObjectResult("Invalid token or unauthorized access.");
-            return;
-        }
-
         var routeUserIdValue = context.RouteData.Values[_routeIdParamName]?.ToString();
-        var tokenSubject = parsedToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+        var tokenSubject = _tokenService.GetArgumentFromToken(jwtToken, JwtRegisteredClaimNames.Sub);
 
         var isSelf =
             int.TryParse(routeUserIdValue, out var routeUserId) &&
@@ -66,7 +55,7 @@ public sealed class PermissionOrSelfAuthorizationFilter : IAuthorizationFilter
             return;
         }
 
-        var userPermissions = parsedToken.Claims
+        var userPermissions = context.HttpContext.User.Claims
             .Where(c => string.Equals(c.Type, "permission", StringComparison.OrdinalIgnoreCase))
             .Select(c => c.Value)
             .Where(v => !string.IsNullOrWhiteSpace(v))

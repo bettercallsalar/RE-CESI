@@ -76,7 +76,32 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
         return null;
     }
 
-    public async Task<AddToUserResult> AddToUserAsync(int idCategory, CancellationToken ct)
+    public async Task<IReadOnlyList<Category>> GetFavoriteCategoriesAsync(int idUser, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT c.id_category, c.name
+            FROM `user_category` uc
+            INNER JOIN `category` c ON c.id_category = uc.id_category
+            WHERE uc.id_user = @idUser
+            ORDER BY c.id_category DESC
+            """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@idUser", idUser);
+
+        var categories = new List<Category>();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+            categories.Add(Map(reader));
+
+        return categories;
+    }
+
+    public async Task<AddToUserResult> AddToUserAsync(int idUser, int idCategory, CancellationToken ct)
     {
         const string sql = """
             INSERT INTO `user_category` (id_user, id_category)
@@ -88,16 +113,8 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
-
-        var idUserParam = cmd.CreateParameter();
-        idUserParam.ParameterName = "@idUser";
-        idUserParam.Value = 1; // TODO: get from context
-        cmd.Parameters.Add(idUserParam);
-
-        var idCategoryParam = cmd.CreateParameter();
-        idCategoryParam.ParameterName = "@idCategory";
-        idCategoryParam.Value = idCategory;
-        cmd.Parameters.Add(idCategoryParam);
+        AddParameter(cmd, "@idUser", idUser);
+        AddParameter(cmd, "@idCategory", idCategory);
 
         try
         {
@@ -114,7 +131,7 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
         }
     }
 
-    public async Task<bool> RemoveFromUserAsync(int idCategory, CancellationToken ct)
+    public async Task<bool> RemoveFromUserAsync(int idUser, int idCategory, CancellationToken ct)
     {
         const string sql = """
             DELETE FROM `user_category`
@@ -126,16 +143,8 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
-
-        var idUserParam = cmd.CreateParameter();
-        idUserParam.ParameterName = "@idUser";
-        idUserParam.Value = 1; // TODO: get from context
-        cmd.Parameters.Add(idUserParam);
-
-        var idCategoryParam = cmd.CreateParameter();
-        idCategoryParam.ParameterName = "@idCategory";
-        idCategoryParam.Value = idCategory;
-        cmd.Parameters.Add(idCategoryParam);
+        AddParameter(cmd, "@idUser", idUser);
+        AddParameter(cmd, "@idCategory", idCategory);
 
         var rowsAffected = await cmd.ExecuteNonQueryAsync(ct);
         return rowsAffected > 0;
@@ -147,5 +156,11 @@ public sealed class MySqlCategoryRepository : ICategoryRepository
             reader.GetString(reader.GetOrdinal("name"))
         );
 
-
+    private static void AddParameter(DbCommand cmd, string name, object? value)
+    {
+        var parameter = cmd.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        cmd.Parameters.Add(parameter);
+    }
 }
