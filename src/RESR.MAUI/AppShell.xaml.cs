@@ -8,7 +8,7 @@ public partial class AppShell : Shell
 
 		Items.Add(new ShellContent
 		{
-			Title = "Users",
+			Title = "Ressources",
 			Route = nameof(MainPage),
 			Content = mainPage
 		});

@@ -26,7 +26,9 @@
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiException.cs" Link="Services\ApiException.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiSession.cs" Link="Services\ApiSession.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IApiSession.cs" Link="Services\IApiSession.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\IResourcesApiClient.cs" Link="Services\IResourcesApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IUsersApiClient.cs" Link="Services\IUsersApiClient.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\ResourcesApiClient.cs" Link="Services\ResourcesApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\UsersApiClient.cs" Link="Services\UsersApiClient.cs" />
   </ItemGroup>
 

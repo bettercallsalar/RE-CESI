@@ -1,161 +1,37 @@
 using RESR.MAUI.Services;
-using RESR.Models.Users;
+using RESR.Models.Resources;
 
 namespace RESR.MAUI;
 
 public partial class MainPage : ContentPage
 {
-    private readonly IUsersApiClient _usersApiClient;
+    private readonly IResourcesApiClient _resourcesApiClient;
     private readonly IApiSession _session;
     private CancellationTokenSource? _loadCts;
+    private bool _hasLoadedOnce;
+    private IReadOnlyList<HomeResourceCard> _articleCards = Array.Empty<HomeResourceCard>();
+    private IReadOnlyList<HomeResourceCard> _eventCards = Array.Empty<HomeResourceCard>();
 
-    public MainPage(IUsersApiClient usersApiClient, IApiSession session)
+    public MainPage(IResourcesApiClient resourcesApiClient, IApiSession session)
     {
-        _usersApiClient = usersApiClient;
+        _resourcesApiClient = resourcesApiClient;
         _session = session;
         InitializeComponent();
+
+        HeaderAccountLabel.Text = _session.IsAuthenticated ? "MonCompte" : "Connexion";
+        ApplyArticleState();
+        ApplyEventState();
     }
 
-    private async void OnRegisterClicked(object? sender, EventArgs e)
+    protected override async void OnAppearing()
     {
-        if (_loadCts is not null)
-        {
-            StatusLabel.Text = "Une requete est deja en cours...";
+        base.OnAppearing();
+
+        if (_hasLoadedOnce)
             return;
-        }
 
-        if (!TryBuildRegisterRequest(out var request, out var errorMessage))
-        {
-            StatusLabel.Text = errorMessage;
-            return;
-        }
-
-        _loadCts = new CancellationTokenSource();
-        SetLoadingState(true);
-
-        try
-        {
-            await _usersApiClient.RegisterAsync(request, _loadCts.Token);
-            StatusLabel.Text = "Inscription reussie. Tu peux maintenant verifier le compte et te connecter.";
-            EmailEntry.Text = request.Email;
-            PasswordEntry.Text = request.Password;
-        }
-        catch (ApiException ex)
-        {
-            StatusLabel.Text = $"Erreur register ({(int)ex.StatusCode}): {ex.Message}";
-        }
-        catch (TimeoutException ex)
-        {
-            StatusLabel.Text = ex.Message;
-        }
-        catch (OperationCanceledException)
-        {
-            StatusLabel.Text = "Requete annulee.";
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
-        }
-        finally
-        {
-            _loadCts.Dispose();
-            _loadCts = null;
-            SetLoadingState(false);
-        }
-    }
-
-    private async void OnLoginClicked(object? sender, EventArgs e)
-    {
-        if (_loadCts is not null)
-        {
-            StatusLabel.Text = "Une requete est deja en cours...";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(EmailEntry.Text) || string.IsNullOrWhiteSpace(PasswordEntry.Text))
-        {
-            StatusLabel.Text = "Email et mot de passe requis.";
-            return;
-        }
-
-        _loadCts = new CancellationTokenSource();
-        SetLoadingState(true);
-
-        try
-        {
-            await _usersApiClient.LoginAsync(new Login(EmailEntry.Text.Trim(), PasswordEntry.Text), _loadCts.Token);
-            TokenEditor.Text = _session.Token;
-            StatusLabel.Text = "Login reussi. Le token JWT est affiche et sera envoye au GET /api/users.";
-        }
-        catch (ApiException ex)
-        {
-            StatusLabel.Text = $"Erreur login ({(int)ex.StatusCode}): {ex.Message}";
-        }
-        catch (TimeoutException ex)
-        {
-            StatusLabel.Text = ex.Message;
-        }
-        catch (OperationCanceledException)
-        {
-            StatusLabel.Text = "Requete annulee.";
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
-        }
-        finally
-        {
-            _loadCts.Dispose();
-            _loadCts = null;
-            SetLoadingState(false);
-        }
-    }
-
-    private async void OnLoadClicked(object? sender, EventArgs e)
-    {
-        if (_loadCts is not null)
-        {
-            StatusLabel.Text = "Chargement deja en cours...";
-            return;
-        }
-
-        if (!_session.IsAuthenticated)
-        {
-            StatusLabel.Text = "Fais d'abord un login pour obtenir un token.";
-            return;
-        }
-
-        _loadCts = new CancellationTokenSource();
-        SetLoadingState(true);
-
-        try
-        {
-            var page = await _usersApiClient.GetUsersAsync(_loadCts.Token);
-            UsersCollection.ItemsSource = page.Items;
-            StatusLabel.Text = $"{page.Items.Count} user(s) charges. Page {page.Page}/{page.TotalPages}. Requete envoyee avec le bearer JWT courant.";
-        }
-        catch (ApiException ex)
-        {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}): {ex.Message}";
-        }
-        catch (TimeoutException ex)
-        {
-            StatusLabel.Text = ex.Message;
-        }
-        catch (OperationCanceledException)
-        {
-            StatusLabel.Text = "Requete annulee.";
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
-        }
-        finally
-        {
-            _loadCts.Dispose();
-            _loadCts = null;
-            SetLoadingState(false);
-        }
+        _hasLoadedOnce = true;
+        await LoadResourcesAsync(triggeredByRefresh: false);
     }
 
     protected override void OnDisappearing()
@@ -164,57 +40,234 @@ public partial class MainPage : ContentPage
         base.OnDisappearing();
     }
 
-    private void SetLoadingState(bool isLoading)
+    private async void OnRefreshButtonClicked(object? sender, EventArgs e)
     {
-        RegisterButton.IsEnabled = !isLoading;
-        LoginButton.IsEnabled = !isLoading;
-        LoadButton.IsEnabled = !isLoading;
-        LoadingIndicator.IsRunning = isLoading;
-        LoadingIndicator.IsVisible = isLoading;
+        await LoadResourcesAsync(triggeredByRefresh: false);
     }
 
-    private bool TryBuildRegisterRequest(out RegisterUserRequest request, out string errorMessage)
+    private async void OnRefreshRequested(object? sender, EventArgs e)
     {
-        request = default!;
-        errorMessage = string.Empty;
+        await LoadResourcesAsync(triggeredByRefresh: true);
+    }
 
-        if (string.IsNullOrWhiteSpace(RegisterUsernameEntry.Text) ||
-            string.IsNullOrWhiteSpace(RegisterFirstNameEntry.Text) ||
-            string.IsNullOrWhiteSpace(RegisterEmailEntry.Text) ||
-            string.IsNullOrWhiteSpace(RegisterPasswordEntry.Text))
+    private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
+    {
+        var card = ResolveCard(sender, _articleCards, ArticleCarousel.Position);
+        if (card is null)
+            return;
+
+        await DisplayAlertAsync(card.Title, card.Details, "Fermer");
+    }
+
+    private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
+    {
+        var card = ResolveCard(sender, _eventCards, EventCarousel.Position);
+        if (card is null)
+            return;
+
+        await DisplayAlertAsync(card.Title, card.Details, "Fermer");
+    }
+
+    private void OnMenuClicked(object? sender, EventArgs e)
+    {
+        StatusLabel.Text = "La navigation detaillee sera branchee dans une prochaine iteration.";
+    }
+
+    private async Task LoadResourcesAsync(bool triggeredByRefresh)
+    {
+        if (_loadCts is not null)
+            return;
+
+        _loadCts = new CancellationTokenSource();
+        SetLoadingState(true, triggeredByRefresh);
+
+        try
         {
-            errorMessage = "Username, prenom, email et mot de passe sont requis.";
-            return false;
+            var articleTask = _resourcesApiClient.GetArticlesAsync(1, 5, _loadCts.Token);
+            var eventTask = _resourcesApiClient.GetEventsAsync(1, 5, _loadCts.Token);
+
+            await Task.WhenAll(articleTask, eventTask);
+
+            var articles = await articleTask;
+            var events = await eventTask;
+
+            _articleCards = articles.Items.Select(ToArticleCard).ToList();
+            _eventCards = events.Items.Select(ToEventCard).ToList();
+
+            ApplyArticleState();
+            ApplyEventState();
+
+            StatusLabel.Text = BuildStatusMessage(articles.TotalCount, events.TotalCount);
+            HeaderAccountLabel.Text = _session.IsAuthenticated ? "MonCompte" : "Connexion";
+        }
+        catch (ApiException ex)
+        {
+            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            StatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            StatusLabel.Text = "Chargement annule.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Erreur inattendue : {ex.Message}";
+        }
+        finally
+        {
+            _loadCts.Dispose();
+            _loadCts = null;
+            SetLoadingState(false, triggeredByRefresh);
+        }
+    }
+
+    private void ApplyArticleState()
+    {
+        ArticleCarousel.ItemsSource = _articleCards;
+        ArticleCarousel.IsVisible = _articleCards.Count > 0;
+        ArticleEmptyState.IsVisible = _articleCards.Count == 0;
+        ArticleIndicator.IsVisible = _articleCards.Count > 1;
+    }
+
+    private void ApplyEventState()
+    {
+        EventCarousel.ItemsSource = _eventCards;
+        EventCarousel.IsVisible = _eventCards.Count > 0;
+        EventEmptyState.IsVisible = _eventCards.Count == 0;
+        EventIndicator.IsVisible = _eventCards.Count > 1;
+    }
+
+    private void SetLoadingState(bool isLoading, bool triggeredByRefresh)
+    {
+        LoadingIndicator.IsVisible = isLoading;
+        LoadingIndicator.IsRunning = isLoading;
+        ReloadButton.IsEnabled = !isLoading;
+
+        if (triggeredByRefresh || !isLoading)
+            RefreshContainer.IsRefreshing = isLoading && triggeredByRefresh;
+    }
+
+    private static HomeResourceCard? ResolveCard(object? sender, IReadOnlyList<HomeResourceCard> cards, int position)
+    {
+        if (sender is BindableObject { BindingContext: HomeResourceCard card })
+            return card;
+
+        if (position >= 0 && position < cards.Count)
+            return cards[position];
+
+        return cards.FirstOrDefault();
+    }
+
+    private static HomeResourceCard ToArticleCard(ArticleResponse article)
+    {
+        var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        return new HomeResourceCard(
+            Badge: "Article public",
+            HeroCaption: "ARTICLE",
+            Title: article.Title,
+            Subtitle: $"Publie le {article.CreatedAt:dd/MM/yyyy}",
+            Summary: ToExcerpt(description, 180),
+            Meta: $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
+            Details: BuildArticleDetails(article, description));
+    }
+
+    private static HomeResourceCard ToEventCard(EventResponse @event)
+    {
+        var description = FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
+        var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
+
+        return new HomeResourceCard(
+            Badge: "Evenement public",
+            HeroCaption: "EVENT",
+            Title: @event.Title,
+            Subtitle: BuildEventSubtitle(@event, location),
+            Summary: ToExcerpt(description, 180),
+            Meta: $"Organise par #{@event.IdUser}  |  {location}",
+            Details: BuildEventDetails(@event, description, location));
+    }
+
+    private static string BuildStatusMessage(int totalArticles, int totalEvents)
+    {
+        if (totalArticles == 0 && totalEvents == 0)
+            return "Aucune ressource publique n'a ete trouvee pour le moment.";
+
+        return $"{totalArticles} article(s) et {totalEvents} evenement(s) publics charges.";
+    }
+
+    private static string BuildArticleDetails(ArticleResponse article, string description)
+    {
+        return $"Titre : {article.Title}\n" +
+               $"Publie le : {article.CreatedAt:dd/MM/yyyy HH:mm}\n" +
+               $"Auteur : #{article.IdUser}\n" +
+               $"Visibilite : {article.Visibility}\n\n" +
+               $"{description}";
+    }
+
+    private static string BuildEventDetails(EventResponse @event, string description, string location)
+    {
+        var dateLine = @event.EndDate.HasValue
+            ? $"Du {@event.StartDate:dd/MM/yyyy HH:mm} au {@event.EndDate:dd/MM/yyyy HH:mm}"
+            : $"Le {@event.StartDate:dd/MM/yyyy HH:mm}";
+
+        return $"Titre : {@event.Title}\n" +
+               $"{dateLine}\n" +
+               $"Lieu : {location}\n" +
+               $"Auteur : #{@event.IdUser}\n\n" +
+               $"{description}";
+    }
+
+    private static string BuildEventSubtitle(EventResponse @event, string location)
+    {
+        var dateLine = @event.EndDate.HasValue
+            ? $"Du {@event.StartDate:dd/MM/yyyy} au {@event.EndDate:dd/MM/yyyy}"
+            : $"Le {@event.StartDate:dd/MM/yyyy}";
+
+        return $"{dateLine}  |  {location}";
+    }
+
+    private static string FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value.Trim();
         }
 
-        if (!int.TryParse(RegisterDepartmentEntry.Text, out var idDepartment) || idDepartment <= 0)
-        {
-            errorMessage = "Id department doit etre un entier strictement positif.";
-            return false;
-        }
+        return string.Empty;
+    }
 
-        DateOnly? birthDate = null;
-        if (!string.IsNullOrWhiteSpace(RegisterBirthDateEntry.Text))
-        {
-            if (!DateOnly.TryParse(RegisterBirthDateEntry.Text, out var parsedBirthDate))
-            {
-                errorMessage = "Date de naissance invalide. Format attendu: yyyy-MM-dd.";
-                return false;
-            }
+    private static string ToExcerpt(string value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
 
-            birthDate = parsedBirthDate;
-        }
+        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
+        if (normalized.Length <= maxLength)
+            return normalized;
 
-        request = new RegisterUserRequest(
-            RegisterUsernameEntry.Text.Trim(),
-            RegisterEmailEntry.Text.Trim(),
-            RegisterPasswordEntry.Text,
-            RegisterFirstNameEntry.Text.Trim(),
-            birthDate,
-            string.IsNullOrWhiteSpace(RegisterBioEntry.Text) ? null : RegisterBioEntry.Text.Trim(),
-            idDepartment
-        );
+        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
+    }
 
-        return true;
+    private static string TrimMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return "Erreur inconnue.";
+
+        return ToExcerpt(message, 180);
+    }
+
+    private sealed record HomeResourceCard(
+        string Badge,
+        string HeroCaption,
+        string Title,
+        string Subtitle,
+        string Summary,
+        string Meta,
+        string Details)
+    {
+        public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }
 }
