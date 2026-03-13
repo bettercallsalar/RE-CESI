@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Controls.RichTextEditor">
+
+    <VerticalStackLayout Spacing="8">
+        <HorizontalStackLayout Spacing="8">
+            <Button Text="B"
+                    FontAttributes="Bold"
+                    Padding="10,6"
+                    Clicked="OnBoldClicked"/>
+            <Button Text="I"
+                    FontAttributes="Italic"
+                    Padding="10,6"
+                    Clicked="OnItalicClicked"/>
+            <Button Text="U"
+                    Padding="10,6"
+                    Clicked="OnUnderlineClicked"/>
+            <Button Text="•"
+                    Padding="10,6"
+                    Clicked="OnBulletedClicked"/>
+            <Button Text="1."
+                    Padding="10,6"
+                    Clicked="OnNumberedClicked"/>
+            <Button Text="Lien"
+                    Padding="10,6"
+                    Clicked="OnLinkClicked"/>
+        </HorizontalStackLayout>
+
+        <Border StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
+            <Grid>
+                <WebView x:Name="EditorWebView"
+                         HeightRequest="{Binding HeightRequest, Source={RelativeSource AncestorType={x:Type ContentView}}}"
+                         Navigated="OnWebViewNavigated"/>
+            </Grid>
+        </Border>
+    </VerticalStackLayout>
+
+</ContentView>

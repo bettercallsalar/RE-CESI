@@ -22,7 +22,7 @@
             <Entry x:Name="RegisterBirthDateEntry"
                    Placeholder="Date de naissance (JJ-MM-AAAA) - optionnel"/>
             <Picker x:Name="RegisterDepartmentPicker"
-                    Title="Département"
+                    Title="Choisir un département"
                     ItemsSource="{Binding Departments}"
                     ItemDisplayBinding="{Binding Name}"/>
             <Editor x:Name="RegisterBioEntry"

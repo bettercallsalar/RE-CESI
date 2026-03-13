@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Articles.CreateArticlePage"
+             Title="Nouvel article">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+            <Label Text="Créer un article"
+                   Style="{StaticResource Headline}"/>
+
+            <Label Text="Titre (max 50 caractères)"/>
+            <Entry x:Name="TitleEntry"
+                   Placeholder="Titre de l'article"
+                   MaxLength="50"
+                   TextChanged="OnTitleChanged"/>
+            <Label x:Name="TitleCounterLabel"
+                   Text="0/50"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"/>
+
+            <Label Text="Visibilité"/>
+            <Picker x:Name="VisibilityPicker"
+                    Title="Choisir une visibilité"/>
+
+            <Label Text="Catégorie"/>
+            <Picker x:Name="CategoryPicker"
+                    Title="Choisir une catégorie"
+                    ItemsSource="{Binding Categories}"
+                    ItemDisplayBinding="{Binding Name}"/>
+
+            <Label Text="Description (max 5000 caractères)"/>
+            <Editor x:Name="DescriptionEditor"
+                    Placeholder="Résumé de l'article"
+                    AutoSize="TextChanges"
+                    MaxLength="5000"
+                    HeightRequest="160"/>
+            <Label Text="Limite: 5000 caractères"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"/>
+
+            <Label Text="Contenu"/>
+            <Editor x:Name="ContentEditor"
+                    Placeholder="Écris ton article ici..."
+                    AutoSize="TextChanges"
+                    HeightRequest="260"/>
+            <Label Text="Contenu obligatoire"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"/>
+
+            <Button Text="Créer l'article"
+                    Clicked="OnCreateClicked"
+                    x:Name="CreateButton"/>
+
+            <Label x:Name="StatusLabel"
+                   Text="Renseigne les champs obligatoires."
+                   LineBreakMode="WordWrap"/>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
