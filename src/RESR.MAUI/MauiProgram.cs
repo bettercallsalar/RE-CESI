@@ -4,6 +4,7 @@ using Microsoft.Maui.Devices;
 using RESR.MAUI.Services;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Profile;
 
@@ -25,6 +26,7 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<AppShell>();
 		builder.Services.AddTransient<HomePage>();
+		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
 		builder.Services.AddTransient<ProfilePage>();
@@ -33,10 +35,6 @@ public static class MauiProgram
 		builder.Services.AddTransient<EventsPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
 		var apiBaseAddress = ResolveApiBaseAddress();
-
-		var baseAddress = DeviceInfo.Platform == DevicePlatform.Android
-			? new Uri("http://10.0.2.2:8080/")
-			: new Uri("http://localhost:8080/");
 
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
 		{

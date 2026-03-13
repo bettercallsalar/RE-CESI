@@ -1,7 +1,7 @@
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
 
-namespace RESR.MAUI;
+namespace RESR.MAUI.Pages.Events;
 
 public partial class EventsPage : ContentPage
 {

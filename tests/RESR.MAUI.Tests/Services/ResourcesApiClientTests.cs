@@ -11,7 +11,7 @@ public sealed class ResourcesApiClientTests
     [Fact]
     public async Task GetArticlesAsync_ReturnsPayload_FromPublicEndpoint()
     {
-        var session = new ApiSession();
+        var session = new StubApiSession();
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
@@ -47,7 +47,7 @@ public sealed class ResourcesApiClientTests
     [Fact]
     public async Task GetArticlesAsync_AddsKeywordQueryString_WhenProvided()
     {
-        var session = new ApiSession();
+        var session = new StubApiSession();
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
@@ -73,7 +73,7 @@ public sealed class ResourcesApiClientTests
     [Fact]
     public async Task GetEventsAsync_SendsBearerHeader_WhenSessionIsAuthenticated()
     {
-        var session = new ApiSession
+        var session = new StubApiSession
         {
             Token = "jwt-token-for-events"
         };
@@ -140,6 +140,18 @@ public sealed class ResourcesApiClientTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             return _handler(request);
+        }
+    }
+
+    private sealed class StubApiSession : IApiSession
+    {
+        public string? Token { get; set; }
+
+        public bool IsAuthenticated => !string.IsNullOrWhiteSpace(Token);
+
+        public void Clear()
+        {
+            Token = null;
         }
     }
 }

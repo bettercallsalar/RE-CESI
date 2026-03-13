@@ -1,5 +1,6 @@
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Profile;
 
@@ -7,7 +8,7 @@ namespace RESR.MAUI;
 
 public partial class AppShell : Shell
 {
-	public AppShell(HomePage homePage)
+	public AppShell(MainPage mainPage)
 	{
 		InitializeComponent();
 

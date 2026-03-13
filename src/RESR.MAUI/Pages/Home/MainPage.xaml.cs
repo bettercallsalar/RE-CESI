@@ -1,7 +1,9 @@
+using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
 
-namespace RESR.MAUI;
+namespace RESR.MAUI.Pages.Home;
 
 public partial class MainPage : ContentPage
 {

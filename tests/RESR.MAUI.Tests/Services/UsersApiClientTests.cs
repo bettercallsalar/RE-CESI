@@ -10,7 +10,7 @@ public sealed class UsersApiClientTests
     [Fact]
     public async Task LoginAsync_WithKnownCredentials_StoresTokenForSubsequentCalls()
     {
-        var session = new ApiSession();
+        var session = new StubApiSession();
         var handler = new StubHttpMessageHandler(async request =>
         {
             if (request.Method == HttpMethod.Post && request.RequestUri?.PathAndQuery == "/api/login")
@@ -70,6 +70,18 @@ public sealed class UsersApiClientTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             return _handler(request);
+        }
+    }
+
+    private sealed class StubApiSession : IApiSession
+    {
+        public string? Token { get; set; }
+
+        public bool IsAuthenticated => !string.IsNullOrWhiteSpace(Token);
+
+        public void Clear()
+        {
+            Token = null;
         }
     }
 }
