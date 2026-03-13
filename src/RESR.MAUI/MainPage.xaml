@@ -11,6 +11,7 @@
             <Setter Property="TextColor" Value="#2E2AA5" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextDecorations" Value="Underline" />
         </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="Label">
@@ -104,11 +105,11 @@
                                TextColor="#2E2AA5" />
 
                         <Button Grid.Column="2"
-                                Text="☰"
+                                Text="Menu"
                                 Clicked="OnMenuClicked"
-                                FontSize="24"
-                                WidthRequest="48"
-                                HeightRequest="48"
+                                FontSize="14"
+                                WidthRequest="64"
+                                HeightRequest="42"
                                 Padding="0"
                                 BackgroundColor="Transparent"
                                 TextColor="#2E2AA5" />
@@ -119,8 +120,18 @@
                                                HorizontalOptions="End"
                                                Spacing="18"
                                                IsVisible="{OnIdiom Phone=False, Default=True}">
-                            <Label Text="Ressources"
-                                   Style="{StaticResource HeaderLinkLabelStyle}" />
+                            <Label Text="Articles"
+                                   Style="{StaticResource HeaderLinkLabelStyle}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticlesHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label Text="Evenements"
+                                   Style="{StaticResource HeaderLinkLabelStyle}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEventsHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                             <Label x:Name="HeaderAccountLabel"
                                    Text="Connexion"
                                    Style="{StaticResource HeaderLinkLabelStyle}" />
@@ -166,6 +177,9 @@
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="16">
                         <VerticalStackLayout Spacing="2">
+                            <VerticalStackLayout.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnArticlesHeaderTapped" />
+                            </VerticalStackLayout.GestureRecognizers>
                             <Label Text="Article"
                                    Style="{StaticResource SectionTitleStyle}" />
                             <Label Text="Selection editoriale publique"
@@ -173,67 +187,75 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <Grid>
+                    <Grid IsClippedToBounds="True">
                         <CarouselView x:Name="ArticleCarousel"
                                       HeightRequest="{OnIdiom Phone='360', Tablet='395', Default='420'}"
                                       IndicatorView="ArticleIndicator"
-                                      IsBounceEnabled="True"
-                                      PeekAreaInsets="{OnIdiom Phone='0', Default='18'}">
+                                      IsBounceEnabled="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0">
                             <CarouselView.ItemTemplate>
                                 <DataTemplate>
-                                    <Border BackgroundColor="White"
-                                            Stroke="#E3DDD6"
-                                            StrokeShape="RoundRectangle 28">
-                                        <Grid RowDefinitions="190,*">
-                                            <Grid BackgroundColor="#D9D7EA"
-                                                  Padding="18">
-                                                <VerticalStackLayout Spacing="8">
-                                                    <Border BackgroundColor="#2E2AA5"
-                                                            HorizontalOptions="Start"
-                                                            Padding="10,4"
-                                                            StrokeThickness="0"
-                                                            StrokeShape="RoundRectangle 12">
-                                                        <Label Text="{Binding Badge}"
-                                                               FontSize="12"
+                                    <Grid Padding="{OnIdiom Phone='6,0', Tablet='26,0', Default='56,0'}">
+                                        <Border BackgroundColor="White"
+                                                Stroke="#E3DDD6"
+                                                StrokeShape="RoundRectangle 28"
+                                                WidthRequest="{OnIdiom Phone='308', Tablet='560', Default='820'}"
+                                                HorizontalOptions="Center">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnArticleCardTapped" />
+                                            </Border.GestureRecognizers>
+                                            <Grid RowDefinitions="190,*">
+                                                <Grid BackgroundColor="#D9D7EA"
+                                                      Padding="18">
+                                                    <VerticalStackLayout Spacing="8">
+                                                        <Border BackgroundColor="#2E2AA5"
+                                                                HorizontalOptions="Start"
+                                                                Padding="10,4"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 12">
+                                                            <Label Text="{Binding Badge}"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="White" />
+                                                        </Border>
+
+                                                        <Label Text="{Binding Meta}"
+                                                               HorizontalOptions="End"
+                                                               HorizontalTextAlignment="End"
+                                                               Style="{StaticResource CardMetaStyle}"
+                                                               TextColor="#2D2857" />
+                                                    </VerticalStackLayout>
+
+                                                    <VerticalStackLayout VerticalOptions="End"
+                                                                         Spacing="8">
+                                                        <Label Text="{Binding HeroCaption}"
+                                                               FontSize="{OnIdiom Phone='28', Default='34'}"
                                                                FontAttributes="Bold"
-                                                               TextColor="White" />
-                                                    </Border>
+                                                               TextColor="#5A56A8"
+                                                               Opacity="0.7" />
+                                                        <Label Text="{Binding Title}"
+                                                               Style="{StaticResource CardTitleStyle}"
+                                                               TextColor="#211D5E" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
 
-                                                    <Label Text="{Binding Meta}"
-                                                           HorizontalOptions="End"
-                                                           HorizontalTextAlignment="End"
+                                                <VerticalStackLayout Grid.Row="1"
+                                                                     Padding="22"
+                                                                     Spacing="10">
+                                                    <Label Text="{Binding Subtitle}"
                                                            Style="{StaticResource CardMetaStyle}"
-                                                           TextColor="#2D2857" />
-                                                </VerticalStackLayout>
-
-                                                <VerticalStackLayout VerticalOptions="End"
-                                                                     Spacing="8">
-                                                    <Label Text="{Binding HeroCaption}"
-                                                           FontSize="{OnIdiom Phone='28', Default='34'}"
-                                                           FontAttributes="Bold"
-                                                           TextColor="#5A56A8"
-                                                           Opacity="0.7" />
-                                                    <Label Text="{Binding Title}"
-                                                           Style="{StaticResource CardTitleStyle}"
-                                                           TextColor="#211D5E" />
+                                                           IsVisible="{Binding HasSubtitle}" />
+                                                    <Label Text="{Binding Summary}"
+                                                           Style="{StaticResource CardSummaryStyle}" />
+                                                    <Button Text="Voir +"
+                                                            Style="{StaticResource MiniActionButtonStyle}"
+                                                            HorizontalOptions="End"
+                                                            Clicked="OnArticleSeeMoreClicked" />
                                                 </VerticalStackLayout>
                                             </Grid>
-
-                                            <VerticalStackLayout Grid.Row="1"
-                                                                 Padding="22"
-                                                                 Spacing="10">
-                                                <Label Text="{Binding Subtitle}"
-                                                       Style="{StaticResource CardMetaStyle}"
-                                                       IsVisible="{Binding HasSubtitle}" />
-                                                <Label Text="{Binding Summary}"
-                                                       Style="{StaticResource CardSummaryStyle}" />
-                                                <Button Text="Voir +"
-                                                        Style="{StaticResource MiniActionButtonStyle}"
-                                                        HorizontalOptions="End"
-                                                        Clicked="OnArticleSeeMoreClicked" />
-                                            </VerticalStackLayout>
-                                        </Grid>
-                                    </Border>
+                                        </Border>
+                                    </Grid>
                                 </DataTemplate>
                             </CarouselView.ItemTemplate>
                         </CarouselView>
@@ -265,6 +287,9 @@
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="16">
                         <VerticalStackLayout Spacing="2">
+                            <VerticalStackLayout.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnEventsHeaderTapped" />
+                            </VerticalStackLayout.GestureRecognizers>
                             <Label Text="Evenement"
                                    Style="{StaticResource SectionTitleStyle}" />
                             <Label Text="Agenda et rendez-vous a venir"
@@ -272,66 +297,74 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <Grid>
+                    <Grid IsClippedToBounds="True">
                         <CarouselView x:Name="EventCarousel"
                                       HeightRequest="{OnIdiom Phone='390', Tablet='420', Default='440'}"
                                       IndicatorView="EventIndicator"
-                                      IsBounceEnabled="True"
-                                      PeekAreaInsets="{OnIdiom Phone='0', Default='18'}">
+                                      IsBounceEnabled="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0">
                             <CarouselView.ItemTemplate>
                                 <DataTemplate>
-                                    <Border BackgroundColor="White"
-                                            Stroke="#E3DDD6"
-                                            StrokeShape="RoundRectangle 28">
-                                        <Grid RowDefinitions="190,*">
-                                            <Grid BackgroundColor="#E5E0DA"
-                                                  Padding="18">
-                                                <VerticalStackLayout Spacing="8">
-                                                    <Border BackgroundColor="#3B3779"
-                                                            HorizontalOptions="Start"
-                                                            Padding="10,4"
-                                                            StrokeThickness="0"
-                                                            StrokeShape="RoundRectangle 12">
-                                                        <Label Text="{Binding Badge}"
-                                                               FontSize="12"
+                                    <Grid Padding="{OnIdiom Phone='6,0', Tablet='26,0', Default='56,0'}">
+                                        <Border BackgroundColor="White"
+                                                Stroke="#E3DDD6"
+                                                StrokeShape="RoundRectangle 28"
+                                                WidthRequest="{OnIdiom Phone='308', Tablet='560', Default='820'}"
+                                                HorizontalOptions="Center">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnEventCardTapped" />
+                                            </Border.GestureRecognizers>
+                                            <Grid RowDefinitions="190,*">
+                                                <Grid BackgroundColor="#E5E0DA"
+                                                      Padding="18">
+                                                    <VerticalStackLayout Spacing="8">
+                                                        <Border BackgroundColor="#3B3779"
+                                                                HorizontalOptions="Start"
+                                                                Padding="10,4"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 12">
+                                                            <Label Text="{Binding Badge}"
+                                                                   FontSize="12"
+                                                                   FontAttributes="Bold"
+                                                                   TextColor="White" />
+                                                        </Border>
+
+                                                        <Label Text="{Binding Meta}"
+                                                               HorizontalOptions="End"
+                                                               HorizontalTextAlignment="End"
+                                                               Style="{StaticResource CardMetaStyle}"
+                                                               TextColor="#4C496A" />
+                                                    </VerticalStackLayout>
+
+                                                    <VerticalStackLayout VerticalOptions="End"
+                                                                         Spacing="8">
+                                                        <Label Text="{Binding HeroCaption}"
+                                                               FontSize="{OnIdiom Phone='28', Default='34'}"
                                                                FontAttributes="Bold"
-                                                               TextColor="White" />
-                                                    </Border>
+                                                               TextColor="#7B776F"
+                                                               Opacity="0.8" />
+                                                        <Label Text="{Binding Title}"
+                                                               Style="{StaticResource CardTitleStyle}" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
 
-                                                    <Label Text="{Binding Meta}"
-                                                           HorizontalOptions="End"
-                                                           HorizontalTextAlignment="End"
+                                                <VerticalStackLayout Grid.Row="1"
+                                                                     Padding="22"
+                                                                     Spacing="10">
+                                                    <Label Text="{Binding Subtitle}"
                                                            Style="{StaticResource CardMetaStyle}"
-                                                           TextColor="#4C496A" />
-                                                </VerticalStackLayout>
-
-                                                <VerticalStackLayout VerticalOptions="End"
-                                                                     Spacing="8">
-                                                    <Label Text="{Binding HeroCaption}"
-                                                           FontSize="{OnIdiom Phone='28', Default='34'}"
-                                                           FontAttributes="Bold"
-                                                           TextColor="#7B776F"
-                                                           Opacity="0.8" />
-                                                    <Label Text="{Binding Title}"
-                                                           Style="{StaticResource CardTitleStyle}" />
+                                                           IsVisible="{Binding HasSubtitle}" />
+                                                    <Label Text="{Binding Summary}"
+                                                           Style="{StaticResource CardSummaryStyle}" />
+                                                    <Button Text="Voir +"
+                                                            Style="{StaticResource MiniActionButtonStyle}"
+                                                            HorizontalOptions="End"
+                                                            Clicked="OnEventSeeMoreClicked" />
                                                 </VerticalStackLayout>
                                             </Grid>
-
-                                            <VerticalStackLayout Grid.Row="1"
-                                                                 Padding="22"
-                                                                 Spacing="10">
-                                                <Label Text="{Binding Subtitle}"
-                                                       Style="{StaticResource CardMetaStyle}"
-                                                       IsVisible="{Binding HasSubtitle}" />
-                                                <Label Text="{Binding Summary}"
-                                                       Style="{StaticResource CardSummaryStyle}" />
-                                                <Button Text="Voir +"
-                                                        Style="{StaticResource MiniActionButtonStyle}"
-                                                        HorizontalOptions="End"
-                                                        Clicked="OnEventSeeMoreClicked" />
-                                            </VerticalStackLayout>
-                                        </Grid>
-                                    </Border>
+                                        </Border>
+                                    </Grid>
                                 </DataTemplate>
                             </CarouselView.ItemTemplate>
                         </CarouselView>

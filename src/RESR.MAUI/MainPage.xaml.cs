@@ -50,27 +50,39 @@ public partial class MainPage : ContentPage
         await LoadResourcesAsync(triggeredByRefresh: true);
     }
 
+    private async void OnArticlesHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(ArticlesPage));
+    }
+
+    private async void OnEventsHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(EventsPage));
+    }
+
+    private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(ArticlesPage));
+    }
+
+    private async void OnEventCardTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(EventsPage));
+    }
+
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        var card = ResolveCard(sender, _articleCards, ArticleCarousel.Position);
-        if (card is null)
-            return;
-
-        await DisplayAlertAsync(card.Title, card.Details, "Fermer");
+        await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
     {
-        var card = ResolveCard(sender, _eventCards, EventCarousel.Position);
-        if (card is null)
-            return;
-
-        await DisplayAlertAsync(card.Title, card.Details, "Fermer");
+        await NavigateToAsync(nameof(EventsPage));
     }
 
     private void OnMenuClicked(object? sender, EventArgs e)
     {
-        StatusLabel.Text = "La navigation detaillee sera branchee dans une prochaine iteration.";
+        StatusLabel.Text = "Utilise les liens Articles et Evenements pour ouvrir les listes de recherche.";
     }
 
     private async Task LoadResourcesAsync(bool triggeredByRefresh)
@@ -150,17 +162,6 @@ public partial class MainPage : ContentPage
             RefreshContainer.IsRefreshing = isLoading && triggeredByRefresh;
     }
 
-    private static HomeResourceCard? ResolveCard(object? sender, IReadOnlyList<HomeResourceCard> cards, int position)
-    {
-        if (sender is BindableObject { BindingContext: HomeResourceCard card })
-            return card;
-
-        if (position >= 0 && position < cards.Count)
-            return cards[position];
-
-        return cards.FirstOrDefault();
-    }
-
     private static HomeResourceCard ToArticleCard(ArticleResponse article)
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
@@ -170,8 +171,7 @@ public partial class MainPage : ContentPage
             Title: article.Title,
             Subtitle: $"Publie le {article.CreatedAt:dd/MM/yyyy}",
             Summary: ToExcerpt(description, 180),
-            Meta: $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
-            Details: BuildArticleDetails(article, description));
+            Meta: $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}");
     }
 
     private static HomeResourceCard ToEventCard(EventResponse @event)
@@ -185,8 +185,7 @@ public partial class MainPage : ContentPage
             Title: @event.Title,
             Subtitle: BuildEventSubtitle(@event, location),
             Summary: ToExcerpt(description, 180),
-            Meta: $"Organise par #{@event.IdUser}  |  {location}",
-            Details: BuildEventDetails(@event, description, location));
+            Meta: $"Organise par #{@event.IdUser}  |  {location}");
     }
 
     private static string BuildStatusMessage(int totalArticles, int totalEvents)
@@ -195,28 +194,6 @@ public partial class MainPage : ContentPage
             return "Aucune ressource publique n'a ete trouvee pour le moment.";
 
         return $"{totalArticles} article(s) et {totalEvents} evenement(s) publics charges.";
-    }
-
-    private static string BuildArticleDetails(ArticleResponse article, string description)
-    {
-        return $"Titre : {article.Title}\n" +
-               $"Publie le : {article.CreatedAt:dd/MM/yyyy HH:mm}\n" +
-               $"Auteur : #{article.IdUser}\n" +
-               $"Visibilite : {article.Visibility}\n\n" +
-               $"{description}";
-    }
-
-    private static string BuildEventDetails(EventResponse @event, string description, string location)
-    {
-        var dateLine = @event.EndDate.HasValue
-            ? $"Du {@event.StartDate:dd/MM/yyyy HH:mm} au {@event.EndDate:dd/MM/yyyy HH:mm}"
-            : $"Le {@event.StartDate:dd/MM/yyyy HH:mm}";
-
-        return $"Titre : {@event.Title}\n" +
-               $"{dateLine}\n" +
-               $"Lieu : {location}\n" +
-               $"Auteur : #{@event.IdUser}\n\n" +
-               $"{description}";
     }
 
     private static string BuildEventSubtitle(EventResponse @event, string location)
@@ -259,14 +236,21 @@ public partial class MainPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
+    private static async Task NavigateToAsync(string route)
+    {
+        if (Shell.Current is null)
+            return;
+
+        await Shell.Current.GoToAsync(route);
+    }
+
     private sealed record HomeResourceCard(
         string Badge,
         string HeroCaption,
         string Title,
         string Subtitle,
         string Summary,
-        string Meta,
-        string Details)
+        string Meta)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }

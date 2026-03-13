@@ -45,6 +45,32 @@ public sealed class ResourcesApiClientTests
     }
 
     [Fact]
+    public async Task GetArticlesAsync_AddsKeywordQueryString_WhenProvided()
+    {
+        var session = new ApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles?page=2&pageSize=10&keyword=charge%20mentale", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new PaginatedArticlesResponse([], 2, 10, 0, 0))
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        await sut.GetArticlesAsync(2, 10, "charge mentale", CancellationToken.None);
+    }
+
+    [Fact]
     public async Task GetEventsAsync_SendsBearerHeader_WhenSessionIsAuthenticated()
     {
         var session = new ApiSession
@@ -55,7 +81,7 @@ public sealed class ResourcesApiClientTests
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal("/api/events?page=1&pageSize=3", request.RequestUri?.PathAndQuery);
+            Assert.Equal("/api/events?page=1&pageSize=3&keyword=forum", request.RequestUri?.PathAndQuery);
             Assert.NotNull(request.Headers.Authorization);
             Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             Assert.Equal("jwt-token-for-events", request.Headers.Authorization.Parameter);
@@ -96,7 +122,7 @@ public sealed class ResourcesApiClientTests
 
         var sut = new ResourcesApiClient(httpClient, session);
 
-        var page = await sut.GetEventsAsync(1, 3, CancellationToken.None);
+        var page = await sut.GetEventsAsync(1, 3, "forum", CancellationToken.None);
 
         Assert.Single(page.Items);
         Assert.Equal("Forum test", page.Items[0].Title);

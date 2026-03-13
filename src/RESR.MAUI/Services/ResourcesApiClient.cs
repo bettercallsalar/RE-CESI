@@ -17,13 +17,23 @@ public sealed class ResourcesApiClient : IResourcesApiClient
 
     public async Task<PaginatedArticlesResponse> GetArticlesAsync(int page, int pageSize, CancellationToken ct)
     {
-        var uri = $"api/articles?page={page}&pageSize={pageSize}";
+        return await GetArticlesAsync(page, pageSize, keyword: null, ct);
+    }
+
+    public async Task<PaginatedArticlesResponse> GetArticlesAsync(int page, int pageSize, string? keyword, CancellationToken ct)
+    {
+        var uri = BuildListingUri("api/articles", page, pageSize, keyword);
         return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
     }
 
     public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct)
     {
-        var uri = $"api/events?page={page}&pageSize={pageSize}";
+        return await GetEventsAsync(page, pageSize, keyword: null, ct);
+    }
+
+    public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, string? keyword, CancellationToken ct)
+    {
+        var uri = BuildListingUri("api/events", page, pageSize, keyword);
         return await GetAsync(uri, new PaginatedEventsResponse([], page, pageSize, 0, 0), ct);
     }
 
@@ -58,5 +68,19 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         _httpClient.DefaultRequestHeaders.Authorization = string.IsNullOrWhiteSpace(_session.Token)
             ? null
             : new AuthenticationHeaderValue("Bearer", _session.Token);
+    }
+
+    private static string BuildListingUri(string basePath, int page, int pageSize, string? keyword)
+    {
+        var queryParameters = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            queryParameters.Add($"keyword={Uri.EscapeDataString(keyword.Trim())}");
+
+        return $"{basePath}?{string.Join("&", queryParameters)}";
     }
 }

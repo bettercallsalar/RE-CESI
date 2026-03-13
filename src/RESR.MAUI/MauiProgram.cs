@@ -20,6 +20,8 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<AppShell>();
 		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<ArticlesPage>();
+		builder.Services.AddTransient<EventsPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
 		var apiBaseAddress = ResolveApiBaseAddress();
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
