@@ -157,6 +157,7 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
                     FirstName: req.FirstName,
                     BirthDate: req.BirthDate,
                     Bio: req.Bio,
+                    ClearBio: req.Bio is not null && string.IsNullOrWhiteSpace(req.Bio),
                     IdDepartment: req.IdDepartment
                     ),
                 ct
