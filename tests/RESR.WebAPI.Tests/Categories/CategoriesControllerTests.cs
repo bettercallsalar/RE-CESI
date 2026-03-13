@@ -123,9 +123,12 @@ public sealed class CategoriesControllerTests
     public async Task AddToUser_ReturnsNoContent_WhenAdded()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.AddToUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.AddToUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AddToUserResult.Added);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.AddToUser(2, CancellationToken.None);
 
@@ -136,9 +139,12 @@ public sealed class CategoriesControllerTests
     public async Task AddToUser_ReturnsConflict_WhenAlreadyExists()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.AddToUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.AddToUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AddToUserResult.AlreadyExists);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.AddToUser(2, CancellationToken.None);
 
@@ -149,9 +155,12 @@ public sealed class CategoriesControllerTests
     public async Task AddToUser_ReturnsNotFound_WhenMissing()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.AddToUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.AddToUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(AddToUserResult.NotFound);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.AddToUser(2, CancellationToken.None);
 
@@ -162,9 +171,12 @@ public sealed class CategoriesControllerTests
     public async Task AddToUser_ReturnsServerError_WhenUnexpectedResult()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.AddToUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.AddToUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync((AddToUserResult)999);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.AddToUser(2, CancellationToken.None);
 
@@ -176,9 +188,12 @@ public sealed class CategoriesControllerTests
     public async Task RemoveFromUser_ReturnsNoContent_WhenSuccess()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.RemoveFromUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.RemoveFromUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.RemoveFromUser(2, CancellationToken.None);
 
@@ -189,9 +204,12 @@ public sealed class CategoriesControllerTests
     public async Task RemoveFromUser_ReturnsNotFound_WhenMissing()
     {
         var service = new Mock<ICategoryService>();
-        service.Setup(s => s.RemoveFromUserAsync(2, It.IsAny<CancellationToken>()))
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.RemoveFromUserAsync(7, 2, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        var controller = new CategoriesController(service.Object);
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("7");
+        var controller = CreateAuthenticatedController(service.Object, tokenService.Object);
 
         var result = await controller.RemoveFromUser(2, CancellationToken.None);
 

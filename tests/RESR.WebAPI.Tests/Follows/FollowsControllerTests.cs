@@ -1,6 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Reflection;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Follows;
@@ -188,54 +185,6 @@ public sealed class FollowsControllerTests
         var result = await controller.Delete(1, 2, CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result);
-    }
-
-    [Fact]
-    public void TryGetCurrentUserId_ReturnsTrue_WhenClaimPresent()
-    {
-        var controller = CreateController(out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext
-            {
-                User = new System.Security.Claims.ClaimsPrincipal(
-                    new System.Security.Claims.ClaimsIdentity(
-                        new[] { new System.Security.Claims.Claim(JwtRegisteredClaimNames.Sub, "42") },
-                        "test"))
-            }
-        };
-
-        var method = typeof(FollowsController).GetMethod(
-            "TryGetCurrentUserId",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(method);
-
-        var args = new object?[] { 0 };
-        var result = (bool)method!.Invoke(controller, args)!;
-
-        Assert.True(result);
-        Assert.Equal(42, (int)args[0]!);
-    }
-
-    [Fact]
-    public void TryGetCurrentUserId_ReturnsFalse_WhenClaimMissing()
-    {
-        var controller = CreateController(out _);
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
-
-        var method = typeof(FollowsController).GetMethod(
-            "TryGetCurrentUserId",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(method);
-
-        var args = new object?[] { 0 };
-        var result = (bool)method!.Invoke(controller, args)!;
-
-        Assert.False(result);
-        Assert.Equal(0, (int)args[0]!);
     }
 
     private static FollowsController CreateController(out Mock<IFollowsService> service)
