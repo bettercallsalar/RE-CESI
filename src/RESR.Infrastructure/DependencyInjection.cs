@@ -8,6 +8,8 @@ using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
+using RESR.Core.Controllers.Reactions.Factories;
+using RESR.Core.Controllers.Reactions.Ports;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
@@ -22,6 +24,7 @@ using RESR.Core.Controllers.Marks.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Comments;
 using RESR.Infrastructure.Categories;
+using RESR.Infrastructure.Reactions;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
@@ -42,6 +45,7 @@ public static class DependencyInjection
         // Ensure category factory is available even if Core DI isn't wired as expected.
         services.TryAddScoped<ICategoryFactory, CategoryFactory>();
         services.TryAddScoped<ICommentFactory, CommentFactory>();
+        services.TryAddScoped<IReactionFactory, ReactionFactory>();
 
         services.AddScoped<IUserRepository>(sp =>
             new MySqlUserRepository(
@@ -109,6 +113,13 @@ public static class DependencyInjection
         services.AddScoped<IMarksRepository>(sp =>
             new MySqlMarksRepository(
                 connectionString
+            )
+        );
+
+        services.AddScoped<IReactionRepository>(sp =>
+            new MySqlReactionRepository(
+                connectionString,
+                sp.GetRequiredService<IReactionFactory>()
             )
         );
 
