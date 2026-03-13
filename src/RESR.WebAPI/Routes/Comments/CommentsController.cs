@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Comments;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
 using RESR.Models.Comments;
 using RESR.WebAPI.Security;
 
@@ -8,13 +9,17 @@ namespace RESR.WebAPI.Routes.Comments;
 
 [ApiController]
 [Route("api/comments")]
-public sealed class CommentsController : ControllerBase
+public sealed class CommentsController : AuthenticatedResourceControllerBase
 {
     private readonly ICommentService _service;
 
-    public CommentsController(ICommentService service) => _service = service;
+    public CommentsController(ICommentService service, ITokenService tokenService)
+        : base(tokenService)
+    {
+        _service = service;
+    }
 
-    [HttpGet("/api/resources/{idResource:int}/comments")]
+    [HttpGet("resources/{idResource:int}")]
     public async Task<ActionResult<IReadOnlyList<CommentResponse>>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
         try
@@ -47,11 +52,12 @@ public sealed class CommentsController : ControllerBase
     }
 
     [AuthorizePermission]
-    [HttpPost("/api/resources/{idResource:int}/comments")]
+    [HttpPost("resources/{idResource:int}")]
     public async Task<ActionResult<CommentResponse>> Create([FromRoute] int idResource, [FromBody] CreateCommentRequest req, CancellationToken ct)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-            return Unauthorized(new { message = "Invalid token or unauthorized access." });
+        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        if (authResult is not null)
+            return authResult;
 
         try
         {
@@ -76,8 +82,9 @@ public sealed class CommentsController : ControllerBase
     [HttpPatch("{idComment:int}")]
     public async Task<ActionResult<CommentResponse>> Update([FromRoute] int idComment, [FromBody] UpdateCommentRequest req, CancellationToken ct)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-            return Unauthorized(new { message = "Invalid token or unauthorized access." });
+        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        if (authResult is not null)
+            return authResult;
 
         try
         {
@@ -102,16 +109,43 @@ public sealed class CommentsController : ControllerBase
         }
     }
 
-    [AuthorizePermission]
     [HttpDelete("{idComment:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idComment, CancellationToken ct)
     {
-        if (!User.TryGetCurrentUserId(out var currentUserId))
-            return Unauthorized(new { message = "Invalid token or unauthorized access." });
+        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        if (authResult is not null)
+            return authResult;
 
         try
         {
-            await _service.DeleteAsync(idComment, currentUserId, User.GetCurrentPermissions(), ct);
+            await _service.DeleteAsync(idComment, currentUserId, canDeleteOtherUsersComments: false, ct);
+            return NoContent();
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [AuthorizePermission(PermissionNames.DeleteComment)]
+    [HttpDelete("moderation/{idComment:int}")]
+    public async Task<ActionResult> DeleteForModeration([FromRoute] int idComment, CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        if (authResult is not null)
+            return authResult;
+
+        try
+        {
+            await _service.DeleteAsync(idComment, currentUserId, canDeleteOtherUsersComments: true, ct);
             return NoContent();
         }
         catch (NotFoundException ex)

@@ -1,4 +1,5 @@
 using RESR.Core.Controllers.Users.Factories;
+using RESR.Models.Departments;
 using RESR.Models.Users;
 
 namespace RESR.Core.Tests.Users;
@@ -18,7 +19,7 @@ public sealed class UserFactoryTests
             "User",
             birthDate,
             "bio",
-            1,
+            new Department { IdDepartment = 1, Name = "IT", Code = 10 },
             2
         );
 
@@ -28,7 +29,7 @@ public sealed class UserFactoryTests
         Assert.Equal("User", user.FirstName);
         Assert.Equal(birthDate, user.BirthDate);
         Assert.Equal("bio", user.Bio);
-        Assert.Equal(1, user.IdDepartment);
+        Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal(2, user.IdRole);
         Assert.False(user.IsVerified);
         Assert.Null(user.DeletedAt);
@@ -50,7 +51,7 @@ public sealed class UserFactoryTests
             null,
             true,
             deletedAt,
-            3,
+            new Department { IdDepartment = 3, Name = "HR", Code = 20 },
             4
         );
 
@@ -61,7 +62,7 @@ public sealed class UserFactoryTests
         Assert.Equal("User", user.FirstName);
         Assert.True(user.IsVerified);
         Assert.Equal(deletedAt, user.DeletedAt);
-        Assert.Equal(3, user.IdDepartment);
+        Assert.Equal(3, user.Department.IdDepartment);
         Assert.Equal(4, user.IdRole);
     }
 }

@@ -12,7 +12,8 @@ INSERT IGNORE INTO `permission` (`id_permission`, `name`, `description`) VALUES
     (11, 'AccessAdminPanel', 'Permission to access the administrative panel of the platform.'),
     (12, 'BanUser', 'Permission to ban or suspend user accounts for violations of platform rules.'),
     (13, 'DeleteComment', 'Permission to delete inappropriate comments from resources.'),
-    (14, 'DeleteOtherUserContent', 'Permission to delete content created by other users, such as articles or events.');
+    (14, 'DeleteOtherUserContent', 'Permission to delete content created by other users, such as articles or events.'),
+    (15, 'ApproveEvent', 'Permission to approve events for publication.');
 
 INSERT IGNORE INTO `role` (`id_role`, `name`, `description`) VALUES
     (1, 'User', 'Standard user with basic permissions.'),
@@ -28,8 +29,11 @@ INSERT IGNORE INTO `role_permission` (`id_role`, `id_permission`) VALUES
     (2, 3),
     (2, 4),
     (2, 5),
+    (2, 15),
     (3, 1),
     (3, 2),
     (3, 3),
     (3, 4),
-    (3, 5);
+    (3, 5),
+    (3, 15);
+    

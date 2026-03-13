@@ -81,6 +81,17 @@ public sealed class FollowsControllerTests
     }
 
     [Fact]
+    public async Task GetAllFollowing_ReturnsBadRequest_WhenPageSizeInvalid()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.GetAllFollowing(1, page: 1, pageSize: 0, CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
     public async Task GetAllFollowing_ReturnsOk_WithPagination()
     {
         var controller = CreateController(out var service);
@@ -100,6 +111,20 @@ public sealed class FollowsControllerTests
         Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.TotalPages);
         Assert.Single(response.Items);
+    }
+
+    [Fact]
+    public async Task GetAllFollowing_ReturnsZeroTotalPages_WhenEmpty()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.GetAllFollowingAsync(2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<FollowUser>());
+
+        var result = await controller.GetAllFollowing(2, page: 1, pageSize: 10, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PaginatedFollowUsersResponse>(ok.Value);
+        Assert.Equal(0, response.TotalPages);
     }
 
     [Fact]

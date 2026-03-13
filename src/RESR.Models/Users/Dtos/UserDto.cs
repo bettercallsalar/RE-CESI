@@ -1,3 +1,5 @@
+using RESR.Models.Departments;
+
 namespace RESR.Models.Users;
 
 public sealed record RegisterUserRequest(
@@ -41,7 +43,7 @@ public sealed record UserResponse(
     DateOnly? BirthDate,
     string? Bio,
     bool IsVerified,
-    int IdDepartment,
+    Department Department,
     int IdRole
 );
 

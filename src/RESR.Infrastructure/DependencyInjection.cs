@@ -15,7 +15,12 @@ using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Articles.Factories;
+using RESR.Core.Controllers.Articles.Ports;
+using RESR.Core.Controllers.Events.Factories;
+using RESR.Core.Controllers.Events.Ports;
 using RESR.Core.Controllers.Follows.Ports;
+using RESR.Core.Controllers.Marks.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Comments;
 using RESR.Infrastructure.Categories;
@@ -23,7 +28,10 @@ using RESR.Infrastructure.Reactions;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
+using RESR.Infrastructure.Articles;
+using RESR.Infrastructure.Events;
 using RESR.Infrastructure.Follows;
+using RESR.Infrastructure.Marks;
 
 namespace RESR.Infrastructure;
 
@@ -75,6 +83,20 @@ public static class DependencyInjection
             )
         );
 
+        services.AddScoped<IArticleRepository>(sp =>
+            new MySqlArticleRepository(
+                connectionString,
+                sp.GetRequiredService<IArticleFactory>()
+            )
+        );
+
+        services.AddScoped<IEventRepository>(sp =>
+            new MySqlEventRepository(
+                connectionString,
+                sp.GetRequiredService<IEventFactory>()
+            )
+        );
+
         services.AddScoped<IFollowsRepository>(sp =>
             new MySqlFollowsRepository(
                 connectionString
@@ -85,6 +107,12 @@ public static class DependencyInjection
             new MySqlCommentRepository(
                 connectionString,
                 sp.GetRequiredService<ICommentFactory>()
+            )
+        );
+
+        services.AddScoped<IMarksRepository>(sp =>
+            new MySqlMarksRepository(
+                connectionString
             )
         );
 
