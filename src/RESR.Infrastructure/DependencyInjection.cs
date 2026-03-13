@@ -18,6 +18,7 @@ using RESR.Core.Controllers.Articles.Ports;
 using RESR.Core.Controllers.Events.Factories;
 using RESR.Core.Controllers.Events.Ports;
 using RESR.Core.Controllers.Follows.Ports;
+using RESR.Core.Controllers.Marks.Ports;
 using RESR.Infrastructure.Departments;
 using RESR.Infrastructure.Comments;
 using RESR.Infrastructure.Categories;
@@ -27,6 +28,7 @@ using RESR.Infrastructure.Users;
 using RESR.Infrastructure.Articles;
 using RESR.Infrastructure.Events;
 using RESR.Infrastructure.Follows;
+using RESR.Infrastructure.Marks;
 
 namespace RESR.Infrastructure;
 
@@ -101,6 +103,12 @@ public static class DependencyInjection
             new MySqlCommentRepository(
                 connectionString,
                 sp.GetRequiredService<ICommentFactory>()
+            )
+        );
+
+        services.AddScoped<IMarksRepository>(sp =>
+            new MySqlMarksRepository(
+                connectionString
             )
         );
 

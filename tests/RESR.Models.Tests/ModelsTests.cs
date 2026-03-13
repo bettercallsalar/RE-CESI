@@ -5,6 +5,7 @@ using RESR.Models.Permissions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
 using RESR.Models.Categories;
+using RESR.Models.Marks;
 
 namespace RESR.Models.Tests;
 
@@ -281,5 +282,28 @@ public sealed class ModelsTests
 
         Assert.Equal("Desc", permission.Description);
         Assert.Equal("RoleDesc", role.Description);
+    }
+
+    [Fact]
+    public void MarkDtos_AssignValues()
+    {
+        var create = new CreateMarkRequest(true, false, 4);
+        var update = new UpdateMarkRequest(false, true, 4);
+        var response = new MarkResponse(7, true, false, 4, 2);
+        var paginated = new PaginatedMarksResponse(new List<MarkResponse> { response }, 1, 10, 1, 1);
+        var mark = new Mark
+        {
+            IdMark = 7,
+            IsFavorite = true,
+            IsReadLater = false,
+            IdRessource = 4,
+            IdUser = 2
+        };
+
+        Assert.True(create.IsFavorite);
+        Assert.True(update.IsReadLater);
+        Assert.Equal(7, response.IdMark);
+        Assert.Single(paginated.Items);
+        Assert.Equal(4, mark.IdRessource);
     }
 }

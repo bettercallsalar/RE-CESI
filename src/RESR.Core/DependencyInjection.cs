@@ -19,6 +19,7 @@ using RESR.Core.Controllers.Articles.Factories;
 using RESR.Core.Controllers.Events;
 using RESR.Core.Controllers.Events.Factories;
 using RESR.Core.Controllers.Follows;
+using RESR.Core.Controllers.Marks;
 
 namespace RESR.Core;
 
@@ -49,6 +50,7 @@ public static class DependencyInjection
                 services.AddScoped<IArticleService, ArticleService>();
                 services.AddScoped<IEventService, EventService>();
                 services.AddScoped<IFollowsService, FollowsService>();
+        services.AddScoped<IMarkService, MarkService>();
 
                 return services;
         }
