@@ -5,6 +5,16 @@ export interface Category {
   name: string;
 }
 
+export interface ResourceFile {
+  idFile: number;
+  fileName: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  path: string;
+  createdAt: string;
+}
+
 export interface Article {
   idResource: number;
   idArticle: number;
@@ -18,6 +28,7 @@ export interface Article {
   idCategory: number;
   content: string;
   isApproved: boolean;
+  files: ResourceFile[];
 }
 
 export interface PaginatedResponse<T> {

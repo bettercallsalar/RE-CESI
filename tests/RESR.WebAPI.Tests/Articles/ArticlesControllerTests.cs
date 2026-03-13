@@ -78,7 +78,7 @@ public sealed class ArticlesControllerTests
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
         var result = await controller.Create(
-            new CreateArticleRequest("Title", null, "public", 2, "Body"),
+            new CreateArticleFormRequest { Title = "Title", Description = null, Visibility = "public", IdCategory = 2, Content = "Body" },
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result);
@@ -135,7 +135,7 @@ public sealed class ArticlesControllerTests
         };
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
-        var result = await controller.Update(6, new UpdateArticleRequest(Title: "Updated"), CancellationToken.None);
+        var result = await controller.Update(6, new UpdateArticleFormRequest { Title = "Updated" }, CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
         service.Verify(s => s.UpdateAsync(

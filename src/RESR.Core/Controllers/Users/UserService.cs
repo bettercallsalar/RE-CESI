@@ -129,7 +129,7 @@ public sealed class UserService : IUserService
             Email = nextEmail,
             Username = nextUsername,
             FirstName = NormalizeOptional(cmd.FirstName),
-            Bio = cmd.Bio is null ? null : cmd.Bio.Trim()
+            Bio = NormalizeOptional(cmd.Bio)
         };
 
         return await _repo.PatchAsync(normalizedCommand, ct);

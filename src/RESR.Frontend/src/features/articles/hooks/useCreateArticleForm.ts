@@ -19,7 +19,8 @@ const initialValues: CreateArticleFormValues = {
   description: "",
   visibility: "PUBLIC",
   idCategory: "",
-  content: ""
+  content: "",
+  images: []
 };
 
 export function useCreateArticleForm() {
@@ -101,6 +102,23 @@ export function useCreateArticleForm() {
       return;
     }
 
+    if (values.images.length > 6) {
+      showFormMessage(setMessage, createWarningMessage("Vous ne pouvez pas envoyer plus de 6 images."));
+      return;
+    }
+
+    for (const image of values.images) {
+      if (!image.type.startsWith("image/")) {
+        showFormMessage(setMessage, createWarningMessage("Seules les images sont autorisées."));
+        return;
+      }
+
+      if (image.size > 5 * 1024 * 1024) {
+        showFormMessage(setMessage, createWarningMessage("Chaque image doit faire moins de 5 Mo."));
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     showFormMessage(setMessage, null);
 
@@ -110,7 +128,8 @@ export function useCreateArticleForm() {
         description: trimmedDescription || null,
         visibility: values.visibility,
         idCategory: values.idCategory,
-        content: trimmedContent
+        content: trimmedContent,
+        images: values.images
       });
 
       flashMessageStorage.set(

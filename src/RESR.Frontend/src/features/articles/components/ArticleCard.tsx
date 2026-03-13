@@ -1,5 +1,6 @@
-import { Badge, Card, CardBody, HStack, Heading, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Card, CardBody, HStack, Heading, Image, Stack, Text } from "@chakra-ui/react";
 import { stripHtml } from "@/features/articles/lib/articleContent";
+import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import type { Article } from "@/shared/types/article";
 
 interface ArticleCardProps {
@@ -25,6 +26,8 @@ function getExcerpt(article: Article) {
 }
 
 export function ArticleCard({ article, categoryName, compact = false }: ArticleCardProps) {
+  const firstImage = article.files[0];
+
   return (
     <Card
       bg="white"
@@ -34,6 +37,11 @@ export function ArticleCard({ article, categoryName, compact = false }: ArticleC
       rounded={{ base: "12px", md: "16px" }}
       shadow="sm"
     >
+      {firstImage ? (
+        <Box bg="canvas.200" h={compact ? "180px" : "220px"} overflow="hidden">
+          <Image alt={article.title} h="100%" objectFit="cover" src={getResourceFileUrl(firstImage.path)} w="100%" />
+        </Box>
+      ) : null}
       <CardBody p={{ base: 5, md: 6 }}>
         <Stack h="100%" spacing={compact ? 3 : 4}>
           <HStack flexWrap="wrap" spacing={3}>

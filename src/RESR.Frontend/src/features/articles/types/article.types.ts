@@ -12,6 +12,7 @@ export interface CreateArticlePayload {
   visibility: ArticleVisibility;
   idCategory: number;
   content: string;
+  images: File[];
 }
 
 export interface CreateArticleFormValues {
@@ -20,6 +21,7 @@ export interface CreateArticleFormValues {
   visibility: ArticleVisibility;
   idCategory: number | "";
   content: string;
+  images: File[];
 }
 
 export interface ArticlesPageState {
