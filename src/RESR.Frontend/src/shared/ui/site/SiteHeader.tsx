@@ -82,13 +82,13 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
     variant === "authenticated"
       ? [
           { label: "Statistiques", glyph: "chart" as const, href: "/" },
-          { label: "Ressources", glyph: "grid" as const, href: "/" },
-          { label: "MonCompte", glyph: "user" as const, href: "/mon-compte" }
+          { label: "Ressources", glyph: "grid" as const, href: "/articles" },
+          { label: "Mon compte", glyph: "user" as const, href: "/mon-compte" }
         ]
       : [
           { label: "Statistiques", glyph: "chart" as const, href: "/" },
-          { label: "Ressources", glyph: "grid" as const, href: "/" },
-          { label: "MonCompte", glyph: "user" as const, href: "/login" }
+          { label: "Ressources", glyph: "grid" as const, href: "/articles" },
+          { label: "Mon compte", glyph: "user" as const, href: "/login" }
         ];
 
   return (

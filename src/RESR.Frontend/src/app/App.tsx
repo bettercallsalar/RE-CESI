@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ArticlesPage } from "@/features/articles/pages/ArticlesPage";
+import { CreateArticlePage } from "@/features/articles/pages/CreateArticlePage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { HomePage } from "@/pages/HomePage";
 import { AppLoader } from "@/shared/ui/AppLoader";
@@ -28,6 +30,10 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
+    if (pathname === "/articles/nouveau" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
   }, [pathname, status]);
 
   if (pathname === "/mon-compte") {
@@ -48,6 +54,22 @@ function App() {
     }
 
     return <LoginPage />;
+  }
+
+  if (pathname === "/articles") {
+    return <ArticlesPage />;
+  }
+
+  if (pathname === "/articles/nouveau") {
+    if (status === "loading") {
+      return <AppLoader label="Vérification de votre session" />;
+    }
+
+    if (status === "authenticated") {
+      return <CreateArticlePage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
   }
 
   return <HomePage />;
