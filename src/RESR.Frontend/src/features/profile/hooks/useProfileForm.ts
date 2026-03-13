@@ -173,8 +173,8 @@ export function useProfileForm() {
       payload.birthDate = values.birthDate || null;
     }
 
-    if ((values.bio || null) !== (user.bio ?? null)) {
-      payload.bio = trimmedBio ? trimmedBio : null;
+    if (values.bio !== (user.bio ?? "")) {
+      payload.bio = trimmedBio ? trimmedBio : "";
     }
 
     if (values.idDepartment !== user.department.idDepartment && values.idDepartment !== "") {

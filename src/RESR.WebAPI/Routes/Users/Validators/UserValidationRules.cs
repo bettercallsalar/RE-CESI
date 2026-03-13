@@ -10,16 +10,19 @@ internal static class UserValidationRules
     {
         return ruleBuilder
             .MaximumLength(255)
+            .WithMessage("L'adresse e-mail ne peut pas depasser 255 caracteres.")
             .Matches(EmailPattern)
-            .WithMessage("Email format is invalid.");
+            .WithMessage("Le format de l'adresse e-mail est invalide.");
     }
 
     public static IRuleBuilderOptions<T, string> ApplyRequiredEmailRules<T>(this IRuleBuilder<T, string> ruleBuilder)
     {
         return ruleBuilder
             .NotEmpty()
+            .WithMessage("L'adresse e-mail est obligatoire.")
             .MaximumLength(255)
+            .WithMessage("L'adresse e-mail ne peut pas depasser 255 caracteres.")
             .Matches(EmailPattern)
-            .WithMessage("Email format is invalid.");
+            .WithMessage("Le format de l'adresse e-mail est invalide.");
     }
 }

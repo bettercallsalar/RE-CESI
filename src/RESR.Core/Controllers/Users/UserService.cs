@@ -53,22 +53,22 @@ public sealed class UserService : IUserService
         var firstName = cmd.FirstName.Trim();
 
         if (string.IsNullOrWhiteSpace(firstName))
-            throw new ValidationException("First name is required");
+            throw new ValidationException("Le prenom est obligatoire.");
 
         if (cmd.IdDepartment <= 0)
-            throw new ValidationException("IdDepartment must be greater than 0");
+            throw new ValidationException("Le departement doit etre superieur a 0.");
 
         if (await _repo.GetByEmailAsync(email, ct) is not null)
-            throw new ConflictException("Email already exists");
+            throw new ConflictException("Cette adresse e-mail existe deja.");
 
         if (await _repo.GetByUsernameAsync(username, ct) is not null)
-            throw new ConflictException("Username already exists.");
+            throw new ConflictException("Ce nom d'utilisateur existe deja.");
 
         if (await _roleRepository.GetByIdAsync(cmd.IdRole, ct) is null)
-            throw new ValidationException($"Role {cmd.IdRole} does not exist");
+            throw new ValidationException($"Le role {cmd.IdRole} n'existe pas.");
 
         Department department = await _departmentRepository.GetByIdAsync(cmd.IdDepartment, ct)
-            ?? throw new ValidationException($"Department {cmd.IdDepartment} does not exist");
+            ?? throw new ValidationException($"Le departement {cmd.IdDepartment} n'existe pas.");
 
         var user = _userFactory.CreateForRegistration(
             username,
@@ -87,10 +87,10 @@ public sealed class UserService : IUserService
     public async Task<User> UpdateAsync(UpdateUserCommand cmd, CancellationToken ct)
     {
         var user = await _repo.GetByIdAsync(cmd.IdUser, ct)
-            ?? throw new NotFoundException($"User {cmd.IdUser} not found");
+            ?? throw new NotFoundException($"Utilisateur {cmd.IdUser} introuvable.");
 
         if (user.DeletedAt is not null)
-            throw new ValidationException("User account is deleted");
+            throw new ValidationException("Le compte utilisateur est supprime.");
 
         var nextEmail = NormalizeOptional(cmd.Email);
         var nextUsername = NormalizeOptional(cmd.Username);
@@ -99,28 +99,28 @@ public sealed class UserService : IUserService
             !string.Equals(nextEmail, user.Email, StringComparison.OrdinalIgnoreCase))
         {
             if (await _repo.GetByEmailAsync(nextEmail, ct) is not null)
-                throw new ConflictException("Email already exists");
+                throw new ConflictException("Cette adresse e-mail existe deja.");
         }
 
         if (!string.IsNullOrWhiteSpace(nextUsername) &&
             !string.Equals(nextUsername, user.Username, StringComparison.OrdinalIgnoreCase))
         {
             if (await _repo.GetByUsernameAsync(nextUsername, ct) is not null)
-                throw new ConflictException("Username already exists");
+                throw new ConflictException("Ce nom d'utilisateur existe deja.");
         }
 
         if (cmd.IdRole is int idRole && idRole != user.IdRole && await _roleRepository.GetByIdAsync(idRole, ct) is null)
-            throw new ValidationException($"Role {idRole} does not exist");
+            throw new ValidationException($"Le role {idRole} n'existe pas.");
 
         if (cmd.IdDepartment is int idDepartment)
         {
             if (idDepartment <= 0)
-                throw new ValidationException("IdDepartment must be greater than 0");
+                throw new ValidationException("Le departement doit etre superieur a 0.");
 
             if (idDepartment != user.Department.IdDepartment &&
                 await _departmentRepository.GetByIdAsync(idDepartment, ct) is null)
             {
-                throw new ValidationException($"Department {idDepartment} does not exist");
+                throw new ValidationException($"Le departement {idDepartment} n'existe pas.");
             }
         }
 
@@ -129,7 +129,7 @@ public sealed class UserService : IUserService
             Email = nextEmail,
             Username = nextUsername,
             FirstName = NormalizeOptional(cmd.FirstName),
-            Bio = NormalizeOptional(cmd.Bio)
+            Bio = cmd.Bio is null ? null : cmd.Bio.Trim()
         };
 
         return await _repo.PatchAsync(normalizedCommand, ct);
@@ -138,10 +138,10 @@ public sealed class UserService : IUserService
     public async Task<User> SetVerificationAsync(SetUserVerificationCommand cmd, CancellationToken ct)
     {
         var user = await _repo.GetByIdAsync(cmd.IdUser, ct)
-            ?? throw new NotFoundException($"User {cmd.IdUser} not found");
+            ?? throw new NotFoundException($"Utilisateur {cmd.IdUser} introuvable.");
 
         if (user.DeletedAt is not null)
-            throw new ValidationException("User account is deleted");
+            throw new ValidationException("Le compte utilisateur est supprime.");
 
         if (user.IsVerified == cmd.IsVerified)
             return user;
@@ -155,12 +155,12 @@ public sealed class UserService : IUserService
     {
         var email = loginDto.Email.Trim();
         var user = await _repo.GetByEmailAsync(email, ct)
-            ?? throw new InvalidOperationException("Invalid email or password");
+            ?? throw new InvalidOperationException("Adresse e-mail ou mot de passe invalide.");
 
         if (!_passwordHasher.VerifyPassword(user.HashedPassword, loginDto.Password))
-            throw new InvalidOperationException("Invalid email or password");
-        if (!user.IsVerified) throw new InvalidOperationException("User email is not verified");
-        if (user.DeletedAt is not null) throw new InvalidOperationException("User account is deleted");
+            throw new InvalidOperationException("Adresse e-mail ou mot de passe invalide.");
+        if (!user.IsVerified) throw new InvalidOperationException("L'adresse e-mail du compte n'est pas verifiee.");
+        if (user.DeletedAt is not null) throw new InvalidOperationException("Le compte utilisateur est supprime.");
 
         IReadOnlyList<Permission> permissions = await _roleRepository.GetPermissionsByRoleIdAsync(user.IdRole, ct);
 
