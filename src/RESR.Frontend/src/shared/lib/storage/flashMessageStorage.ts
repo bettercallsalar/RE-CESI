@@ -1,15 +1,12 @@
-export interface FlashMessage {
-  type: "success" | "error";
-  message: string;
-}
+import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 
 const FLASH_KEY = "resr.flash.message";
 
 export const flashMessageStorage = {
-  set(value: FlashMessage) {
+  set(value: FeedbackMessage) {
     window.sessionStorage.setItem(FLASH_KEY, JSON.stringify(value));
   },
-  take(): FlashMessage | null {
+  take(): FeedbackMessage | null {
     const raw = window.sessionStorage.getItem(FLASH_KEY);
 
     if (!raw) {
@@ -19,7 +16,7 @@ export const flashMessageStorage = {
     window.sessionStorage.removeItem(FLASH_KEY);
 
     try {
-      return JSON.parse(raw) as FlashMessage;
+      return JSON.parse(raw) as FeedbackMessage;
     } catch {
       return null;
     }

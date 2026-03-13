@@ -1,6 +1,4 @@
 import {
-  Alert,
-  AlertIcon,
   Box,
   Button,
   Card,
@@ -19,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { useProfileForm } from "@/features/profile/hooks/useProfileForm";
 import { DeleteAccountSection } from "@/features/profile/components/DeleteAccountSection";
+import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
 export function ProfileForm() {
   const {
@@ -29,9 +28,8 @@ export function ProfileForm() {
     isSaving,
     isDeleting,
     hasChanges,
-    saveMessage,
-    error,
-    deleteError,
+    formMessage,
+    deleteMessage,
     updateField,
     save,
     deleteAccount,
@@ -202,18 +200,12 @@ export function ProfileForm() {
             </Grid>
 
             <Stack spacing={4}>
-              {saveMessage ? (
-                <Alert borderRadius="8px" status="success">
-                  <AlertIcon />
-                  {saveMessage}
-                </Alert>
-              ) : null}
-
-              {error ? (
-                <Alert borderRadius="8px" status="error" color={"red"}>
-                  <AlertIcon />
-                  {error}
-                </Alert>
+              {formMessage ? (
+                <MessageBanner
+                  message={formMessage.message}
+                  title={formMessage.title}
+                  tone={formMessage.tone}
+                />
               ) : null}
             </Stack>
 
@@ -236,7 +228,7 @@ export function ProfileForm() {
       </Card>
 
       <DeleteAccountSection
-        error={deleteError}
+        message={deleteMessage}
         isDeleting={isDeleting}
         onDelete={deleteAccount}
       />

@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { LoginCredentials } from "@/features/auth/types/auth.types";
-import { getErrorMessage } from "@/shared/lib/errors/getErrorMessage";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
+import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
+import {
+  createErrorMessage,
+  createSuccessMessage,
+  showFormMessage
+} from "@/shared/lib/feedback/showFormMessage";
 
 const initialValues: LoginCredentials = {
   email: "",
@@ -12,10 +17,11 @@ const initialValues: LoginCredentials = {
 export function useLoginForm() {
   const { signIn } = useAuth();
   const [values, setValues] = useState<LoginCredentials>(initialValues);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updateField<K extends keyof LoginCredentials>(field: K, value: LoginCredentials[K]) {
+    showFormMessage(setMessage, null);
     setValues((current) => ({
       ...current,
       [field]: value
@@ -24,16 +30,13 @@ export function useLoginForm() {
 
   async function submit() {
     setIsSubmitting(true);
-    setError(null);
+    showFormMessage(setMessage, null);
 
     try {
       await signIn(values);
-      flashMessageStorage.set({
-        type: "success",
-        message: "Connexion réussie."
-      });
+      flashMessageStorage.set(createSuccessMessage("Connexion réussie."));
     } catch (submitError) {
-      setError(getErrorMessage(submitError));
+      showFormMessage(setMessage, createErrorMessage(submitError, "Erreur de connexion"));
     } finally {
       setIsSubmitting(false);
     }
@@ -41,7 +44,7 @@ export function useLoginForm() {
 
   return {
     values,
-    error,
+    message,
     isSubmitting,
     updateField,
     submit

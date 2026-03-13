@@ -1,14 +1,16 @@
-import { Alert, AlertIcon, Box, Button, CloseButton, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ShowcasePanel } from "@/shared/ui/site/ShowcasePanel";
-import { flashMessageStorage, type FlashMessage } from "@/shared/lib/storage/flashMessageStorage";
+import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
+import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 
 export function HomePage() {
   const { status, user, signOut } = useAuth();
   const isAuthenticated = status === "authenticated";
-  const [flashMessage, setFlashMessage] = useState<FlashMessage | null>(null);
+  const [flashMessage, setFlashMessage] = useState<FeedbackMessage | null>(null);
 
   useEffect(() => {
     setFlashMessage(flashMessageStorage.take());
@@ -18,16 +20,12 @@ export function HomePage() {
     <SiteLayout headerVariant={isAuthenticated ? "authenticated" : "public"}>
       <Stack spacing={{ base: 10, md: 12 }}>
         {flashMessage ? (
-          <Alert alignItems="start" borderRadius="10px" status={flashMessage.type}>
-            <AlertIcon mt={1} />
-            <Box flex="1">
-              <Text fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
-                {flashMessage.type === "success" ? "Succès" : "Erreur"}
-              </Text>
-              <Text fontSize={{ base: "14px", md: "15px" }}>{flashMessage.message}</Text>
-            </Box>
-            <CloseButton alignSelf="start" onClick={() => setFlashMessage(null)} position="relative" />
-          </Alert>
+          <MessageBanner
+            message={flashMessage.message}
+            onClose={() => setFlashMessage(null)}
+            title={flashMessage.title ?? (flashMessage.tone === "success" ? "Succès" : "Information")}
+            tone={flashMessage.tone}
+          />
         ) : null}
 
         <ShowcasePanel minHeight={{ base: "260px", md: "380px", lg: "460px" }} title="Titre Article" />

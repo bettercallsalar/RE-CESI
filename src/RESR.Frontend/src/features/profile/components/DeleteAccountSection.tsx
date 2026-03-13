@@ -1,13 +1,11 @@
 import { useRef, useState } from "react";
 import {
-  Alert,
   AlertDialog,
   AlertDialogBody,
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
-  AlertIcon,
   Box,
   Button,
   Checkbox,
@@ -16,14 +14,16 @@ import {
   Text,
   useDisclosure
 } from "@chakra-ui/react";
+import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 
 interface DeleteAccountSectionProps {
   isDeleting: boolean;
-  error: string | null;
+  message: FeedbackMessage | null;
   onDelete: () => Promise<void>;
 }
 
-export function DeleteAccountSection({ isDeleting, error, onDelete }: DeleteAccountSectionProps) {
+export function DeleteAccountSection({ isDeleting, message, onDelete }: DeleteAccountSectionProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -45,11 +45,8 @@ export function DeleteAccountSection({ isDeleting, error, onDelete }: DeleteAcco
         </Text>
       </Box>
 
-      {error ? (
-        <Alert borderRadius="8px" status="error">
-          <AlertIcon />
-          {error}
-        </Alert>
+      {message ? (
+        <MessageBanner message={message.message} title={message.title} tone={message.tone} />
       ) : null}
 
       <Button alignSelf="start" colorScheme="red" onClick={onOpen} variant="outline">

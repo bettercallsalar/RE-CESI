@@ -1,6 +1,4 @@
 import {
-  Alert,
-  AlertIcon,
   Box,
   Button,
   Card,
@@ -14,9 +12,10 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useLoginForm } from "@/features/auth/hooks/useLoginForm";
+import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
 export function LoginForm() {
-  const { values, error, isSubmitting, updateField, submit } = useLoginForm();
+  const { values, message, isSubmitting, updateField, submit } = useLoginForm();
 
   return (
     <Card
@@ -79,11 +78,8 @@ export function LoginForm() {
               />
             </FormControl>
 
-            {error ? (
-              <Alert borderRadius="4px" status="error">
-                <AlertIcon />
-                {error}
-              </Alert>
+            {message ? (
+              <MessageBanner message={message.message} title={message.title} tone={message.tone} />
             ) : null}
 
             <Button
