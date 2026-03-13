@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Auth.RegisterPage"
+             Title="Inscription">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+            <Label Text="Inscription"
+                   FontAttributes="Bold"/>
+
+            <Entry x:Name="RegisterUsernameEntry"
+                   Placeholder="Nom d'utilisateur"/>
+            <Entry x:Name="RegisterFirstNameEntry"
+                   Placeholder="Prénom"/>
+            <Entry x:Name="RegisterEmailEntry"
+                   Placeholder="Courriel"
+                   Keyboard="Email"/>
+            <Entry x:Name="RegisterPasswordEntry"
+                   Placeholder="Mot de passe"
+                   IsPassword="True"/>
+            <Entry x:Name="RegisterBirthDateEntry"
+                   Placeholder="Date de naissance (JJ-MM-AAAA) - optionnel"/>
+            <Picker x:Name="RegisterDepartmentPicker"
+                    Title="Choisir un département"
+                    ItemsSource="{Binding Departments}"
+                    ItemDisplayBinding="{Binding Name}"/>
+            <Editor x:Name="RegisterBioEntry"
+                    Placeholder="Biographie - optionnel"
+                    AutoSize="TextChanges"
+                    HeightRequest="90"/>
+
+            <Button Text="S'inscrire"
+                    Clicked="OnRegisterClicked"/>
+
+            <Label x:Name="StatusLabel"
+                   Text="Renseigne les informations pour créer un compte."
+                   LineBreakMode="WordWrap"/>
+
+            <BoxView HeightRequest="1"
+                     Opacity="0.2"/>
+
+            <Label Text="Déjà un compte ?"/>
+            <Button Text="Se connecter"
+                    Clicked="OnGoToLoginClicked"/>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

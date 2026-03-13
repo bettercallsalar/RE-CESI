@@ -90,6 +90,86 @@ public sealed class ArticlesControllerTests
     }
 
     [Fact]
+    public async Task Create_ReturnsUnauthorized_WhenAuthorizationHeaderMissing()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        var controller = new ArticlesController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+
+        var result = await controller.Create(
+            new CreateArticleRequest("Title", null, "public", 2, "Body"),
+            CancellationToken.None);
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.NotNull(unauthorized.Value);
+        service.Verify(s => s.CreateAsync(It.IsAny<CreateArticleCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Create_ReturnsBadRequest_WhenServiceValidationFails()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.CreateAsync(It.IsAny<CreateArticleCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ValidationException("Content is required."));
+        tokenService.Setup(s => s.ValidateToken("jwt-token"))
+            .Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
+            .Returns("7");
+        var controller = new ArticlesController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+
+        var result = await controller.Create(
+            new CreateArticleRequest("Title", null, "public", 2, ""),
+            CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.NotNull(badRequest.Value);
+    }
+
+    [Fact]
+    public async Task Create_ParsesVisibilityCaseInsensitively()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.CreateAsync(It.IsAny<CreateArticleCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(11);
+        tokenService.Setup(s => s.ValidateToken("jwt-token"))
+            .Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
+            .Returns("7");
+        var controller = new ArticlesController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+
+        await controller.Create(
+            new CreateArticleRequest("Title", null, "PrIvAtE", 2, "Body"),
+            CancellationToken.None);
+
+        service.Verify(s => s.CreateAsync(
+            It.Is<CreateArticleCommand>(cmd => cmd.Visibility == ResourceVisibility.PRIVATE),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task Delete_ReturnsNoContent_WhenDeleted()
     {
         var service = new Mock<IArticleService>();
