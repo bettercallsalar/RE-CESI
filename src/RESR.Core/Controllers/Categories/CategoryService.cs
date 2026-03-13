@@ -13,8 +13,17 @@ public sealed class CategoryService : ICategoryService
 
     public Task<Category?> GetByIdAsync(int idCategory, CancellationToken ct) => _repo.GetByIdAsync(idCategory, ct);
 
-    public Task<AddToUserResult> AddToUserAsync(int idCategory, CancellationToken ct) =>
-        _repo.AddToUserAsync(idCategory, ct);
+    public Task<IReadOnlyList<Category>> GetFavoriteCategoriesAsync(int idUser, CancellationToken ct) =>
+        _repo.GetFavoriteCategoriesAsync(idUser, ct);
 
-    public Task<bool> RemoveFromUserAsync(int idCategory, CancellationToken ct) => _repo.RemoveFromUserAsync(idCategory, ct);
+    public async Task<AddToUserResult> AddToUserAsync(int idUser, int idCategory, CancellationToken ct)
+    {
+        if (await _repo.GetByIdAsync(idCategory, ct) is null)
+            return AddToUserResult.NotFound;
+
+        return await _repo.AddToUserAsync(idUser, idCategory, ct);
+    }
+
+    public Task<bool> RemoveFromUserAsync(int idUser, int idCategory, CancellationToken ct) =>
+        _repo.RemoveFromUserAsync(idUser, idCategory, ct);
 }

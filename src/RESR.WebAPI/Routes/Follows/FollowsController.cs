@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Follows;
@@ -88,10 +87,4 @@ public sealed class FollowsController : ControllerBase
 
     private static FollowUserResponse ToUserResponse(FollowUser user) =>
         new(user.IdUser, user.Username, user.FirstName);
-
-    private bool TryGetCurrentUserId(out int idUser)
-    {
-        var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        return int.TryParse(sub, out idUser);
-    }
 }

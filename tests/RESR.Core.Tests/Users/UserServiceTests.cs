@@ -1,8 +1,10 @@
 using Moq;
+using RESR.Core.Controllers.Departments.Ports;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
+using RESR.Models.Departments;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Core.Security.Tools;
@@ -30,7 +32,8 @@ public sealed class UserServiceTests
         repo.Setup(r => r.CountUsersAsync(It.IsAny<UserListingFilters>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
 
-        var service = new UserService(repo.Object, roleRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+        var departmentRepo = new Mock<IDepartmentRepository>();
+        var service = new UserService(repo.Object, roleRepo.Object, departmentRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
         var filters = new UserListingFilters(
             Keyword: "  key ",
             DepartmentIds: new List<int> { 1, 0, 1 },
@@ -64,7 +67,8 @@ public sealed class UserServiceTests
         repo.Setup(r => r.CountUsersAsync(It.IsAny<UserListingFilters>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
 
-        var service = new UserService(repo.Object, roleRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+        var departmentRepo = new Mock<IDepartmentRepository>();
+        var service = new UserService(repo.Object, roleRepo.Object, departmentRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
         var filters = new UserListingFilters(
             Keyword: "   ",
             DepartmentIds: new List<int> { 0, -2 },
@@ -94,7 +98,8 @@ public sealed class UserServiceTests
         var expected = BuildUser(idUser: 7);
         repo.Setup(r => r.GetByIdAsync(7, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
 
-        var service = new UserService(repo.Object, roleRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+        var departmentRepo = new Mock<IDepartmentRepository>();
+        var service = new UserService(repo.Object, roleRepo.Object, departmentRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
 
         var user = await service.GetByIdAsync(7, CancellationToken.None);
 
@@ -170,13 +175,15 @@ public sealed class UserServiceTests
     [Fact]
     public async Task RegisterAsync_CreatesUser_WithNormalizedInputs()
     {
-        var service = CreateService(out var repo, out var roles, out var factory, out var passwordHasher, out _);
+        var service = CreateService(out var repo, out var roles, out var departments, out var factory, out var passwordHasher, out _);
         repo.Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
         repo.Setup(r => r.GetByUsernameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
         roles.Setup(r => r.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Role { IdRole = 2, Name = "Role" });
+        departments.Setup(d => d.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Department { IdDepartment = 1, Name = "IT", Code = 10 });
 
         passwordHasher.Setup(p => p.HashPassword("pass")).Returns("hash");
 
@@ -187,7 +194,7 @@ public sealed class UserServiceTests
                 "User",
                 null,
                 null,
-                1,
+                It.Is<Department>(d => d.IdDepartment == 1 && d.Name == "IT" && d.Code == 10),
                 2))
             .Returns(BuildUser());
 
@@ -417,17 +424,29 @@ public sealed class UserServiceTests
     private static UserService CreateService(
         out Mock<IUserRepository> repo,
         out Mock<IRoleRepository> roleRepo,
+        out Mock<IDepartmentRepository> departmentRepo,
         out Mock<IUserFactory> factory,
         out Mock<IPasswordHasher> passwordHasher,
         out Mock<ITokenService> tokenService)
     {
         repo = new Mock<IUserRepository>();
         roleRepo = new Mock<IRoleRepository>();
+        departmentRepo = new Mock<IDepartmentRepository>();
         factory = new Mock<IUserFactory>();
         passwordHasher = new Mock<IPasswordHasher>();
         tokenService = new Mock<ITokenService>();
 
-        return new UserService(repo.Object, roleRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+        return new UserService(repo.Object, roleRepo.Object, departmentRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+    }
+
+    private static UserService CreateService(
+        out Mock<IUserRepository> repo,
+        out Mock<IRoleRepository> roleRepo,
+        out Mock<IUserFactory> factory,
+        out Mock<IPasswordHasher> passwordHasher,
+        out Mock<ITokenService> tokenService)
+    {
+        return CreateService(out repo, out roleRepo, out _, out factory, out passwordHasher, out tokenService);
     }
 
     private static RegisterUserCommand NewRegisterCommand(
@@ -458,7 +477,7 @@ public sealed class UserServiceTests
         Email = email,
         FirstName = firstName,
         HashedPassword = hashedPassword,
-        IdDepartment = idDepartment,
+        Department = new Department { IdDepartment = idDepartment, Name = $"Department {idDepartment}", Code = idDepartment * 10 },
         IdRole = idRole,
         IsVerified = isVerified,
         DeletedAt = deletedAt

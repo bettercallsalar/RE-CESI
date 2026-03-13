@@ -1,3 +1,4 @@
+using RESR.Models.Departments;
 using RESR.Models.Users;
 
 namespace RESR.Core.Controllers.Users.Factories;
@@ -11,7 +12,7 @@ public sealed class UserFactory : IUserFactory
         string firstName,
         DateOnly? birthDate,
         string? bio,
-        int idDepartment,
+        Department department,
         int idRole
     ) =>
         new()
@@ -22,7 +23,7 @@ public sealed class UserFactory : IUserFactory
             FirstName = firstName,
             BirthDate = birthDate,
             Bio = bio,
-            IdDepartment = idDepartment,
+            Department = department,
             IdRole = idRole,
             IsVerified = false,
             DeletedAt = null
@@ -38,7 +39,7 @@ public sealed class UserFactory : IUserFactory
         string? bio,
         bool isVerified,
         DateTime? deletedAt,
-        int idDepartment,
+        Department department,
         int idRole
     ) =>
         new()
@@ -52,7 +53,7 @@ public sealed class UserFactory : IUserFactory
             Bio = bio,
             IsVerified = isVerified,
             DeletedAt = deletedAt,
-            IdDepartment = idDepartment,
+            Department = department,
             IdRole = idRole
         };
 }

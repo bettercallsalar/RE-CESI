@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using RESR.Core.Security.Token;
@@ -35,18 +34,7 @@ public sealed class PermissionAuthorizationFilter : IAuthorizationFilter
         if (_requiredPermissions.Length == 0)
             return;
 
-        JwtSecurityToken parsedToken;
-        try
-        {
-            parsedToken = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
-        }
-        catch
-        {
-            context.Result = new UnauthorizedObjectResult("Invalid token or unauthorized access.");
-            return;
-        }
-
-        var userPermissions = parsedToken.Claims
+        var userPermissions = context.HttpContext.User.Claims
             .Where(c => string.Equals(c.Type, "permission", StringComparison.OrdinalIgnoreCase))
             .Select(c => c.Value)
             .Where(v => !string.IsNullOrWhiteSpace(v))

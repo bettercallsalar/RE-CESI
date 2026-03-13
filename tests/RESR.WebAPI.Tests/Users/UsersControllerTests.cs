@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using RESR.Core.Controllers.Users;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
+using RESR.Models.Departments;
 using RESR.Models.Users;
 using RESR.WebAPI.Routes.Users;
 
@@ -81,6 +84,20 @@ public sealed class UsersControllerTests
         service.Setup(s => s.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser());
 
         var result = await controller.GetById(1, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<UserResponse>(ok.Value);
+        Assert.Equal(1, response.IdUser);
+        Assert.Equal(1, response.Department.IdDepartment);
+    }
+
+    [Fact]
+    public async Task GetOwnProfile_ReturnsOk_WhenTokenUserExists()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser());
+
+        var result = await controller.GetOwnProfile(CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<UserResponse>(ok.Value);
@@ -224,9 +241,9 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task UpdateOwnProfile_ReturnsBadRequest_WhenNoFields()
     {
-        var controller = CreateController(out _);
+        var controller = CreateAuthenticatedController(out _);
 
-        var result = await controller.UpdateOwnProfile(1, new UpdateOwnProfileRequest(null, null, null, null, null, null), CancellationToken.None);
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest(null, null, null, null, null, null), CancellationToken.None);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -234,11 +251,11 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task UpdateOwnProfile_ReturnsOk_WhenSuccess()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildUser(username: "new"));
 
-        var result = await controller.UpdateOwnProfile(1, new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var response = Assert.IsType<UserResponse>(ok.Value);
@@ -246,13 +263,38 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task UpdateOwnProfile_UsesTokenUserId()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(username: "new"));
+
+        await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateUserCommand>(cmd => cmd.IdUser == 1 && cmd.Username == "new"),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateOwnProfile_ReturnsUnauthorized_WhenTokenMissing()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
     public async Task UpdateOwnProfile_ReturnsNotFound_WhenMissing()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotFoundException("Missing"));
 
-        var result = await controller.UpdateOwnProfile(1, new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
@@ -260,11 +302,11 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task UpdateOwnProfile_ReturnsBadRequest_WhenValidationFails()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ValidationException("Bad"));
 
-        var result = await controller.UpdateOwnProfile(1, new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
 
         Assert.IsType<BadRequestObjectResult>(result);
     }
@@ -272,11 +314,11 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task UpdateOwnProfile_ReturnsConflict_WhenConflict()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Conflict"));
 
-        var result = await controller.UpdateOwnProfile(1, new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
+        var result = await controller.UpdateOwnProfile(new UpdateOwnProfileRequest("new", null, null, null, null, null), CancellationToken.None);
 
         Assert.IsType<ConflictObjectResult>(result);
     }
@@ -284,10 +326,10 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task SoftDelete_ReturnsNoContent_WhenDeleted()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.SoftDeleteAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        var result = await controller.SoftDelete(1, CancellationToken.None);
+        var result = await controller.SoftDelete(CancellationToken.None);
 
         Assert.IsType<NoContentResult>(result);
     }
@@ -295,10 +337,10 @@ public sealed class UsersControllerTests
     [Fact]
     public async Task SoftDelete_ReturnsNotFound_WhenMissing()
     {
-        var controller = CreateController(out var service);
+        var controller = CreateAuthenticatedController(out var service);
         service.Setup(s => s.SoftDeleteAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
-        var result = await controller.SoftDelete(1, CancellationToken.None);
+        var result = await controller.SoftDelete(CancellationToken.None);
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -306,7 +348,25 @@ public sealed class UsersControllerTests
     private static UsersController CreateController(out Mock<IUserService> service)
     {
         service = new Mock<IUserService>();
-        return new UsersController(service.Object);
+        return new UsersController(service.Object, Mock.Of<ITokenService>());
+    }
+
+    private static UsersController CreateAuthenticatedController(out Mock<IUserService> service)
+    {
+        service = new Mock<IUserService>();
+        var tokenService = new Mock<ITokenService>();
+        tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("1");
+
+        var controller = new UsersController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+        return controller;
     }
 
     private static User BuildUser(
@@ -326,7 +386,7 @@ public sealed class UsersControllerTests
         Email = email,
         FirstName = firstName,
         IsVerified = isVerified,
-        IdDepartment = idDepartment,
+        Department = new Department { IdDepartment = idDepartment, Name = $"Department {idDepartment}", Code = idDepartment * 10 },
         IdRole = idRole,
         BirthDate = birthDate,
         Bio = bio,

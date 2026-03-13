@@ -1,3 +1,5 @@
+using RESR.Models.Departments;
+
 namespace RESR.Models.Users;
 
 public sealed class User
@@ -11,6 +13,6 @@ public sealed class User
     public required string HashedPassword { get; set; }
     public bool IsVerified { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
-    public required int IdDepartment { get; set; }
+    public required Department Department { get; set; }
     public required int IdRole { get; set; }
 }

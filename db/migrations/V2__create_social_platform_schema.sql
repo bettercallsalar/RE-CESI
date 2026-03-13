@@ -120,7 +120,7 @@ CREATE TABLE `resource` (
   `title` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci,
   `type` enum('article','event') COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_verified` bit(1) NOT NULL DEFAULT b'0',
+  `is_approved` tinyint(1) NOT NULL DEFAULT '0',
   `visibility` enum('public','private') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'public',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` datetime DEFAULT NULL,
@@ -140,7 +140,6 @@ CREATE TABLE `resource` (
 CREATE TABLE `article` (
   `id_article` int NOT NULL AUTO_INCREMENT,
   `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
-  `is_approved` tinyint(1) NOT NULL DEFAULT '0',
   `id_ressource` int NOT NULL,
   PRIMARY KEY (`id_article`),
   UNIQUE KEY `uq_article_resource` (`id_ressource`),
