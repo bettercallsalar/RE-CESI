@@ -1,9 +1,9 @@
-import { Box, Button, Flex, HStack, Link, Show, Stack, Text } from "@chakra-ui/react";
+import { Box, Collapse, Flex, HStack, IconButton, Link, Show, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
 interface SiteHeaderProps {
-  isAuthenticated?: boolean;
+  variant?: "public" | "authenticated";
 }
 
 function NavGlyph({ type }: { type: "chart" | "grid" | "user" }) {
@@ -55,9 +55,17 @@ function NavGlyph({ type }: { type: "chart" | "grid" | "user" }) {
   );
 }
 
-function HeaderLink({ label, glyph }: { label: string; glyph: "chart" | "grid" | "user" }) {
+function HeaderLink({
+  label,
+  glyph,
+  href
+}: {
+  label: string;
+  glyph: "chart" | "grid" | "user";
+  href: string;
+}) {
   return (
-    <Link _hover={{ textDecoration: "none", color: "brand.600" }} color="brand.500">
+    <Link _hover={{ textDecoration: "none", color: "brand.600" }} color="brand.500" href={href}>
       <HStack spacing={2}>
         <Text fontSize="11px" fontWeight="600">
           {label}
@@ -68,41 +76,64 @@ function HeaderLink({ label, glyph }: { label: string; glyph: "chart" | "grid" |
   );
 }
 
-export function SiteHeader({ isAuthenticated = false }: SiteHeaderProps) {
+export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
+  const { isOpen, onToggle } = useDisclosure();
+  const navigationItems =
+    variant === "authenticated"
+      ? [
+          { label: "Statistiques", glyph: "chart" as const, href: "/" },
+          { label: "Ressources", glyph: "grid" as const, href: "/" },
+          { label: "MonCompte", glyph: "user" as const, href: "/" }
+        ]
+      : [
+          { label: "Statistiques", glyph: "chart" as const, href: "/" },
+          { label: "Ressources", glyph: "grid" as const, href: "/" },
+          { label: "MonCompte", glyph: "user" as const, href: "/login" }
+        ];
+
   return (
-    <Flex align="start" justify="space-between" pb={6} pt={{ base: 4, md: 6 }}>
-      <GovernmentBrand />
+    <Box pb={6} pt={{ base: 4, md: 6 }}>
+      <Flex align="start" gap={3} justify="space-between">
+        <GovernmentBrand />
 
-      <Stack align="center" flex="1" px={{ base: 3, md: 10 }} spacing={1}>
-        <Text color="brand.500" fontSize={{ base: "14px", md: "18px" }} fontWeight="700" textAlign="center">
-          (RE) Sources Relationnelles
-        </Text>
-      </Stack>
+        <Stack align="center" flex="1" px={{ base: 1, sm: 4, md: 10 }} spacing={1}>
+          <Text color="brand.500" fontSize={{ base: "12px", sm: "14px", md: "18px" }} fontWeight="700" textAlign="center">
+            (RE) Sources Relationnelles
+          </Text>
+        </Stack>
 
-      <Box minW={{ base: "56px", md: "220px" }}>
-        <Show above="md">
-          {isAuthenticated ? (
+        <Box minW={{ base: "40px", md: "260px" }}>
+          <Show above="lg">
             <HStack justify="flex-end" spacing={5}>
-              <HeaderLink glyph="chart" label="Statistiques" />
-              <HeaderLink glyph="grid" label="Ressources" />
-              <HeaderLink glyph="user" label="MonCompte" />
+              {navigationItems.map((item) => (
+                <HeaderLink glyph={item.glyph} href={item.href} key={item.label} label={item.label} />
+              ))}
             </HStack>
-          ) : (
+          </Show>
+          <Show below="lg">
             <Flex justify="flex-end">
-              <Button aria-label="Menu" color="brand.500" minW="auto" variant="ghost">
-                <HamburgerIcon boxSize={6} />
-              </Button>
+              <IconButton
+                aria-label="Ouvrir le menu"
+                color="brand.500"
+                icon={<HamburgerIcon boxSize={6} />}
+                minW="auto"
+                onClick={onToggle}
+                variant="ghost"
+              />
             </Flex>
-          )}
-        </Show>
-        <Show below="md">
-          <Flex justify="flex-end">
-            <Button aria-label="Menu" color="brand.500" minW="auto" variant="ghost">
-              <HamburgerIcon boxSize={6} />
-            </Button>
-          </Flex>
-        </Show>
-      </Box>
-    </Flex>
+          </Show>
+        </Box>
+      </Flex>
+
+      <Show below="lg">
+        <Collapse animateOpacity in={isOpen}>
+          <Stack align="flex-end" pt={4} spacing={3}>
+            {navigationItems.map((item) => (
+              <HeaderLink glyph={item.glyph} href={item.href} key={item.label} label={item.label} />
+            ))}
+          </Stack>
+        </Collapse>
+      </Show>
+    </Box>
   );
 }
