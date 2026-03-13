@@ -146,7 +146,7 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
         if (authResult is not null)
             return authResult;
         if (req.Username is null && req.Email is null && req.FirstName is null && req.BirthDate is null && req.Bio is null && req.IdDepartment is null)
-            return BadRequest(new { message = "At least one field must be provided for update" });
+            return BadRequest(new { message = "Au moins un champ doit etre fourni pour la mise a jour." });
         try
         {
             User user = await _service.UpdateAsync(
@@ -157,6 +157,7 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
                     FirstName: req.FirstName,
                     BirthDate: req.BirthDate,
                     Bio: req.Bio,
+                    ClearBio: req.Bio is not null && string.IsNullOrWhiteSpace(req.Bio),
                     IdDepartment: req.IdDepartment
                     ),
                 ct

@@ -9,8 +9,20 @@ using RESR.Infrastructure;
 using RESR.WebAPI;
 
 var builder = WebApplication.CreateBuilder(args);
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddWebApiServices();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.AllowAnyHeader()
+              .AllowAnyMethod();
+
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins);
+    });
+});
 
 builder.Services.AddInfrastructure(builder.Configuration)
                 .AddCoreServices(builder.Configuration);
@@ -96,6 +108,7 @@ app.Use(async (context, next) =>
     }
 });
 
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -222,7 +222,7 @@ public sealed class MySqlUserRepository : IUserRepository
             username = COALESCE(@username, username),
             first_name = COALESCE(@first_name, first_name),
             birth_date = COALESCE(@birth_date, birth_date),
-            bio = COALESCE(@bio, bio),
+            bio = CASE WHEN @clear_bio THEN NULL ELSE COALESCE(@bio, bio) END,
             email = COALESCE(@email, email),
             id_department = COALESCE(@id_department, id_department),
             id_role = COALESCE(@id_role, id_role)
@@ -408,6 +408,7 @@ public sealed class MySqlUserRepository : IUserRepository
         AddParameter(cmd, "@first_name", (object?)user.FirstName ?? DBNull.Value);
         AddParameter(cmd, "@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         AddParameter(cmd, "@bio", (object?)user.Bio ?? DBNull.Value);
+        AddParameter(cmd, "@clear_bio", user.ClearBio);
         AddParameter(cmd, "@email", (object?)user.Email ?? DBNull.Value);
         AddParameter(cmd, "@id_department", (object?)user.IdDepartment ?? DBNull.Value);
         AddParameter(cmd, "@id_role", (object?)user.IdRole ?? DBNull.Value);

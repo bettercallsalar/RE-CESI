@@ -22,7 +22,7 @@ public sealed class UpdateUserRequestValidatorTests
         var validator = new UpdateUserRequestValidator();
         var request = new UpdateUserRequest(
             "u!",
-            "bad",
+            ".",
             "1",
             null,
             new string('a', 600),

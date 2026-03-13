@@ -30,7 +30,7 @@ public sealed class RegisterUserRequestValidatorTests
         var validator = new RegisterUserRequestValidator();
         var request = new RegisterUserRequest(
             "u!",
-            "bad",
+            ".",
             "short",
             "1",
             null,

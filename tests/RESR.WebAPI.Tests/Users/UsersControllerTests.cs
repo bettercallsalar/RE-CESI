@@ -278,6 +278,21 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task UpdateOwnProfile_SetsClearBio_WhenBioIsBlank()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.UpdateAsync(It.IsAny<UpdateUserCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser());
+
+        await controller.UpdateOwnProfile(new UpdateOwnProfileRequest(null, null, null, null, "   ", null), CancellationToken.None);
+
+        service.Verify(s => s.UpdateAsync(
+            It.Is<UpdateUserCommand>(cmd => cmd.IdUser == 1 && cmd.Bio == "   " && cmd.ClearBio),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task UpdateOwnProfile_ReturnsUnauthorized_WhenTokenMissing()
     {
         var controller = CreateController(out _);
