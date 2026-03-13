@@ -41,6 +41,10 @@ export const theme = extendTheme({
       body: {
         bg: "canvas.50",
         color: "ink.900"
+      },
+      "*:focus-visible": {
+        outline: "3px solid #726ce2",
+        outlineOffset: "2px"
       }
     }
   },
@@ -48,7 +52,9 @@ export const theme = extendTheme({
     Button: {
       baseStyle: {
         borderRadius: "2px",
-        fontWeight: "600"
+        fontWeight: "600",
+        minH: "44px",
+        px: 5
       },
       defaultProps: {
         colorScheme: "brand"
@@ -57,6 +63,11 @@ export const theme = extendTheme({
         solid: {
           bg: "brand.500",
           color: "white",
+          _disabled: {
+            bg: "brand.200",
+            color: "white",
+            opacity: 1
+          },
           _hover: {
             bg: "brand.600"
           }
@@ -80,13 +91,52 @@ export const theme = extendTheme({
     Input: {
       baseStyle: {
         field: {
-          borderRadius: "4px"
+          bg: "white",
+          borderColor: "blackAlpha.300",
+          borderRadius: "4px",
+          color: "ink.900",
+          minH: "48px",
+          fontSize: "16px",
+          _placeholder: {
+            color: "ink.400"
+          },
+          _hover: {
+            borderColor: "ink.400"
+          }
+        }
+      }
+    },
+    Select: {
+      baseStyle: {
+        field: {
+          bg: "white",
+          borderColor: "blackAlpha.300",
+          borderRadius: "4px",
+          color: "ink.900",
+          minH: "48px",
+          fontSize: "16px",
+          _hover: {
+            borderColor: "ink.400"
+          }
+        },
+        icon: {
+          color: "ink.700"
         }
       }
     },
     Textarea: {
       baseStyle: {
-        borderRadius: "4px"
+        borderRadius: "4px",
+        bg: "white",
+        borderColor: "blackAlpha.300",
+        color: "ink.900",
+        fontSize: "16px",
+        _placeholder: {
+          color: "ink.400"
+        },
+        _hover: {
+          borderColor: "ink.400"
+        }
       }
     }
   }

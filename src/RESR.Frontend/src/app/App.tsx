@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { HomePage } from "@/pages/HomePage";
 import { AppLoader } from "@/shared/ui/AppLoader";
 
@@ -23,11 +24,27 @@ function App() {
       window.history.replaceState({}, "", "/");
       setPathname("/");
     }
+    if (pathname === "/mon-compte" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
   }, [pathname, status]);
+
+  if (pathname === "/mon-compte") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de votre compte" />;
+    }
+
+    if (status === "authenticated") {
+      return <ProfilePage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
 
   if (pathname === "/login") {
     if (status === "loading") {
-      return <AppLoader label="Restoring your session" />;
+      return <AppLoader label="Restauration de votre session" />;
     }
 
     return <LoginPage />;

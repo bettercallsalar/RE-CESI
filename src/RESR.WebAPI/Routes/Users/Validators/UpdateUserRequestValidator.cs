@@ -14,8 +14,7 @@ public sealed class UpdateUserRequestValidator : AbstractValidator<UpdateUserReq
             .When(x => x.Username is not null);
 
         RuleFor(x => x.Email)
-            .EmailAddress()
-            .MaximumLength(255)
+            .ApplyOptionalEmailRules()
             .When(x => x.Email is not null);
 
         RuleFor(x => x.FirstName)

@@ -3,37 +3,33 @@ using RESR.Models.Users;
 
 namespace RESR.WebAPI.Routes.Users.Validators;
 
-public sealed class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>
+public sealed class UpdateOwnProfileRequestValidator : AbstractValidator<UpdateOwnProfileRequest>
 {
-    public RegisterUserRequestValidator()
+    public UpdateOwnProfileRequestValidator()
     {
         RuleFor(x => x.Username)
-            .NotEmpty()
             .MinimumLength(3)
             .MaximumLength(30)
             .Matches(@"^[a-zA-Z0-9_]+$")
-            .WithMessage("Username can contain only letters, numbers, and underscore.");
+            .When(x => x.Username is not null);
 
         RuleFor(x => x.Email)
-            .ApplyRequiredEmailRules();
-
-        RuleFor(x => x.Password)
-            .NotEmpty()
-            .MinimumLength(8)
-            .MaximumLength(100);
+            .ApplyOptionalEmailRules()
+            .When(x => x.Email is not null);
 
         RuleFor(x => x.FirstName)
-            .NotEmpty()
             .MinimumLength(2)
             .MaximumLength(100)
             .Matches(@"^[a-zA-ZÀ-ÿ'\\ -]+$")
-            .WithMessage("FirstName contains invalid characters.");
+            .WithMessage("FirstName contains invalid characters.")
+            .When(x => x.FirstName is not null);
 
         RuleFor(x => x.Bio)
             .MaximumLength(500)
             .When(x => x.Bio is not null);
 
         RuleFor(x => x.IdDepartment)
-            .GreaterThan(0);
+            .GreaterThan(0)
+            .When(x => x.IdDepartment.HasValue);
     }
 }

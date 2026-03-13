@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { LoginCredentials } from "@/features/auth/types/auth.types";
 import { getErrorMessage } from "@/shared/lib/errors/getErrorMessage";
+import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 
 const initialValues: LoginCredentials = {
   email: "",
@@ -27,6 +28,10 @@ export function useLoginForm() {
 
     try {
       await signIn(values);
+      flashMessageStorage.set({
+        type: "success",
+        message: "Connexion réussie."
+      });
     } catch (submitError) {
       setError(getErrorMessage(submitError));
     } finally {

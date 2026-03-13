@@ -39,6 +39,21 @@ class HttpClient {
     });
   }
 
+  async patch<T>(path: string, body?: unknown, options: Omit<RequestOptions, "method" | "body"> = {}) {
+    return this.request<T>(path, {
+      ...options,
+      method: "PATCH",
+      body
+    });
+  }
+
+  async delete<T>(path: string, options: Omit<RequestOptions, "method" | "body"> = {}) {
+    return this.request<T>(path, {
+      ...options,
+      method: "DELETE"
+    });
+  }
+
   private async request<T>(path: string, options: RequestOptions): Promise<T> {
     const headers = new Headers(options.headers);
     headers.set("Accept", "application/json");

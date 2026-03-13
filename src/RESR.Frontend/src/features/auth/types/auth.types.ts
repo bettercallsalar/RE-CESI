@@ -18,4 +18,5 @@ export interface AuthContextValue {
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signOut: () => void;
   refreshCurrentUser: () => Promise<void>;
+  setCurrentUser: (user: User) => void;
 }

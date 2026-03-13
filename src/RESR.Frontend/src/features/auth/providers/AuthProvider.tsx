@@ -82,6 +82,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setStatus("authenticated");
   }
 
+  function setCurrentUser(nextUser: User) {
+    setUser(nextUser);
+    setStatus("authenticated");
+  }
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
@@ -89,7 +94,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       signIn,
       signOut,
-      refreshCurrentUser
+      refreshCurrentUser,
+      setCurrentUser
     }),
     [status, token, user]
   );
