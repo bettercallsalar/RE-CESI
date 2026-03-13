@@ -179,7 +179,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.ApproveArticle)]
+    [AuthorizePermission(PermissionNames.ApproveEvent)]
     [HttpPatch("{idResource:int}/approval")]
     public async Task<ActionResult<EventResponse>> SetApproval(
         [FromRoute] int idResource,
