@@ -1,6 +1,7 @@
 import { Box, SimpleGrid, Text } from "@chakra-ui/react";
 import type { Article, Category } from "@/shared/types/article";
 import { ArticleCard } from "@/features/articles/components/ArticleCard";
+import type { ArticleCardAction } from "@/features/articles/components/ArticleCard";
 
 interface ArticlesGridProps {
   articles: Article[];
@@ -9,6 +10,7 @@ interface ArticlesGridProps {
   compact?: boolean;
   resolveHref?: (article: Article) => string;
   ctaLabel?: string;
+  resolveActions?: (article: Article) => ArticleCardAction[];
   showStatusBadges?: boolean;
 }
 
@@ -19,6 +21,7 @@ export function ArticlesGrid({
   compact = false,
   resolveHref,
   ctaLabel,
+  resolveActions,
   showStatusBadges = false
 }: ArticlesGridProps) {
   function getCategoryName(idCategory: number) {
@@ -43,6 +46,7 @@ export function ArticlesGrid({
           categoryName={getCategoryName(article.idCategory)}
           compact={compact}
           ctaLabel={ctaLabel}
+          actions={resolveActions?.(article)}
           href={resolveHref?.(article)}
           key={article.idResource}
           showStatusBadges={showStatusBadges}

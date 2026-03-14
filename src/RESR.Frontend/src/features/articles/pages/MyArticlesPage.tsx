@@ -106,9 +106,11 @@ export function MyArticlesPage() {
             articles={articles}
             categories={categories}
             emptyLabel="Aucun de vos articles ne correspond aux filtres sélectionnés."
-            resolveHref={(article) => `/articles/${article.idResource}/modifier`}
+            resolveActions={(article) => [
+              { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline" },
+              { href: `/articles/${article.idResource}/modifier`, label: "Modifier" }
+            ]}
             showStatusBadges
-            ctaLabel="Voir ou modifier"
           />
         )}
 

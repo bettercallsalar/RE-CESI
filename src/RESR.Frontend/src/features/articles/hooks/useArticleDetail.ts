@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { articlesService } from "@/features/articles/services/articles.service";
+import { ApiError } from "@/shared/api/httpClient";
 import type { Article, Category } from "@/shared/types/article";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
 
 export function useArticleDetail(idResource: number) {
-  const { status, user } = useAuth();
+  const { status, user, token } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,8 +20,20 @@ export function useArticleDetail(idResource: number) {
       setIsLoading(true);
 
       try {
+        const loadArticle = async () => {
+          try {
+            return await articlesService.getArticleById(idResource);
+          } catch (error) {
+            if (!(error instanceof ApiError) || error.status !== 404 || !token) {
+              throw error;
+            }
+
+            return articlesService.getOwnArticleById(token, idResource);
+          }
+        };
+
         const [articleResponse, categoriesResponse] = await Promise.all([
-          articlesService.getArticleById(idResource),
+          loadArticle(),
           articlesService.getCategories()
         ]);
 
@@ -47,7 +60,7 @@ export function useArticleDetail(idResource: number) {
     return () => {
       cancelled = true;
     };
-  }, [idResource]);
+  }, [idResource, token]);
 
   const categoryName = useMemo(
     () => categories.find((category) => category.idCategory === article?.idCategory)?.name,

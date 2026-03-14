@@ -1,7 +1,14 @@
-import { Badge, Box, Card, CardBody, HStack, Heading, Image, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, HStack, Heading, Image, Stack, Text } from "@chakra-ui/react";
 import { getPrimaryArticleImage, stripHtml } from "@/features/articles/lib/articleContent";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
+import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import type { Article } from "@/shared/types/article";
+
+export interface ArticleCardAction {
+  href: string;
+  label: string;
+  variant?: "solid" | "outline";
+}
 
 interface ArticleCardProps {
   article: Article;
@@ -9,6 +16,7 @@ interface ArticleCardProps {
   compact?: boolean;
   href?: string;
   ctaLabel?: string;
+  actions?: ArticleCardAction[];
   showStatusBadges?: boolean;
 }
 
@@ -34,17 +42,19 @@ export function ArticleCard({
   compact = false,
   href = `/articles/${article.idResource}`,
   ctaLabel = "Lire l'article",
+  actions,
   showStatusBadges = false
 }: ArticleCardProps) {
   const firstImage = getPrimaryArticleImage(article);
   const coverImageSrc = firstImage ? getResourceFileUrl(firstImage.path) : "/article-placeholder.svg";
   const visibilityLabel = article.visibility === "PUBLIC" ? "Public" : "Privé";
   const approvalLabel = article.isApproved ? "Validé" : "En attente";
+  const isLinkedCard = !actions?.length;
 
   return (
     <Card
-      as="a"
-      href={href}
+      as={isLinkedCard ? "a" : undefined}
+      href={isLinkedCard ? href : undefined}
       bg="white"
       border="1px solid"
       borderColor="canvas.200"
@@ -98,9 +108,24 @@ export function ArticleCard({
             {getExcerpt(article)}
           </Text>
 
-          <Text color="brand.500" fontSize={{ base: "14px", md: "15px" }} fontWeight="700" mt="auto">
-            {ctaLabel}
-          </Text>
+          {actions?.length ? (
+            <HStack mt="auto" spacing={3}>
+              {actions.map((action) => (
+                <Button
+                  key={action.href}
+                  onClick={() => navigateTo(action.href)}
+                  size="sm"
+                  variant={action.variant ?? "outline"}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </HStack>
+          ) : (
+            <Text color="brand.500" fontSize={{ base: "14px", md: "15px" }} fontWeight="700" mt="auto">
+              {ctaLabel}
+            </Text>
+          )}
         </Stack>
       </CardBody>
     </Card>
