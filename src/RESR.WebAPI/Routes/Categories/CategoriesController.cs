@@ -39,7 +39,7 @@ public sealed class CategoriesController : AuthenticatedResourceControllerBase
     [HttpGet("favoriteCategory")]
     public async Task<ActionResult<IReadOnlyList<CategoryResponse>>> GetFavoriteCategories(CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -51,7 +51,7 @@ public sealed class CategoriesController : AuthenticatedResourceControllerBase
     [HttpPost("{idCategory:int}/favoriteCategory")]
     public async Task<ActionResult> AddToUser([FromRoute] int idCategory, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -69,7 +69,7 @@ public sealed class CategoriesController : AuthenticatedResourceControllerBase
     [HttpDelete("{idCategory:int}/favoriteCategory")]
     public async Task<ActionResult> RemoveFromUser([FromRoute] int idCategory, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 

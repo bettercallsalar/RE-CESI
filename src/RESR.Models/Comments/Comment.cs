@@ -9,5 +9,7 @@ public sealed class Comment
     public DateTime? DeletedAt { get; set; }
     public int IdResource { get; set; }
     public int IdUser { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
     public int? IdParentComment { get; set; }
 }

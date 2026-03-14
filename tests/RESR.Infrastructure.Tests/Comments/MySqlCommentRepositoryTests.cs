@@ -23,8 +23,8 @@ public sealed class MySqlCommentRepositoryTests
     public async Task GetByResourceIdAsync_ReturnsComments()
     {
         var table = CreateCommentTable(
-            Row(1, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, null),
-            Row(2, "Reply", new DateTime(2026, 3, 11, 12, 5, 0), null, new DateTime(2026, 3, 11, 13, 0, 0), 4, 3, 1)
+            Row(1, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, "user2", "User Two", null),
+            Row(2, "Reply", new DateTime(2026, 3, 11, 12, 5, 0), null, new DateTime(2026, 3, 11, 13, 0, 0), 4, 3, "user3", "User Three", 1)
         );
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
@@ -32,6 +32,8 @@ public sealed class MySqlCommentRepositoryTests
         var comments = await repo.GetByResourceIdAsync(4, CancellationToken.None);
 
         Assert.Equal(2, comments.Count);
+        Assert.Equal("user2", comments[0].Username);
+        Assert.Equal("User Two", comments[0].FirstName);
         Assert.Equal(1, comments[1].IdParentComment);
         Assert.NotNull(comments[1].DeletedAt);
     }
@@ -39,7 +41,7 @@ public sealed class MySqlCommentRepositoryTests
     [Fact]
     public async Task GetByIdAsync_ReturnsComment_WhenFound()
     {
-        var table = CreateCommentTable(Row(3, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, 1));
+        var table = CreateCommentTable(Row(3, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, "user2", "User Two", 1));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -47,6 +49,8 @@ public sealed class MySqlCommentRepositoryTests
 
         Assert.NotNull(comment);
         Assert.Equal(3, comment!.IdComment);
+        Assert.Equal("user2", comment.Username);
+        Assert.Equal("User Two", comment.FirstName);
         Assert.Equal(1, comment.IdParentComment);
     }
 
@@ -55,7 +59,7 @@ public sealed class MySqlCommentRepositoryTests
     {
         var insertCommentCmd = ScalarCommand(12);
         var insertReplyCmd = NonQueryCommand(1);
-        var selectCmd = ReaderCommand(CreateCommentTable(Row(12, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, 1)));
+        var selectCmd = ReaderCommand(CreateCommentTable(Row(12, "Hello", new DateTime(2026, 3, 11, 12, 0, 0), null, null, 4, 2, "user2", "User Two", 1)));
         var repo = CreateRepo(insertCommentCmd, insertReplyCmd, selectCmd);
 
         var result = await repo.CreateAsync(new RESR.Models.Comments.Comment
@@ -74,7 +78,7 @@ public sealed class MySqlCommentRepositoryTests
     public async Task UpdateContentAsync_UpdatesAndReturnsComment()
     {
         var updateCmd = NonQueryCommand(1);
-        var selectCmd = ReaderCommand(CreateCommentTable(Row(5, "Updated", new DateTime(2026, 3, 11, 12, 0, 0), new DateTime(2026, 3, 11, 12, 1, 0), null, 4, 2, null)));
+        var selectCmd = ReaderCommand(CreateCommentTable(Row(5, "Updated", new DateTime(2026, 3, 11, 12, 0, 0), new DateTime(2026, 3, 11, 12, 1, 0), null, 4, 2, "user2", "User Two", null)));
         var repo = CreateRepo(updateCmd, selectCmd);
 
         var result = await repo.UpdateContentAsync(5, "Updated", CancellationToken.None);
@@ -133,6 +137,8 @@ public sealed class MySqlCommentRepositoryTests
         table.Columns.Add("deleted_at", typeof(DateTime));
         table.Columns.Add("id_ressource", typeof(int));
         table.Columns.Add("id_user", typeof(int));
+        table.Columns.Add("username", typeof(string));
+        table.Columns.Add("first_name", typeof(string));
         table.Columns.Add("id_parent_comment", typeof(int));
 
         foreach (var row in rows)
@@ -149,6 +155,8 @@ public sealed class MySqlCommentRepositoryTests
         DateTime? deletedAt,
         int idResource,
         int idUser,
+        string username,
+        string firstName,
         int? idParentComment)
     {
         return new object?[]
@@ -160,6 +168,8 @@ public sealed class MySqlCommentRepositoryTests
             deletedAt,
             idResource,
             idUser,
+            username,
+            firstName,
             idParentComment
         };
     }

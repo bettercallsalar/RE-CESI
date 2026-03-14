@@ -22,3 +22,12 @@ export interface ProfilePageData {
   user: User;
   departments: Department[];
 }
+
+export interface PublicUserProfile {
+  idUser: number;
+  username: string;
+  firstName: string;
+  bio: string | null;
+  isVerified: boolean;
+  department: Department;
+}

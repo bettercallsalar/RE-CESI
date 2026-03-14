@@ -12,6 +12,15 @@ export interface User {
   birthDate: string | null;
   bio: string | null;
   isVerified: boolean;
+  isBanned: boolean;
   department: Department;
   idRole: number;
+}
+
+export interface PaginatedUsersResponse {
+  items: User[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }

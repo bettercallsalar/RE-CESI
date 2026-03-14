@@ -12,6 +12,7 @@ namespace RESR.Core.Controllers.Users;
 
 public sealed class UserService : IUserService
 {
+    private const int StandardUserRoleId = 1;
     private readonly IUserRepository _repo;
     private readonly IRoleRepository _roleRepository;
     private readonly IDepartmentRepository _departmentRepository;
@@ -44,6 +45,20 @@ public sealed class UserService : IUserService
         int totalCount = await _repo.CountUsersAsync(normalizedFilters, ct);
         return (users, totalCount);
     }
+
+    public async Task<(IReadOnlyList<User> Users, int TotalCount)> GetManageableUsersPaginatedAsync(int page, int pageSize, UserListingFilters filters, CancellationToken ct)
+    {
+        UserListingFilters normalizedFilters = NormalizeListingFilters(filters) with
+        {
+            RoleIds = new[] { StandardUserRoleId },
+            IncludeDeleted = false
+        };
+
+        IReadOnlyList<User> users = await _repo.GetUsersPaginatedAsync(page, pageSize, normalizedFilters, ct);
+        int totalCount = await _repo.CountUsersAsync(normalizedFilters, ct);
+        return (users, totalCount);
+    }
+
     public Task<User?> GetByIdAsync(int idUser, CancellationToken ct) => _repo.GetByIdAsync(idUser, ct);
 
     public async Task<int?> RegisterAsync(RegisterUserCommand cmd, CancellationToken ct)
@@ -143,6 +158,9 @@ public sealed class UserService : IUserService
         if (user.DeletedAt is not null)
             throw new ValidationException("Le compte utilisateur est supprime.");
 
+        if (user.IsBanned)
+            throw new ValidationException("Le compte utilisateur est banni.");
+
         if (user.IsVerified == cmd.IsVerified)
             return user;
 
@@ -150,6 +168,23 @@ public sealed class UserService : IUserService
     }
 
     public Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct) => _repo.SoftDeleteAsync(idUser, ct);
+
+    public async Task SetManageableUserBanStatusAsync(int idUser, bool isBanned, CancellationToken ct)
+    {
+        var user = await _repo.GetByIdAsync(idUser, ct);
+        if (user is null || user.IdRole != StandardUserRoleId)
+            throw new NotFoundException($"User {idUser} not found.");
+
+        if (user.IsBanned == isBanned)
+            return;
+
+        await _repo.SetBannedAsync(idUser, isBanned, ct);
+    }
+
+    public async Task BanManageableUserAsync(int idUser, CancellationToken ct)
+    {
+        await SetManageableUserBanStatusAsync(idUser, true, ct);
+    }
 
     public async Task<string?> LoginUserAsync(Login loginDto, CancellationToken ct)
     {
@@ -161,6 +196,7 @@ public sealed class UserService : IUserService
             throw new InvalidOperationException("Adresse e-mail ou mot de passe invalide.");
         if (!user.IsVerified) throw new InvalidOperationException("L'adresse e-mail du compte n'est pas verifiee.");
         if (user.DeletedAt is not null) throw new InvalidOperationException("Le compte utilisateur est supprime.");
+        if (user.IsBanned) throw new InvalidOperationException("Le compte utilisateur est banni.");
 
         IReadOnlyList<Permission> permissions = await _roleRepository.GetPermissionsByRoleIdAsync(user.IdRole, ct);
 

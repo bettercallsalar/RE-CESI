@@ -15,6 +15,11 @@ export interface AuthContextValue {
   status: AuthStatus;
   token: string | null;
   user: User | null;
+  roleId: number | null;
+  isSuperAdmin: boolean;
+  permissions: string[];
+  canAccessAdminDashboard: boolean;
+  hasPermission: (permission: string) => boolean;
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signOut: () => void;
   refreshCurrentUser: () => Promise<void>;

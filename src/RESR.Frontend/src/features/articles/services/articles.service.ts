@@ -1,4 +1,5 @@
 import { httpClient } from "@/shared/api/httpClient";
+import { buildQueryString } from "@/shared/lib/http/buildQueryString";
 import type { Article, Category, PaginatedResponse } from "@/shared/types/article";
 import type { CreateArticlePayload, UpdateArticlePayload } from "@/features/articles/types/article.types";
 
@@ -14,61 +15,24 @@ interface ArticleQuery {
   createdTo?: string;
 }
 
-function buildQuery(query: ArticleQuery) {
-  const params = new URLSearchParams();
-
-  if (query.page) {
-    params.set("page", String(query.page));
-  }
-
-  if (query.pageSize) {
-    params.set("pageSize", String(query.pageSize));
-  }
-
-  if (query.keyword) {
-    params.set("keyword", query.keyword);
-  }
-
-  if (query.idCategory) {
-    params.set("idCategory", String(query.idCategory));
-  }
-
-  if (query.idUser) {
-    params.set("idUser", String(query.idUser));
-  }
-
-  if (query.visibility) {
-    params.set("visibility", query.visibility);
-  }
-
-  if (query.isApproved !== undefined) {
-    params.set("isApproved", String(query.isApproved));
-  }
-
-  if (query.createdFrom) {
-    params.set("createdFrom", query.createdFrom);
-  }
-
-  if (query.createdTo) {
-    params.set("createdTo", query.createdTo);
-  }
-
-  const raw = params.toString();
-  return raw ? `?${raw}` : "";
-}
-
 export const articlesService = {
   getPublicArticles(query: ArticleQuery = {}) {
-    return httpClient.get<PaginatedResponse<Article>>(`/api/articles${buildQuery(query)}`);
+    return httpClient.get<PaginatedResponse<Article>>(`/api/articles${buildQueryString(query)}`);
+  },
+  getPendingArticles(token: string, query: ArticleQuery = {}) {
+    return httpClient.get<PaginatedResponse<Article>>(`/api/articles/approval/pending${buildQueryString(query)}`, { token });
   },
   getArticleById(idResource: number) {
     return httpClient.get<Article>(`/api/articles/${idResource}`);
+  },
+  getApprovalArticleById(token: string, idResource: number) {
+    return httpClient.get<Article>(`/api/articles/approval/${idResource}`, { token });
   },
   getOwnArticleById(token: string, idResource: number) {
     return httpClient.get<Article>(`/api/articles/me/${idResource}`, { token });
   },
   getOwnArticles(token: string, idUser: number, query: ArticleQuery = {}) {
-    return httpClient.get<PaginatedResponse<Article>>(`/api/articles/${idUser}/my-articles${buildQuery(query)}`, { token });
+    return httpClient.get<PaginatedResponse<Article>>(`/api/articles/${idUser}/my-articles${buildQueryString(query)}`, { token });
   },
   getCategories() {
     return httpClient.get<Category[]>("/api/categories");
@@ -78,6 +42,9 @@ export const articlesService = {
   },
   updateArticle(token: string, idResource: number, payload: UpdateArticlePayload) {
     return httpClient.patch<Article>(`/api/articles/${idResource}`, toArticleFormData(payload), { token });
+  },
+  setArticleApproval(token: string, idResource: number, isApproved: boolean) {
+    return httpClient.patch<Article>(`/api/articles/${idResource}/approval`, { isApproved }, { token });
   },
   deleteArticle(token: string, idResource: number) {
     return httpClient.delete<void>(`/api/articles/${idResource}`, { token });

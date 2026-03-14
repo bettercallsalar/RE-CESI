@@ -2,17 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { eventsService } from "@/features/events/services/events.service";
 import { ApiError } from "@/shared/api/httpClient";
+import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import type { Category } from "@/shared/types/article";
 import type { Event } from "@/shared/types/event";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
-import { createErrorMessage, createWarningMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
+import { createErrorMessage, createSuccessMessage, createWarningMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
 
 export function useEventDetail(idResource: number) {
-  const { status, user, token } = useAuth();
+  const { status, user, token, hasPermission } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
+  const canApproveEvent = hasPermission(PermissionNames.approveEvent);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,6 +31,16 @@ export function useEventDetail(idResource: number) {
           } catch (error) {
             if (!(error instanceof ApiError) || error.status !== 404 || !token) {
               throw error;
+            }
+
+            if (canApproveEvent) {
+              try {
+                return await eventsService.getApprovalEventById(token, idResource);
+              } catch (approvalError) {
+                if (!(approvalError instanceof ApiError) || approvalError.status !== 404) {
+                  throw approvalError;
+                }
+              }
             }
 
             return eventsService.getOwnEventById(token, idResource);
@@ -69,7 +82,36 @@ export function useEventDetail(idResource: number) {
     return () => {
       cancelled = true;
     };
-  }, [idResource, token]);
+  }, [canApproveEvent, idResource, token]);
+
+  async function setEventApproval(nextIsApproved: boolean) {
+    if (!token || !event || event.deletedAt || event.isApproved === nextIsApproved || !canApproveEvent) {
+      return false;
+    }
+
+    setIsUpdatingApproval(true);
+
+    try {
+      const updatedEvent = await eventsService.setEventApproval(token, event.idResource, nextIsApproved);
+      setEvent(updatedEvent);
+
+      showFormMessage(
+        setMessage,
+        createSuccessMessage(
+          nextIsApproved
+            ? "L'evenement a ete approuve et devient maintenant visible publiquement."
+            : "L'evenement a ete desapprouve et n'apparait plus parmi les events publics."
+        )
+      );
+
+      return true;
+    } catch (approvalError) {
+      showFormMessage(setMessage, createErrorMessage(approvalError, "Approbation impossible"));
+      return false;
+    } finally {
+      setIsUpdatingApproval(false);
+    }
+  }
 
   const categoryName = useMemo(
     () => categories.find((category) => category.idCategory === event?.idCategory)?.name,
@@ -80,7 +122,11 @@ export function useEventDetail(idResource: number) {
     event,
     categoryName,
     isLoading,
+    isUpdatingApproval,
     message,
-    canEdit: status === "authenticated" && user?.idUser === event?.idUser && !event?.deletedAt
+    canEdit: status === "authenticated" && user?.idUser === event?.idUser && !event?.deletedAt,
+    canApprove: status === "authenticated" && canApproveEvent && !event?.deletedAt,
+    approveEvent: () => setEventApproval(true),
+    unapproveEvent: () => setEventApproval(false)
   };
 }

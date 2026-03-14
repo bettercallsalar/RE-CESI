@@ -8,6 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { useRef } from "react";
 import { FiCalendar } from "react-icons/fi";
+import { AppIcon } from "@/shared/ui/icons/AppIcon";
 
 interface DatePickerFieldProps {
   label: string;
@@ -51,10 +52,10 @@ export function DatePickerField({
             border="1px solid"
             borderColor="canvas.200"
             borderRadius="12px"
-            boxSize="44px"
+            boxSize="48px"
             color="brand.500"
-            icon={<FiCalendar size="22px" strokeWidth={1.75} />}
-            minW="44px"
+            icon={<AppIcon color="brand.500" icon={FiCalendar} size="lg" />}
+            minW="48px"
             onClick={openPicker}
             size="md"
             variant="ghost"
@@ -66,7 +67,7 @@ export function DatePickerField({
           max={max}
           min={min}
           onChange={(event) => onChange(event.target.value)}
-          pl="72px"
+          pl="76px"
           ref={inputRef}
           sx={{
             "&::-webkit-calendar-picker-indicator": {
