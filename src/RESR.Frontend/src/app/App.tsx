@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { RolePermissionsPage } from "@/features/admin/pages/RolePermissionsPage";
+import { RolesManagementPage } from "@/features/admin/pages/RolesManagementPage";
+import { SuperAdminAccessDeniedPage } from "@/features/admin/pages/SuperAdminAccessDeniedPage";
 import { ArticleDetailPage } from "@/features/articles/pages/ArticleDetailPage";
 import { ArticlesPage } from "@/features/articles/pages/ArticlesPage";
 import { CreateArticlePage } from "@/features/articles/pages/CreateArticlePage";
@@ -16,8 +19,9 @@ import { HomePage } from "@/pages/HomePage";
 import { AppLoader } from "@/shared/ui/AppLoader";
 
 function App() {
-  const { status } = useAuth();
+  const { isSuperAdmin, status } = useAuth();
   const [pathname, setPathname] = useState(() => window.location.pathname);
+  const adminRoleDetailMatch = pathname.match(/^\/admin\/roles\/(\d+)$/);
   const articleDetailMatch = pathname.match(/^\/articles\/(\d+)$/);
   const articleEditMatch = pathname.match(/^\/articles\/(\d+)\/modifier$/);
   const eventDetailMatch = pathname.match(/^\/events\/(\d+)$/);
@@ -58,6 +62,14 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
+    if (pathname === "/admin/roles" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (adminRoleDetailMatch && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
     if (articleEditMatch && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
@@ -66,7 +78,39 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
-  }, [articleEditMatch, eventEditMatch, pathname, status]);
+  }, [adminRoleDetailMatch, articleEditMatch, eventEditMatch, pathname, status]);
+
+  if (pathname === "/admin/roles") {
+    if (status === "loading") {
+      return <AppLoader label="Verification de votre session SuperAdmin" />;
+    }
+
+    if (status === "authenticated" && isSuperAdmin) {
+      return <RolesManagementPage />;
+    }
+
+    if (status === "authenticated") {
+      return <SuperAdminAccessDeniedPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (adminRoleDetailMatch) {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de la gestion des permissions" />;
+    }
+
+    if (status === "authenticated" && isSuperAdmin) {
+      return <RolePermissionsPage idRole={Number(adminRoleDetailMatch[1])} />;
+    }
+
+    if (status === "authenticated") {
+      return <SuperAdminAccessDeniedPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
 
   if (pathname === "/mon-compte") {
     if (status === "loading") {

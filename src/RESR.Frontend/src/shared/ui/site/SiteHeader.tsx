@@ -17,7 +17,7 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import type { IconType } from "react-icons";
-import { FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiUser } from "react-icons/fi";
+import { FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiShield, FiUser } from "react-icons/fi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
@@ -48,12 +48,19 @@ function getUserLabel(firstName?: string, username?: string) {
   return firstName?.trim() || username?.trim() || "Mon compte";
 }
 
-function UserMenu({ label }: { label: string }) {
-  const items: NavLinkItem[] = [
-    { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
-    { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-    { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
-  ];
+function UserMenu({ isSuperAdmin, label }: { isSuperAdmin: boolean; label: string }) {
+  const items: NavLinkItem[] = isSuperAdmin
+    ? [
+        { label: "Administration", icon: FiShield, href: "/admin/roles" },
+        { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+      ]
+    : [
+        { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+      ];
 
   return (
     <Menu>
@@ -84,6 +91,7 @@ function UserMenu({ label }: { label: string }) {
             as="a"
             _focus={{ bg: "canvas.100", color: "ink.800" }}
             _hover={{ bg: "canvas.100", color: "ink.800" }}
+            alignItems="center"
             bg="white"
             borderRadius="10px"
             color="brand.500"
@@ -91,9 +99,10 @@ function UserMenu({ label }: { label: string }) {
             fontWeight="600"
             href={item.href}
             key={item.label}
+            minH="52px"
           >
-            <HStack spacing={3}>
-              <Icon as={item.icon} boxSize={5.5} color="brand.500" flexShrink={0} strokeWidth={1.75} />
+            <HStack align="center" spacing={3}>
+              <Icon as={item.icon} boxSize="20px" color="brand.500" flexShrink={0} strokeWidth={1.9} />
               <Text>{item.label}</Text>
             </HStack>
           </MenuItem>
@@ -104,9 +113,11 @@ function UserMenu({ label }: { label: string }) {
 }
 
 function MobileNavigation({
+  isSuperAdmin,
   variant,
   userLabel
 }: {
+  isSuperAdmin: boolean;
   variant: "public" | "authenticated";
   userLabel: string;
 }) {
@@ -117,17 +128,25 @@ function MobileNavigation({
     { label: "Events", icon: FiCalendar, href: "/events" },
     { label: "Mon compte", icon: FiUser, href: "/login" }
   ];
-  const userItems: NavLinkItem[] = [
-    { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
-    { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-    { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+  const userItems: NavLinkItem[] = isSuperAdmin
+    ? [
+        { label: "Administration", icon: FiShield, href: "/admin/roles" },
+        { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+      ]
+    : [
+        { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+      ];
+  const authenticatedItems: NavLinkItem[] = [
+    { label: "Accueil", icon: FiHome, href: "/" },
+    { label: "Articles", icon: FiFileText, href: "/articles" },
+    { label: "Events", icon: FiCalendar, href: "/events" }
   ];
   const topLevelItems: NavLinkItem[] = variant === "authenticated"
-    ? [
-        { label: "Accueil", icon: FiHome, href: "/" },
-        { label: "Articles", icon: FiFileText, href: "/articles" },
-        { label: "Events", icon: FiCalendar, href: "/events" }
-      ]
+    ? authenticatedItems
     : publicItems;
 
   return (
@@ -169,7 +188,7 @@ function MobileNavigation({
 
 export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const { isOpen, onToggle } = useDisclosure();
-  const { user } = useAuth();
+  const { isSuperAdmin, user } = useAuth();
   const userLabel = getUserLabel(user?.firstName, user?.username);
   const publicItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
@@ -200,7 +219,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
               {(variant === "authenticated" ? authenticatedItems : publicItems).map((item) => (
                 <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
-              {variant === "authenticated" ? <UserMenu label={userLabel} /> : null}
+              {variant === "authenticated" ? <UserMenu isSuperAdmin={isSuperAdmin} label={userLabel} /> : null}
             </HStack>
           </Show>
           <Show below="lg">
@@ -221,7 +240,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
 
       <Show below="lg">
         <Collapse animateOpacity in={isOpen}>
-          <MobileNavigation userLabel={userLabel} variant={variant} />
+          <MobileNavigation isSuperAdmin={isSuperAdmin} userLabel={userLabel} variant={variant} />
         </Collapse>
       </Show>
     </Box>

@@ -41,6 +41,21 @@ function translateKnownMessage(message: string) {
     return `Le role ${match?.[1]} n'existe pas.`;
   }
 
+  if (/^Permission (\d+) not found\.?$/.test(message)) {
+    const match = message.match(/^Permission (\d+) not found\.?$/);
+    return `La permission ${match?.[1]} est introuvable.`;
+  }
+
+  if (/^Permission (\d+) is already assigned to role (\d+)\.?$/.test(message)) {
+    const match = message.match(/^Permission (\d+) is already assigned to role (\d+)\.?$/);
+    return `La permission ${match?.[1]} est deja attribuee au role ${match?.[2]}.`;
+  }
+
+  if (/^Permission (\d+) is not assigned to role (\d+)\.?$/.test(message)) {
+    const match = message.match(/^Permission (\d+) is not assigned to role (\d+)\.?$/);
+    return `La permission ${match?.[1]} n'est pas attribuee au role ${match?.[2]}.`;
+  }
+
   if (/^User (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^User (\d+) not found\.?$/);
     return `Utilisateur ${match?.[1]} introuvable.`;
@@ -61,6 +76,10 @@ function translateKnownMessage(message: string) {
 
 export function getErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return "Acces reserve au SuperAdmin.";
+    }
+
     return translateKnownMessage(error.message);
   }
 

@@ -15,6 +15,8 @@ export interface AuthContextValue {
   status: AuthStatus;
   token: string | null;
   user: User | null;
+  roleId: number | null;
+  isSuperAdmin: boolean;
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signOut: () => void;
   refreshCurrentUser: () => Promise<void>;

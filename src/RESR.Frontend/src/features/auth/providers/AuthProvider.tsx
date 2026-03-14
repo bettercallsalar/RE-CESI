@@ -3,6 +3,7 @@ import { tokenStorage } from "@/shared/lib/storage/tokenStorage";
 import type { User } from "@/shared/types/user";
 import { authService } from "@/features/auth/services/auth.service";
 import type { AuthContextValue, AuthStatus, LoginCredentials } from "@/features/auth/types/auth.types";
+import { getAuthTokenClaims, isSuperAdminToken } from "@/shared/lib/auth/tokenClaims";
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -87,17 +88,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setStatus("authenticated");
   }
 
+  const { roleId } = getAuthTokenClaims(token);
+  const isSuperAdmin = isSuperAdminToken(token);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
       token,
       user,
+      roleId,
+      isSuperAdmin,
       signIn,
       signOut,
       refreshCurrentUser,
       setCurrentUser
     }),
-    [status, token, user]
+    [isSuperAdmin, roleId, status, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
