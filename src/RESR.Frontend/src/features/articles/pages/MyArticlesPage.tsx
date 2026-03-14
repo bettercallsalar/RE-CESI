@@ -160,19 +160,18 @@ export function MyArticlesPage() {
             resolveActions={(article) =>
               article.deletedAt
                 ? [
-                    { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline", span: 1 },
+                    { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline" },
                     {
                       label: "Article supprimé",
                       variant: "solid",
                       tone: "dangerSoft",
-                      isDisabled: true,
-                      span: 2
+                      isDisabled: true
                     }
                   ]
                 : [
-                    { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline", span: 1 },
-                    { href: `/articles/${article.idResource}/modifier`, label: "Modifier", span: 1 },
-                    { label: "Supprimer", onClick: () => openDeleteDialog(article), tone: "danger", span: 1 }
+                    { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline" },
+                    { href: `/articles/${article.idResource}/modifier`, label: "Modifier" },
+                    { label: "Supprimer", onClick: () => openDeleteDialog(article), tone: "danger" }
                   ]
             }
             showStatusBadges
