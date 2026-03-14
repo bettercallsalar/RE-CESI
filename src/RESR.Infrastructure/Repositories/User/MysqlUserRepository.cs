@@ -38,6 +38,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -71,6 +72,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -104,6 +106,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -138,6 +141,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -189,8 +193,8 @@ public sealed class MySqlUserRepository : IUserRepository
     public async Task<int> CreateAsync(User user, CancellationToken ct)
     {
         const string sql = """
-        INSERT INTO `user` (username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role)
-        VALUES (@username, @first_name, @birth_date, @bio, @email, @hashed_password, @is_verified, @deleted_at, @id_department, @id_role);
+        INSERT INTO `user` (username, first_name, birth_date, bio, email, hashed_password, is_verified, is_banned, deleted_at, id_department, id_role)
+        VALUES (@username, @first_name, @birth_date, @bio, @email, @hashed_password, @is_verified, @is_banned, @deleted_at, @id_department, @id_role);
         SELECT LAST_INSERT_ID();
         """;
 
@@ -206,6 +210,7 @@ public sealed class MySqlUserRepository : IUserRepository
         AddParameter(cmd, "@email", user.Email);
         AddParameter(cmd, "@hashed_password", user.HashedPassword);
         AddParameter(cmd, "@is_verified", user.IsVerified);
+        AddParameter(cmd, "@is_banned", user.IsBanned);
         AddParameter(cmd, "@deleted_at", (object?)user.DeletedAt ?? DBNull.Value);
         AddParameter(cmd, "@id_department", user.Department.IdDepartment);
         AddParameter(cmd, "@id_role", user.IdRole);
@@ -239,6 +244,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -307,6 +313,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,
@@ -324,6 +331,57 @@ public sealed class MySqlUserRepository : IUserRepository
         updateCmd.CommandText = updateSql;
         AddParameter(updateCmd, "@id_user", idUser);
         AddParameter(updateCmd, "@is_verified", isVerified);
+
+        var rows = await updateCmd.ExecuteNonQueryAsync(ct);
+        if (rows == 0)
+            throw new InvalidOperationException("User not found");
+
+        await using var selectCmd = conn.CreateCommand();
+        selectCmd.CommandText = selectSql;
+        AddParameter(selectCmd, "@id_user", idUser);
+
+        await using var reader = await selectCmd.ExecuteReaderAsync(ct);
+        return await reader.ReadAsync(ct)
+            ? Map(reader)
+            : throw new InvalidOperationException("User not found");
+    }
+
+    public async Task<User> SetBannedAsync(int idUser, bool isBanned, CancellationToken ct)
+    {
+        const string updateSql = """
+        UPDATE `user`
+        SET is_banned = @is_banned
+        WHERE id_user = @id_user AND deleted_at IS NULL
+        """;
+
+        const string selectSql = """
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.is_banned,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.id_user = @id_user AND u.deleted_at IS NULL
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var updateCmd = conn.CreateCommand();
+        updateCmd.CommandText = updateSql;
+        AddParameter(updateCmd, "@id_user", idUser);
+        AddParameter(updateCmd, "@is_banned", isBanned);
 
         var rows = await updateCmd.ExecuteNonQueryAsync(ct);
         if (rows == 0)
@@ -361,6 +419,7 @@ public sealed class MySqlUserRepository : IUserRepository
             birthDate,
             reader["bio"] == DBNull.Value ? null : Convert.ToString(reader["bio"]),
             Convert.ToBoolean(reader["is_verified"]),
+            Convert.ToBoolean(reader["is_banned"]),
             reader["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["deleted_at"]),
             MapDepartment(reader),
             Convert.ToInt32(reader["id_role"])
@@ -379,6 +438,7 @@ public sealed class MySqlUserRepository : IUserRepository
             u.email,
             u.hashed_password,
             u.is_verified,
+            u.is_banned,
             u.deleted_at,
             u.id_department,
             u.id_role,

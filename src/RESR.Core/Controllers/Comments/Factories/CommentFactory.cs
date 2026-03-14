@@ -26,6 +26,8 @@ public sealed class CommentFactory : ICommentFactory
         DateTime? deletedAt,
         int idResource,
         int idUser,
+        string? username,
+        string? firstName,
         int? idParentComment
     ) =>
         new()
@@ -37,6 +39,8 @@ public sealed class CommentFactory : ICommentFactory
             DeletedAt = deletedAt,
             IdResource = idResource,
             IdUser = idUser,
+            Username = username ?? string.Empty,
+            FirstName = firstName ?? string.Empty,
             IdParentComment = idParentComment
         };
 }

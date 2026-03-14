@@ -7,6 +7,7 @@ using RESR.Models.Roles;
 using RESR.Models.Users;
 using RESR.Models.Categories;
 using RESR.Models.Marks;
+using RESR.Models.Resources;
 
 namespace RESR.Models.Tests;
 
@@ -25,6 +26,7 @@ public sealed class ModelsTests
             BirthDate = new DateOnly(2000, 1, 1),
             Bio = "bio",
             IsVerified = true,
+            IsBanned = true,
             DeletedAt = DateTime.UtcNow,
             Department = new Department { IdDepartment = 1, Name = "IT", Code = 10 },
             IdRole = 2
@@ -38,6 +40,7 @@ public sealed class ModelsTests
         Assert.Equal(new DateOnly(2000, 1, 1), user.BirthDate);
         Assert.Equal("bio", user.Bio);
         Assert.True(user.IsVerified);
+        Assert.True(user.IsBanned);
         Assert.NotNull(user.DeletedAt);
         Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal(2, user.IdRole);
@@ -141,6 +144,8 @@ public sealed class ModelsTests
             DeletedAt = null,
             IdResource = 9,
             IdUser = 3,
+            Username = "alice",
+            FirstName = "Alice",
             IdParentComment = 1
         };
 
@@ -148,6 +153,8 @@ public sealed class ModelsTests
         Assert.Equal("Hello", comment.Content);
         Assert.Equal(9, comment.IdResource);
         Assert.Equal(3, comment.IdUser);
+        Assert.Equal("alice", comment.Username);
+        Assert.Equal("Alice", comment.FirstName);
         Assert.Equal(1, comment.IdParentComment);
     }
 
@@ -179,7 +186,8 @@ public sealed class ModelsTests
         var update = new UpdateUserRequest("u", "e", "f", null, "b", 1, 2);
         var updateOwn = new UpdateOwnProfileRequest("u", "e", "f", null, "b", 1);
         var verification = new SetUserVerificationRequest(true);
-        var response = new UserResponse(1, "u", "e", "f", null, "b", true, new Department { IdDepartment = 1, Name = "IT", Code = 10 }, 2);
+        var ban = new SetUserBanRequest(true);
+        var response = new UserResponse(1, "u", "e", "f", null, "b", true, false, new Department { IdDepartment = 1, Name = "IT", Code = 10 }, 2);
         var paginated = new PaginatedUsersResponse(new List<UserResponse> { response }, 1, 10, 1, 1);
         var filters = new UserListingFilters("k", new List<int> { 1 }, new List<int> { 2 }, null, true, false);
         var login = new Login("e", "p");
@@ -188,6 +196,7 @@ public sealed class ModelsTests
         Assert.Equal("e", update.Email);
         Assert.Equal("f", updateOwn.FirstName);
         Assert.True(verification.IsVerified);
+        Assert.True(ban.IsBanned);
         Assert.Equal(1, response.IdUser);
         Assert.Single(paginated.Items);
         Assert.Equal("k", filters.Keyword);
@@ -222,6 +231,7 @@ public sealed class ModelsTests
             new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc),
             10,
             2,
+            new ResourceAuthorResponse(2, "alice", "Alice"),
             1
         );
 
@@ -232,6 +242,8 @@ public sealed class ModelsTests
         Assert.Equal(new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc), response.DeletedAt);
         Assert.Equal(10, response.IdResource);
         Assert.Equal(2, response.IdUser);
+        Assert.Equal("alice", response.Author.Username);
+        Assert.Equal("Alice", response.Author.FirstName);
         Assert.Equal(1, response.IdParentComment);
     }
 
@@ -289,7 +301,7 @@ public sealed class ModelsTests
     [Fact]
     public void UserResponse_ExposesAllProperties()
     {
-        var response = new UserResponse(10, "user", "user@example.com", "User", new DateOnly(1999, 12, 31), "bio", false, new Department { IdDepartment = 3, Name = "HR", Code = 20 }, 4);
+        var response = new UserResponse(10, "user", "user@example.com", "User", new DateOnly(1999, 12, 31), "bio", false, true, new Department { IdDepartment = 3, Name = "HR", Code = 20 }, 4);
 
         Assert.Equal(10, response.IdUser);
         Assert.Equal("user", response.Username);
@@ -298,6 +310,7 @@ public sealed class ModelsTests
         Assert.Equal(new DateOnly(1999, 12, 31), response.BirthDate);
         Assert.Equal("bio", response.Bio);
         Assert.False(response.IsVerified);
+        Assert.True(response.IsBanned);
         Assert.Equal(3, response.Department.IdDepartment);
         Assert.Equal(4, response.IdRole);
     }

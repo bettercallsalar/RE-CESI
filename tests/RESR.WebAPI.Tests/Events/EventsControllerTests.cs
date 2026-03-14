@@ -92,6 +92,60 @@ public sealed class EventsControllerTests
     }
 
     [Fact]
+    public async Task GetPendingApprovalEvents_ReturnsOnlyPendingFilters()
+    {
+        var service = new Mock<IEventService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<EventListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Event>(), 0));
+        var controller = new EventsController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetPendingApprovalEvents(ct: CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        service.Verify(s => s.GetPaginatedAsync(
+            1,
+            20,
+            It.Is<EventListingFilters>(filters =>
+                filters.Visibility == null &&
+                filters.IsApproved == false &&
+                filters.IncludeDeleted == false),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetByResourceIdForApproval_ReturnsOk_ForUnapprovedPrivateEvent()
+    {
+        var service = new Mock<IEventService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Event
+            {
+                IdResource = 6,
+                IdEvent = 2,
+                Title = "Forum",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                IdUser = 1,
+                IdCategory = 2,
+                IsApproved = false,
+                StartDate = new DateTime(2026, 4, 1),
+                Department = new Department { IdDepartment = 75, Name = "Department 75", Code = 750 }
+            });
+        var controller = new EventsController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetByResourceIdForApproval(6, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<EventResponse>(ok.Value);
+        Assert.False(response.IsApproved);
+        Assert.Equal("PRIVATE", response.Visibility);
+    }
+
+    [Fact]
     public async Task Create_ReturnsCreatedAtAction_WhenValid()
     {
         var service = new Mock<IEventService>();
@@ -226,6 +280,34 @@ public sealed class EventsControllerTests
         Assert.True(response.IsApproved);
         Assert.Equal(75, response.Department!.IdDepartment);
         Assert.Equal("User 1", response.Author.FirstName);
+    }
+
+    [Fact]
+    public async Task GetByResourceIdForApproval_ReturnsNotFound_WhenEventIsDeleted()
+    {
+        var service = new Mock<IEventService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Event
+            {
+                IdResource = 6,
+                IdEvent = 2,
+                Title = "Forum",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                DeletedAt = DateTime.UtcNow,
+                IdUser = 1,
+                IdCategory = 2,
+                IsApproved = false,
+                StartDate = new DateTime(2026, 4, 1),
+                Department = new Department { IdDepartment = 75, Name = "Department 75", Code = 750 }
+            });
+        var controller = new EventsController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetByResourceIdForApproval(6, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     private static Mock<IUserRepository> CreateUserRepository()

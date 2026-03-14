@@ -15,7 +15,7 @@ public sealed class RolesController : ControllerBase
 
     public RolesController(IRoleService service) => _service = service;
 
-    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoleResponse>>> GetAll(CancellationToken ct)
     {
@@ -31,7 +31,7 @@ public sealed class RolesController : ControllerBase
         return Ok(responses);
     }
 
-    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpGet("{idRole:int}")]
     public async Task<ActionResult<RoleResponse>> GetById([FromRoute] int idRole, CancellationToken ct)
     {
@@ -44,7 +44,7 @@ public sealed class RolesController : ControllerBase
         return Ok(ToResponse(role, permissions));
     }
 
-    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpGet("{idRole:int}/permissions")]
     public async Task<ActionResult<IReadOnlyList<PermissionResponse>>> GetRolePermissions([FromRoute] int idRole, CancellationToken ct)
     {
@@ -56,7 +56,7 @@ public sealed class RolesController : ControllerBase
         return Ok(permissions.Select(p => new PermissionResponse(p.IdPermission, p.Name, p.Description)).ToList());
     }
 
-    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpPost("{idRole:int}/permissions/{idPermission:int}")]
     public async Task<ActionResult> AddPermissionToRole([FromRoute] int idRole, [FromRoute] int idPermission, CancellationToken ct)
     {
@@ -75,7 +75,7 @@ public sealed class RolesController : ControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.ManageRoles)]
+    [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpDelete("{idRole:int}/permissions/{idPermission:int}")]
     public async Task<ActionResult> RemovePermissionFromRole([FromRoute] int idRole, [FromRoute] int idPermission, CancellationToken ct)
     {

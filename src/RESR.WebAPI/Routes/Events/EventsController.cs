@@ -110,7 +110,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpGet("me/{idResource:int}")]
     public async Task<ActionResult<EventResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -119,6 +119,54 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             return NotFound();
         if (@event.IdUser != idUser)
             return Forbid();
+
+        return Ok(await ToResponseAsync(@event, ct));
+    }
+
+    [AuthorizePermission(PermissionNames.ApproveEvent)]
+    [HttpGet("approval/pending")]
+    public async Task<ActionResult<PaginatedEventsResponse>> GetPendingApprovalEvents(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] int? idUser = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] int? idDepartment = null,
+        [FromQuery] DateTime? startFrom = null,
+        [FromQuery] DateTime? startTo = null,
+        CancellationToken ct = default)
+    {
+        if (page <= 0 || pageSize <= 0 || idUser is <= 0 || idCategory is <= 0 || idDepartment is <= 0)
+            return BadRequest(new { message = "Page, PageSize, IdUser, IdCategory and IdDepartment must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new EventListingFilters(
+            Keyword: keyword,
+            Visibility: null,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IdDepartment: idDepartment,
+            IsApproved: false,
+            StartFrom: startFrom,
+            StartTo: startTo,
+            IncludeDeleted: false
+        );
+
+        var (events, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = await ToResponsesAsync(events, ct);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
+    }
+
+    [AuthorizePermission(PermissionNames.ApproveEvent)]
+    [HttpGet("approval/{idResource:int}")]
+    public async Task<ActionResult<EventResponse>> GetByResourceIdForApproval([FromRoute] int idResource, CancellationToken ct)
+    {
+        var @event = await _service.GetByResourceIdAsync(idResource, ct);
+
+        if (@event is null || @event.DeletedAt is not null || @event.IsApproved)
+            return NotFound();
 
         return Ok(await ToResponseAsync(@event, ct));
     }
@@ -136,7 +184,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     public async Task<ActionResult> Create([FromForm] CreateEventFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -174,7 +222,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         [FromForm] UpdateEventFormRequest req,
         CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -223,7 +271,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 

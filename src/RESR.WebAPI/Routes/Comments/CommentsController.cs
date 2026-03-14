@@ -3,6 +3,7 @@ using RESR.Core.Controllers.Comments;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Comments;
+using RESR.Models.Resources;
 using RESR.WebAPI.Security;
 
 namespace RESR.WebAPI.Routes.Comments;
@@ -55,7 +56,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
     [HttpPost("resources/{idResource:int}")]
     public async Task<ActionResult<CommentResponse>> Create([FromRoute] int idResource, [FromBody] CreateCommentRequest req, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        var (authResult, currentUserId) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -82,7 +83,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
     [HttpPatch("{idComment:int}")]
     public async Task<ActionResult<CommentResponse>> Update([FromRoute] int idComment, [FromBody] UpdateCommentRequest req, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        var (authResult, currentUserId) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -112,7 +113,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
     [HttpDelete("{idComment:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idComment, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        var (authResult, currentUserId) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -139,7 +140,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
     [HttpDelete("moderation/{idComment:int}")]
     public async Task<ActionResult> DeleteForModeration([FromRoute] int idComment, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var currentUserId);
+        var (authResult, currentUserId) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -171,6 +172,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
             comment.DeletedAt,
             comment.IdResource,
             comment.IdUser,
+            new ResourceAuthorResponse(comment.IdUser, comment.Username, comment.FirstName),
             comment.IdParentComment
         );
 }

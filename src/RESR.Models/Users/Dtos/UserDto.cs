@@ -35,6 +35,10 @@ public sealed record SetUserVerificationRequest(
     bool IsVerified
 );
 
+public sealed record SetUserBanRequest(
+    bool IsBanned
+);
+
 public sealed record UserResponse(
     int IdUser,
     string Username,
@@ -43,6 +47,7 @@ public sealed record UserResponse(
     DateOnly? BirthDate,
     string? Bio,
     bool IsVerified,
+    bool IsBanned,
     Department Department,
     int IdRole
 );

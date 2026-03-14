@@ -32,6 +32,7 @@ public sealed class UserFactoryTests
         Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal(2, user.IdRole);
         Assert.False(user.IsVerified);
+        Assert.False(user.IsBanned);
         Assert.Null(user.DeletedAt);
     }
 
@@ -50,6 +51,7 @@ public sealed class UserFactoryTests
             new DateOnly(2000, 1, 1),
             null,
             true,
+            true,
             deletedAt,
             new Department { IdDepartment = 3, Name = "HR", Code = 20 },
             4
@@ -61,6 +63,7 @@ public sealed class UserFactoryTests
         Assert.Equal("hash", user.HashedPassword);
         Assert.Equal("User", user.FirstName);
         Assert.True(user.IsVerified);
+        Assert.True(user.IsBanned);
         Assert.Equal(deletedAt, user.DeletedAt);
         Assert.Equal(3, user.Department.IdDepartment);
         Assert.Equal(4, user.IdRole);
