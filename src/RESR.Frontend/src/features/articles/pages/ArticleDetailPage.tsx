@@ -10,6 +10,7 @@ import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
 import { ConfirmationDialog } from "@/shared/ui/feedback/ConfirmationDialog";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { ResourceReactions } from "@/shared/ui/reactions/ResourceReactions";
 
 interface ArticleDetailPageProps {
   idResource: number;
@@ -113,13 +114,16 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 </Text>
               ) : null}
 
-              <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
-                <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Publication proposee par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}{" "}
-                  <Link color="brand.500" fontWeight="700" href={getUserProfileHref(article.idUser)}>
-                    Voir son profil
-                  </Link>
-                </Text>
+              <HStack align={{ base: "stretch", lg: "center" }} flexWrap="wrap" justify="space-between" spacing={4}>
+                <Stack flex="1" minW={{ base: "100%", lg: "0" }} spacing={2}>
+                  <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
+                    Publication proposee par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}{" "}
+                    <Link color="brand.500" fontWeight="700" href={getUserProfileHref(article.idUser)}>
+                      Voir son profil
+                    </Link>
+                  </Text>
+                  {!article.deletedAt ? <ResourceReactions idResource={article.idResource} /> : null}
+                </Stack>
 
                 <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
                   {canApprove && !article.isApproved ? (

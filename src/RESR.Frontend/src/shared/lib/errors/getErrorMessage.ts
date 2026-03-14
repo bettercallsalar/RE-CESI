@@ -15,6 +15,7 @@ const directTranslations: Record<string, string> = {
   "Invalid token or unauthorized access.": "Jeton invalide ou acces non autorise.",
   "Invalid token or missing subject claim.": "Jeton invalide ou identifiant utilisateur manquant.",
   "A user cannot follow themselves": "Vous ne pouvez pas vous suivre vous-meme.",
+  "User already reacted to this resource": "Vous avez deja une reaction sur cette ressource.",
   "Title is required.": "Le titre est obligatoire.",
   "The request payload is invalid.": "Les donnees envoyees sont invalides.",
   "The Content field is required.": "Le contenu est obligatoire.",
@@ -102,6 +103,11 @@ function translateKnownMessage(message: string) {
   if (/^Resource (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^Resource (\d+) not found\.?$/);
     return `La ressource ${match?.[1]} est introuvable.`;
+  }
+
+  if (/^Reaction (\d+) not found\.?$/.test(message)) {
+    const match = message.match(/^Reaction (\d+) not found\.?$/);
+    return `La reaction ${match?.[1]} est introuvable.`;
   }
 
   return message;
