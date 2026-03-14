@@ -1,5 +1,6 @@
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Profile;
 
@@ -7,7 +8,7 @@ namespace RESR.MAUI;
 
 public partial class AppShell : Shell
 {
-	public AppShell(HomePage homePage)
+	public AppShell(MainPage mainPage)
 	{
 		InitializeComponent();
 
@@ -15,12 +16,14 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
 		Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage));
 		Routing.RegisterRoute(nameof(CreateArticlePage), typeof(CreateArticlePage));
+		Routing.RegisterRoute(nameof(ArticlesPage), typeof(ArticlesPage));
+		Routing.RegisterRoute(nameof(EventsPage), typeof(EventsPage));
 
 		Items.Add(new ShellContent
 		{
-			Title = "Accueil",
-			Route = nameof(HomePage),
-			Content = homePage
+			Title = "Ressources",
+			Route = nameof(MainPage),
+			Content = mainPage
 		});
 	}
 }

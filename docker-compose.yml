@@ -65,6 +65,7 @@ services:
     ports:
       - "${API_PORT}:8080"
     volumes:
+      - ./Directory.Build.props:/work/Directory.Build.props:ro
       - ./src:/work/src
       - ./tests:/work/tests
       - nuget_cache:/root/.nuget/packages

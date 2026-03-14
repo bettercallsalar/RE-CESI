@@ -1,8 +1,10 @@
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Devices;
 using RESR.MAUI.Services;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Profile;
 
@@ -15,6 +17,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -23,34 +26,24 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<AppShell>();
 		builder.Services.AddTransient<HomePage>();
+		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
 		builder.Services.AddTransient<ProfilePage>();
 		builder.Services.AddTransient<CreateArticlePage>();
+		builder.Services.AddTransient<ArticlesPage>();
+		builder.Services.AddTransient<EventsPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
-
-		var baseAddress = DeviceInfo.Platform == DevicePlatform.Android
-			? new Uri("http://10.0.2.2:8080/")
-			: new Uri("http://localhost:8080/");
+		var apiBaseAddress = ResolveApiBaseAddress();
 
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
 		{
-			httpClient.BaseAddress = baseAddress;
+			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
-		builder.Services.AddHttpClient<IDepartmentsApiClient, DepartmentsApiClient>(httpClient =>
+		builder.Services.AddHttpClient<IResourcesApiClient, ResourcesApiClient>(httpClient =>
 		{
-			httpClient.BaseAddress = baseAddress;
-			httpClient.Timeout = TimeSpan.FromSeconds(10);
-		});
-		builder.Services.AddHttpClient<ICategoriesApiClient, CategoriesApiClient>(httpClient =>
-		{
-			httpClient.BaseAddress = baseAddress;
-			httpClient.Timeout = TimeSpan.FromSeconds(10);
-		});
-		builder.Services.AddHttpClient<IArticlesApiClient, ArticlesApiClient>(httpClient =>
-		{
-			httpClient.BaseAddress = baseAddress;
+			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
 
@@ -59,6 +52,15 @@ public static class MauiProgram
 #endif
 
 		return builder.Build();
+	}
+
+	private static Uri ResolveApiBaseAddress()
+	{
+		var host = DeviceInfo.Current.Platform == DevicePlatform.Android
+			? "10.0.2.2"
+			: "localhost";
+
+		return new Uri($"http://{host}:8080/");
 	}
 }
 
