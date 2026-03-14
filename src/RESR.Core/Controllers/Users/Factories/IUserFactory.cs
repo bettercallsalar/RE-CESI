@@ -25,6 +25,7 @@ public interface IUserFactory
         DateOnly? birthDate,
         string? bio,
         bool isVerified,
+        bool isBanned,
         DateTime? deletedAt,
         Department department,
         int idRole

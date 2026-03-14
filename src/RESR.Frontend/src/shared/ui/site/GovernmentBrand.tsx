@@ -11,25 +11,25 @@ export function GovernmentBrand() {
       <Stack align="start" spacing={{ base: 2, md: 2.5 }}>
         <Image
           alt="République Française"
-          h={{ base: "34px", sm: "40px", md: "48px" }}
+          h={{ base: "28px", sm: "38px", md: "48px" }}
           objectFit="contain"
           src="/logo_fr.png"
-          w={{ base: "82px", sm: "96px", md: "112px" }}
+          w={{ base: "68px", sm: "92px", md: "112px" }}
         />
         <Box color="ink.900">
           <Text
-            fontSize={{ base: "10px", sm: "11px", md: "12px" }}
+            fontSize={{ base: "8px", sm: "11px", md: "12px" }}
             fontWeight="700"
             letterSpacing="0.03em"
             lineHeight="1.05"
-            maxW={{ base: "116px", sm: "132px", md: "148px" }}
+            maxW={{ base: "96px", sm: "132px", md: "148px" }}
             textTransform="uppercase">
             Ministère des Solidarités et de la Santé
           </Text>
           <Text
             color="ink.500"
             fontFamily="Georgia, serif"
-            fontSize={{ base: "10px", sm: "11px", md: "12px" }}
+            fontSize={{ base: "8px", sm: "11px", md: "12px" }}
             fontStyle="italic"
             lineHeight="1.2"
             mt={1}>

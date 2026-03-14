@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { articlesService } from "@/features/articles/services/articles.service";
 import { ApiError } from "@/shared/api/httpClient";
+import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import type { Article, Category } from "@/shared/types/article";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
-import { createErrorMessage, createWarningMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
+import { createErrorMessage, createSuccessMessage, createWarningMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
 
 export function useArticleDetail(idResource: number) {
-  const { status, user, token } = useAuth();
+  const { status, user, token, hasPermission } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
+  const canApproveArticle = hasPermission(PermissionNames.approveArticle);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,6 +30,16 @@ export function useArticleDetail(idResource: number) {
           } catch (error) {
             if (!(error instanceof ApiError) || error.status !== 404 || !token) {
               throw error;
+            }
+
+            if (canApproveArticle) {
+              try {
+                return await articlesService.getApprovalArticleById(token, idResource);
+              } catch (approvalError) {
+                if (!(approvalError instanceof ApiError) || approvalError.status !== 404) {
+                  throw approvalError;
+                }
+              }
             }
 
             return articlesService.getOwnArticleById(token, idResource);
@@ -69,7 +82,36 @@ export function useArticleDetail(idResource: number) {
     return () => {
       cancelled = true;
     };
-  }, [idResource, token]);
+  }, [canApproveArticle, idResource, token]);
+
+  async function setArticleApproval(nextIsApproved: boolean) {
+    if (!token || !article || article.deletedAt || article.isApproved === nextIsApproved || !canApproveArticle) {
+      return false;
+    }
+
+    setIsUpdatingApproval(true);
+
+    try {
+      const updatedArticle = await articlesService.setArticleApproval(token, article.idResource, nextIsApproved);
+      setArticle(updatedArticle);
+
+      showFormMessage(
+        setMessage,
+        createSuccessMessage(
+          nextIsApproved
+            ? "L'article a ete approuve et devient maintenant visible publiquement."
+            : "L'article a ete desapprouve et n'apparait plus parmi les articles publics."
+        )
+      );
+
+      return true;
+    } catch (approvalError) {
+      showFormMessage(setMessage, createErrorMessage(approvalError, "Approbation impossible"));
+      return false;
+    } finally {
+      setIsUpdatingApproval(false);
+    }
+  }
 
   const categoryName = useMemo(
     () => categories.find((category) => category.idCategory === article?.idCategory)?.name,
@@ -80,7 +122,11 @@ export function useArticleDetail(idResource: number) {
     article,
     categoryName,
     isLoading,
+    isUpdatingApproval,
     message,
-    canEdit: status === "authenticated" && user?.idUser === article?.idUser && !article?.deletedAt
+    canEdit: status === "authenticated" && user?.idUser === article?.idUser && !article?.deletedAt,
+    canApprove: status === "authenticated" && canApproveArticle && !article?.deletedAt,
+    approveArticle: () => setArticleApproval(true),
+    unapproveArticle: () => setArticleApproval(false)
   };
 }

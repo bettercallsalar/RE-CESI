@@ -1,4 +1,5 @@
 import { httpClient } from "@/shared/api/httpClient";
+import { buildQueryString } from "@/shared/lib/http/buildQueryString";
 import type { CreateEventPayload, UpdateEventPayload } from "@/features/events/types/event.types";
 import type { Category } from "@/shared/types/article";
 import type { Event, EventPaginatedResponse } from "@/shared/types/event";
@@ -17,65 +18,24 @@ interface EventQuery {
   startTo?: string;
 }
 
-function buildQuery(query: EventQuery) {
-  const params = new URLSearchParams();
-
-  if (query.page) {
-    params.set("page", String(query.page));
-  }
-
-  if (query.pageSize) {
-    params.set("pageSize", String(query.pageSize));
-  }
-
-  if (query.keyword) {
-    params.set("keyword", query.keyword);
-  }
-
-  if (query.idCategory) {
-    params.set("idCategory", String(query.idCategory));
-  }
-
-  if (query.idDepartment) {
-    params.set("idDepartment", String(query.idDepartment));
-  }
-
-  if (query.idUser) {
-    params.set("idUser", String(query.idUser));
-  }
-
-  if (query.visibility) {
-    params.set("visibility", query.visibility);
-  }
-
-  if (query.isApproved !== undefined) {
-    params.set("isApproved", String(query.isApproved));
-  }
-
-  if (query.startFrom) {
-    params.set("startFrom", query.startFrom);
-  }
-
-  if (query.startTo) {
-    params.set("startTo", query.startTo);
-  }
-
-  const raw = params.toString();
-  return raw ? `?${raw}` : "";
-}
-
 export const eventsService = {
   getPublicEvents(query: EventQuery = {}) {
-    return httpClient.get<EventPaginatedResponse>(`/api/events${buildQuery(query)}`);
+    return httpClient.get<EventPaginatedResponse>(`/api/events${buildQueryString(query)}`);
+  },
+  getPendingEvents(token: string, query: EventQuery = {}) {
+    return httpClient.get<EventPaginatedResponse>(`/api/events/approval/pending${buildQueryString(query)}`, { token });
   },
   getEventById(idResource: number) {
     return httpClient.get<Event>(`/api/events/${idResource}`);
+  },
+  getApprovalEventById(token: string, idResource: number) {
+    return httpClient.get<Event>(`/api/events/approval/${idResource}`, { token });
   },
   getOwnEventById(token: string, idResource: number) {
     return httpClient.get<Event>(`/api/events/me/${idResource}`, { token });
   },
   getOwnEvents(token: string, idUser: number, query: EventQuery = {}) {
-    return httpClient.get<EventPaginatedResponse>(`/api/events/${idUser}/my-events${buildQuery(query)}`, { token });
+    return httpClient.get<EventPaginatedResponse>(`/api/events/${idUser}/my-events${buildQueryString(query)}`, { token });
   },
   getCategories() {
     return httpClient.get<Category[]>("/api/categories");
@@ -88,6 +48,9 @@ export const eventsService = {
   },
   updateEvent(token: string, idResource: number, payload: UpdateEventPayload) {
     return httpClient.patch<Event>(`/api/events/${idResource}`, toEventFormData(payload), { token });
+  },
+  setEventApproval(token: string, idResource: number, isApproved: boolean) {
+    return httpClient.patch<Event>(`/api/events/${idResource}/approval`, { isApproved }, { token });
   },
   deleteEvent(token: string, idResource: number) {
     return httpClient.delete<void>(`/api/events/${idResource}`, { token });

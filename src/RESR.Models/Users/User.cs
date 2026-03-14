@@ -12,6 +12,7 @@ public sealed class User
     public required string Email { get; set; }
     public required string HashedPassword { get; set; }
     public bool IsVerified { get; set; } = false;
+    public bool IsBanned { get; set; } = false;
     public DateTime? DeletedAt { get; set; }
     public required Department Department { get; set; }
     public required int IdRole { get; set; }

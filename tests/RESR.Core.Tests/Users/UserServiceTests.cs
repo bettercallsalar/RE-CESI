@@ -87,6 +87,38 @@ public sealed class UserServiceTests
     }
 
     [Fact]
+    public async Task GetManageableUsersPaginatedAsync_ForcesUserRoleFilter()
+    {
+        var repo = new Mock<IUserRepository>();
+        var roleRepo = new Mock<IRoleRepository>();
+        var factory = new Mock<IUserFactory>();
+        var passwordHasher = new Mock<IPasswordHasher>();
+        var tokenService = new Mock<ITokenService>();
+
+        UserListingFilters? captured = null;
+        repo.Setup(r => r.GetUsersPaginatedAsync(1, 10, It.IsAny<UserListingFilters>(), It.IsAny<CancellationToken>()))
+            .Callback<int, int, UserListingFilters, CancellationToken>((_, _, f, _) => captured = f)
+            .ReturnsAsync(new List<User>());
+        repo.Setup(r => r.CountUsersAsync(It.IsAny<UserListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        var departmentRepo = new Mock<IDepartmentRepository>();
+        var service = new UserService(repo.Object, roleRepo.Object, departmentRepo.Object, factory.Object, passwordHasher.Object, tokenService.Object);
+
+        await service.GetManageableUsersPaginatedAsync(
+            1,
+            10,
+            new UserListingFilters("  user ", new List<int> { 1, 0, 1 }, new List<int> { 2, 3 }, null, null, true),
+            CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal("user", captured!.Keyword);
+        Assert.Equal(new[] { 1 }, captured.DepartmentIds);
+        Assert.Equal(new[] { 1 }, captured.RoleIds);
+        Assert.False(captured.IncludeDeleted);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_DelegatesToRepository()
     {
         var repo = new Mock<IUserRepository>();
@@ -323,6 +355,16 @@ public sealed class UserServiceTests
     }
 
     [Fact]
+    public async Task SetVerificationAsync_Throws_WhenUserBanned()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(isBanned: true));
+
+        await Assert.ThrowsAsync<ValidationException>(() =>
+            service.SetVerificationAsync(new SetUserVerificationCommand(1, true), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task SetVerificationAsync_ReturnsExisting_WhenAlreadyVerified()
     {
         var service = CreateService(out var repo, out _, out _, out _, out _);
@@ -356,6 +398,70 @@ public sealed class UserServiceTests
         var ok = await service.SoftDeleteAsync(5, CancellationToken.None);
 
         Assert.True(ok);
+    }
+
+    [Fact]
+    public async Task BanManageableUserAsync_Throws_WhenUserMissing()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.BanManageableUserAsync(5, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task BanManageableUserAsync_Throws_WhenUserIsAdmin()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 2));
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.BanManageableUserAsync(5, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task BanManageableUserAsync_BansStandardUser()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1));
+        repo.Setup(r => r.SetBannedAsync(5, true, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1, isBanned: true));
+
+        await service.BanManageableUserAsync(5, CancellationToken.None);
+
+        repo.Verify(r => r.SetBannedAsync(5, true, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BanManageableUserAsync_DoesNothing_WhenAlreadyBanned()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1, isBanned: true));
+
+        await service.BanManageableUserAsync(5, CancellationToken.None);
+
+        repo.Verify(r => r.SetBannedAsync(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetManageableUserBanStatusAsync_UnbansStandardUser()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1, isBanned: true));
+        repo.Setup(r => r.SetBannedAsync(5, false, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1, isBanned: false));
+
+        await service.SetManageableUserBanStatusAsync(5, false, CancellationToken.None);
+
+        repo.Verify(r => r.SetBannedAsync(5, false, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetManageableUserBanStatusAsync_DoesNothing_WhenStatusIsAlreadyApplied()
+    {
+        var service = CreateService(out var repo, out _, out _, out _, out _);
+        repo.Setup(r => r.GetByIdAsync(5, It.IsAny<CancellationToken>())).ReturnsAsync(BuildUser(idUser: 5, idRole: 1, isBanned: false));
+
+        await service.SetManageableUserBanStatusAsync(5, false, CancellationToken.None);
+
+        repo.Verify(r => r.SetBannedAsync(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -399,6 +505,18 @@ public sealed class UserServiceTests
         var service = CreateService(out var repo, out _, out _, out var hasher, out _);
         repo.Setup(r => r.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildUser(isVerified: true, deletedAt: DateTime.UtcNow));
+        hasher.Setup(h => h.VerifyPassword("hash", "pass")).Returns(true);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.LoginUserAsync(new Login("user@example.com", "pass"), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task LoginUserAsync_Throws_WhenBanned()
+    {
+        var service = CreateService(out var repo, out _, out _, out var hasher, out _);
+        repo.Setup(r => r.GetByEmailAsync("user@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(isVerified: true, isBanned: true));
         hasher.Setup(h => h.VerifyPassword("hash", "pass")).Returns(true);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -469,6 +587,7 @@ public sealed class UserServiceTests
         int idDepartment = 1,
         int idRole = 1,
         bool isVerified = true,
+        bool isBanned = false,
         DateTime? deletedAt = null
     ) => new()
     {
@@ -480,6 +599,7 @@ public sealed class UserServiceTests
         Department = new Department { IdDepartment = idDepartment, Name = $"Department {idDepartment}", Code = idDepartment * 10 },
         IdRole = idRole,
         IsVerified = isVerified,
+        IsBanned = isBanned,
         DeletedAt = deletedAt
     };
 }

@@ -1,12 +1,17 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Link, SimpleGrid, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatEventDateRange, formatEventPublishedDate, getPrimaryEventImage } from "@/features/events/lib/eventDates";
 import { useEventDetail } from "@/features/events/hooks/useEventDetail";
+import { ReadLaterToggleButton } from "@/features/marks/components/ReadLaterToggleButton";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
+import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
+import { ConfirmationDialog } from "@/shared/ui/feedback/ConfirmationDialog";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { ResourceReactions } from "@/shared/ui/reactions/ResourceReactions";
 
 interface EventDetailPageProps {
   idResource: number;
@@ -18,7 +23,8 @@ function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
 
 export function EventDetailPage({ idResource }: EventDetailPageProps) {
   const { status } = useAuth();
-  const { event, categoryName, isLoading, message, canEdit } = useEventDetail(idResource);
+  const { event, categoryName, isLoading, isUpdatingApproval, message, canEdit, canApprove, approveEvent, unapproveEvent } = useEventDetail(idResource);
+  const unapproveDialog = useDisclosure();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const albumImages = event?.files ?? [];
@@ -52,6 +58,14 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
     }
 
     setCurrentImageIndex((current) => (current === albumImages.length - 1 ? 0 : current + 1));
+  }
+
+  async function confirmUnapprove() {
+    const didUnapprove = await unapproveEvent();
+
+    if (didUnapprove) {
+      unapproveDialog.onClose();
+    }
   }
 
   return (
@@ -89,6 +103,11 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                     Supprime le {formatEventPublishedDate(event.deletedAt)}
                   </Badge>
                 ) : null}
+                {!event.deletedAt && !event.isApproved ? (
+                  <Badge bg="#FEEBC8" color="#9C4221" fontSize="12px" px={2.5} py={1} rounded="full">
+                    En attente d'approbation
+                  </Badge>
+                ) : null}
               </HStack>
 
               <Heading color="ink.800" fontSize={{ base: "30px", md: "40px" }} lineHeight="1.1">
@@ -107,18 +126,51 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                 </Text>
               ) : null}
 
-              <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
-                <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}
-                </Text>
+              <HStack align={{ base: "stretch", lg: "center" }} flexWrap="wrap" justify="space-between" spacing={4}>
+                <Stack flex="1" minW={{ base: "100%", lg: "0" }} spacing={2}>
+                  <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
+                    Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}{" "}
+                    <Link color="brand.500" fontWeight="700" href={getUserProfileHref(event.idUser)}>
+                      Voir son profil
+                    </Link>
+                  </Text>
+                  {!event.deletedAt ? <ResourceReactions idResource={event.idResource} /> : null}
+                </Stack>
 
-                <HStack spacing={3}>
+                <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
+                  {canApprove && !event.isApproved ? (
+                    <Button as="a" href="/admin/events/pending" variant="outline">
+                      Retour aux validations
+                    </Button>
+                  ) : null}
                   <Button onClick={() => navigateTo("/events")} variant="outline">
                     Retour aux evenements
                   </Button>
+                  {!event.deletedAt ? <ReadLaterToggleButton idResource={event.idResource} /> : null}
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/events/${event.idResource}/modifier`)}>
                       Modifier l'evenement
+                    </Button>
+                  ) : null}
+                  {canApprove && !event.isApproved ? (
+                    <Button
+                      isDisabled={isUpdatingApproval}
+                      onClick={() => {
+                        void approveEvent();
+                      }}
+                    >
+                      Approuver l'evenement
+                    </Button>
+                  ) : null}
+                  {canApprove && event.isApproved ? (
+                    <Button
+                      _hover={{ bg: "#9B2C2C" }}
+                      bg="#C53030"
+                      color="white"
+                      isDisabled={isUpdatingApproval}
+                      onClick={unapproveDialog.onOpen}
+                    >
+                      Desapprouver l'evenement
                     </Button>
                   ) : null}
                 </HStack>
@@ -230,6 +282,18 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                 ) : null}
               </Stack>
             ) : null}
+
+            {!event.deletedAt ? <CommentsSection idResource={event.idResource} resourceOwnerId={event.idUser} /> : null}
+
+            <ConfirmationDialog
+              confirmLabel="Desapprouver"
+              description="Voulez-vous vraiment desapprouver cet evenement ? Il ne sera plus visible parmi les events publics."
+              isLoading={isUpdatingApproval}
+              isOpen={unapproveDialog.isOpen}
+              onClose={unapproveDialog.onClose}
+              onConfirm={confirmUnapprove}
+              title="Confirmation de desapprobation"
+            />
           </>
         ) : null}
       </Stack>

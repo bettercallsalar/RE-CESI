@@ -3,6 +3,8 @@ import { tokenStorage } from "@/shared/lib/storage/tokenStorage";
 import type { User } from "@/shared/types/user";
 import { authService } from "@/features/auth/services/auth.service";
 import type { AuthContextValue, AuthStatus, LoginCredentials } from "@/features/auth/types/auth.types";
+import { getAuthTokenClaims, isSuperAdminToken } from "@/shared/lib/auth/tokenClaims";
+import { adminDashboardPermissions } from "@/shared/lib/auth/permissionNames";
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -32,8 +34,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const profile = await authService.getCurrentUser(storedToken);
 
         if (!cancelled) {
-          setUser(profile);
-          setStatus("authenticated");
+          applyCurrentUserProfile(profile, storedToken);
         }
       } catch {
         tokenStorage.clear();
@@ -59,8 +60,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setToken(response.token);
 
     const profile = await authService.getCurrentUser(response.token);
-    setUser(profile);
-    setStatus("authenticated");
+    applyCurrentUserProfile(profile, response.token);
   }
 
   function signOut() {
@@ -78,8 +78,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     const profile = await authService.getCurrentUser(token);
-    setUser(profile);
-    setStatus("authenticated");
+    applyCurrentUserProfile(profile, token);
   }
 
   function setCurrentUser(nextUser: User) {
@@ -87,17 +86,43 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setStatus("authenticated");
   }
 
+  function applyCurrentUserProfile(profile: User, activeToken: string) {
+    if (profile.isBanned) {
+      tokenStorage.clear();
+      setToken(null);
+      setUser(null);
+      setStatus("unauthenticated");
+      return;
+    }
+
+    setToken(activeToken);
+    setUser(profile);
+    setStatus("authenticated");
+  }
+
+  const { permissions, roleId } = getAuthTokenClaims(token);
+  const isSuperAdmin = isSuperAdminToken(token);
+  const normalizedPermissions = [...new Set(permissions)];
+  const permissionSet = new Set(normalizedPermissions.map((permission) => permission.toLowerCase()));
+  const hasPermission = (permission: string) => permissionSet.has(permission.toLowerCase());
+  const canAccessAdminDashboard = isSuperAdmin || adminDashboardPermissions.some((permission) => hasPermission(permission));
+
   const value = useMemo<AuthContextValue>(
     () => ({
       status,
       token,
       user,
+      roleId,
+      isSuperAdmin,
+      permissions: normalizedPermissions,
+      canAccessAdminDashboard,
+      hasPermission,
       signIn,
       signOut,
       refreshCurrentUser,
       setCurrentUser
     }),
-    [status, token, user]
+    [canAccessAdminDashboard, isSuperAdmin, normalizedPermissions, roleId, status, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

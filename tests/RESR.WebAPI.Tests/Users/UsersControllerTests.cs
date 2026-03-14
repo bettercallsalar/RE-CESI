@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using RESR.Core.Controllers.Users;
+using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Departments;
@@ -67,6 +69,34 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task GetManageableUsersPaginated_ReturnsBadRequest_WhenDepartmentIdsInvalid()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.GetManageableUsersPaginated(page: 1, pageSize: 20, keyword: null, departmentIds: new List<int> { 0 }, birthDate: null, isVerified: null, ct: CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal(400, badRequest.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetManageableUsersPaginated_ReturnsOk_WithPagination()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.GetManageableUsersPaginatedAsync(1, 10, It.IsAny<UserListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<User> { BuildUser(idRole: 1) }, 12));
+
+        var result = await controller.GetManageableUsersPaginated(page: 1, pageSize: 10, keyword: null, departmentIds: null, birthDate: null, isVerified: null, ct: CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PaginatedUsersResponse>(ok.Value);
+        Assert.Single(response.Items);
+        Assert.Equal(12, response.TotalCount);
+        Assert.Equal(2, response.TotalPages);
+        Assert.All(response.Items, item => Assert.Equal(1, item.IdRole));
+    }
+
+    [Fact]
     public async Task GetById_ReturnsNotFound_WhenMissing()
     {
         var controller = CreateController(out var service);
@@ -89,6 +119,62 @@ public sealed class UsersControllerTests
         var response = Assert.IsType<UserResponse>(ok.Value);
         Assert.Equal(1, response.IdUser);
         Assert.Equal(1, response.Department.IdDepartment);
+        Assert.False(response.IsBanned);
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsUnauthorized_WhenTokenMissing()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.GetPublicProfile(1, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsNotFound_WhenMissing()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
+
+        var result = await controller.GetPublicProfile(2, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsOk_WhenFound()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(idUser: 2, username: "alice", firstName: "Alice", email: "alice@example.com", bio: "Bio visible"));
+
+        var result = await controller.GetPublicProfile(2, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PublicUserProfileResponse>(ok.Value);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal("alice", response.Username);
+        Assert.Equal("Alice", response.FirstName);
+        Assert.Equal("Bio visible", response.Bio);
+        Assert.Equal(1, response.Department.IdDepartment);
+        Assert.Null(typeof(PublicUserProfileResponse).GetProperty("Email"));
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsUnauthorized_WhenTokenUserIsBanned()
+    {
+        var userRepository = new Mock<IUserRepository>();
+        userRepository.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(isBanned: true));
+
+        var controller = CreateAuthenticatedController(out var service, userRepository.Object);
+
+        var result = await controller.GetPublicProfile(3, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result.Result);
+        service.Verify(s => s.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -102,6 +188,22 @@ public sealed class UsersControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<UserResponse>(ok.Value);
         Assert.Equal(1, response.IdUser);
+        Assert.False(response.IsBanned);
+    }
+
+    [Fact]
+    public async Task GetOwnProfile_ReturnsUnauthorized_WhenTokenUserIsBanned()
+    {
+        var userRepository = new Mock<IUserRepository>();
+        userRepository.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(isBanned: true));
+
+        var controller = CreateAuthenticatedController(out var service, userRepository.Object);
+
+        var result = await controller.GetOwnProfile(CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result.Result);
+        service.Verify(s => s.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -360,18 +462,74 @@ public sealed class UsersControllerTests
         Assert.IsType<NotFoundResult>(result);
     }
 
+    [Fact]
+    public async Task BanManageableUser_ReturnsNoContent_WhenDeleted()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.BanManageableUserAsync(5, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await controller.BanManageableUser(5, CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task BanManageableUser_ReturnsNotFound_WhenMissing()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.BanManageableUserAsync(5, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotFoundException("User 5 not found."));
+
+        var result = await controller.BanManageableUser(5, CancellationToken.None);
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task SetManageableUserBanStatus_ReturnsNoContent_WhenUpdated()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.SetManageableUserBanStatusAsync(5, false, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await controller.SetManageableUserBanStatus(5, new SetUserBanRequest(false), CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task SetManageableUserBanStatus_ReturnsNotFound_WhenMissing()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.SetManageableUserBanStatusAsync(5, false, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotFoundException("User 5 not found."));
+
+        var result = await controller.SetManageableUserBanStatus(5, new SetUserBanRequest(false), CancellationToken.None);
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
     private static UsersController CreateController(out Mock<IUserService> service)
     {
         service = new Mock<IUserService>();
         return new UsersController(service.Object, Mock.Of<ITokenService>());
     }
 
-    private static UsersController CreateAuthenticatedController(out Mock<IUserService> service)
+    private static UsersController CreateAuthenticatedController(out Mock<IUserService> service, IUserRepository? userRepository = null)
     {
         service = new Mock<IUserService>();
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
         tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub")).Returns("1");
+        var effectiveUserRepository = userRepository;
+        if (effectiveUserRepository is null)
+        {
+            var repo = new Mock<IUserRepository>();
+            repo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(BuildUser(idUser: 1));
+            effectiveUserRepository = repo.Object;
+        }
 
         var controller = new UsersController(service.Object, tokenService.Object)
         {
@@ -380,6 +538,9 @@ public sealed class UsersControllerTests
                 HttpContext = new DefaultHttpContext()
             }
         };
+        controller.HttpContext.RequestServices = new ServiceCollection()
+            .AddSingleton(effectiveUserRepository)
+            .BuildServiceProvider();
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
         return controller;
     }
@@ -390,6 +551,7 @@ public sealed class UsersControllerTests
         string email = "user@example.com",
         string firstName = "User",
         bool isVerified = false,
+        bool isBanned = false,
         int idDepartment = 1,
         int idRole = 1,
         DateOnly? birthDate = null,
@@ -401,6 +563,7 @@ public sealed class UsersControllerTests
         Email = email,
         FirstName = firstName,
         IsVerified = isVerified,
+        IsBanned = isBanned,
         Department = new Department { IdDepartment = idDepartment, Name = $"Department {idDepartment}", Code = idDepartment * 10 },
         IdRole = idRole,
         BirthDate = birthDate,

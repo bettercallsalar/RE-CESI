@@ -45,8 +45,9 @@ public sealed class MySqlCommentRepository : ICommentRepository
     public async Task<IReadOnlyList<Comment>> GetByResourceIdAsync(int idResource, CancellationToken ct)
     {
         const string sql = """
-        SELECT c.id_comment, c.content, c.created_at, c.modified_at, c.deleted_at, c.id_ressource, c.id_user, r.id_comment AS id_parent_comment
+        SELECT c.id_comment, c.content, c.created_at, c.modified_at, c.deleted_at, c.id_ressource, c.id_user, u.username, u.first_name, r.id_comment AS id_parent_comment
         FROM `comment` c
+        INNER JOIN `user` u ON u.id_user = c.id_user
         LEFT JOIN `reply` r ON r.id_comment_post = c.id_comment
         WHERE c.id_ressource = @idResource
         ORDER BY c.created_at ASC, c.id_comment ASC
@@ -165,14 +166,17 @@ public sealed class MySqlCommentRepository : ICommentRepository
             reader["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["deleted_at"]),
             Convert.ToInt32(reader["id_ressource"]),
             Convert.ToInt32(reader["id_user"]),
+            Convert.ToString(reader["username"]),
+            Convert.ToString(reader["first_name"]),
             reader["id_parent_comment"] == DBNull.Value ? null : Convert.ToInt32(reader["id_parent_comment"])
         );
 
     private async Task<Comment?> GetByIdAsync(DbConnection conn, int idComment, CancellationToken ct)
     {
         const string sql = """
-        SELECT c.id_comment, c.content, c.created_at, c.modified_at, c.deleted_at, c.id_ressource, c.id_user, r.id_comment AS id_parent_comment
+        SELECT c.id_comment, c.content, c.created_at, c.modified_at, c.deleted_at, c.id_ressource, c.id_user, u.username, u.first_name, r.id_comment AS id_parent_comment
         FROM `comment` c
+        INNER JOIN `user` u ON u.id_user = c.id_user
         LEFT JOIN `reply` r ON r.id_comment_post = c.id_comment
         WHERE c.id_comment = @idComment
         """;

@@ -26,6 +26,7 @@ public sealed class UserFactory : IUserFactory
             Department = department,
             IdRole = idRole,
             IsVerified = false,
+            IsBanned = false,
             DeletedAt = null
         };
 
@@ -38,6 +39,7 @@ public sealed class UserFactory : IUserFactory
         DateOnly? birthDate,
         string? bio,
         bool isVerified,
+        bool isBanned,
         DateTime? deletedAt,
         Department department,
         int idRole
@@ -52,6 +54,7 @@ public sealed class UserFactory : IUserFactory
             BirthDate = birthDate,
             Bio = bio,
             IsVerified = isVerified,
+            IsBanned = isBanned,
             DeletedAt = deletedAt,
             Department = department,
             IdRole = idRole

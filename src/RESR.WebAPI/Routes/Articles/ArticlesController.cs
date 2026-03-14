@@ -108,7 +108,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     [HttpGet("me/{idResource:int}")]
     public async Task<ActionResult<ArticleResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -123,12 +123,58 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         return Ok(await ToResponseAsync(article, ct));
     }
 
-    [AuthorizePermission(PermissionNames.CreateResource)]
+    [AuthorizePermission(PermissionNames.ApproveArticle)]
+    [HttpGet("approval/pending")]
+    public async Task<ActionResult<PaginatedArticlesResponse>> GetPendingApprovalArticles(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] int? idUser = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] DateTime? createdFrom = null,
+        [FromQuery] DateTime? createdTo = null,
+        CancellationToken ct = default)
+    {
+        if (page <= 0 || pageSize <= 0 || idUser is <= 0 || idCategory is <= 0)
+            return BadRequest(new { message = "Page, PageSize, IdUser and IdCategory must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new ArticleListingFilters(
+            Keyword: keyword,
+            Visibility: null,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IsApproved: false,
+            CreatedFrom: createdFrom,
+            CreatedTo: createdTo,
+            IncludeDeleted: false
+        );
+
+        var (articles, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = await ToResponsesAsync(articles, ct);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedArticlesResponse(items, page, pageSize, totalCount, totalPages));
+    }
+
+    [AuthorizePermission(PermissionNames.ApproveArticle)]
+    [HttpGet("approval/{idResource:int}")]
+    public async Task<ActionResult<ArticleResponse>> GetByResourceIdForApproval([FromRoute] int idResource, CancellationToken ct)
+    {
+        var article = await _service.GetByResourceIdAsync(idResource, ct);
+
+        if (article is null || article.DeletedAt is not null || article.IsApproved)
+            return NotFound();
+
+        return Ok(await ToResponseAsync(article, ct));
+    }
+
+    [AuthorizePermission]
     [HttpPost]
     public async Task<ActionResult> Create([FromForm] CreateArticleFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -154,14 +200,14 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.EditResource)]
+    [AuthorizePermission]
     [HttpPatch("{idResource:int}")]
     public async Task<ActionResult<ArticleResponse>> Update(
         [FromRoute] int idResource,
         [FromForm] UpdateArticleFormRequest req,
         CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -202,11 +248,11 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.DeleteResource)]
+    [AuthorizePermission]
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 

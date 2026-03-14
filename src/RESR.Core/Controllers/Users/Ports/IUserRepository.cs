@@ -13,5 +13,6 @@ public interface IUserRepository
     Task<int> CreateAsync(User user, CancellationToken ct);
     Task<User> PatchAsync(UpdateUserCommand cmd, CancellationToken ct);
     Task<User> SetVerificationAsync(int idUser, bool isVerified, CancellationToken ct);
+    Task<User> SetBannedAsync(int idUser, bool isBanned, CancellationToken ct);
     Task<bool> SoftDeleteAsync(int idUser, CancellationToken ct);
 }

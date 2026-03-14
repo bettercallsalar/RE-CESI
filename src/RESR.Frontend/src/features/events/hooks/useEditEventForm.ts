@@ -10,6 +10,14 @@ import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import {
+  getDefaultImageIndex,
+  getDefaultImageSelectionAfterImageChange,
+  getExistingDefaultImageId,
+  getExistingDefaultImageSelection,
+  getImageValidationMessage,
+  validateImageFiles
+} from "@/shared/lib/forms/images";
+import {
   createErrorMessage,
   createSuccessMessage,
   createWarningMessage,
@@ -27,7 +35,7 @@ function toFormValues(event: Event): EventFormValues {
     endDate: formatEventDateTimeInput(event.endDate),
     address: event.address ?? "",
     idDepartment: event.department?.idDepartment ?? "",
-    defaultImageSelection: event.defaultImageId ? `existing:${event.defaultImageId}` : event.files[0] ? `existing:${event.files[0].idFile}` : "",
+    defaultImageSelection: getExistingDefaultImageSelection(event.defaultImageId, event.files),
     images: []
   };
 }
@@ -109,7 +117,10 @@ export function useEditEventForm(idResource: number) {
         return {
           ...current,
           images: nextImages,
-          defaultImageSelection: nextImages.length > 0 ? "new:0" : event?.defaultImageId ? `existing:${event.defaultImageId}` : event?.files[0] ? `existing:${event.files[0].idFile}` : ""
+          defaultImageSelection: getDefaultImageSelectionAfterImageChange(
+            nextImages,
+            event ? getExistingDefaultImageSelection(event.defaultImageId, event.files) : ""
+          )
         };
       }
 
@@ -179,21 +190,11 @@ export function useEditEventForm(idResource: number) {
       return;
     }
 
-    if (values.images.length > 6) {
-      showFormMessage(setMessage, createWarningMessage("Vous ne pouvez pas envoyer plus de 6 images."));
+    const imageValidationError = validateImageFiles(values.images);
+
+    if (imageValidationError) {
+      showFormMessage(setMessage, createWarningMessage(getImageValidationMessage(imageValidationError)));
       return;
-    }
-
-    for (const image of values.images) {
-      if (!image.type.startsWith("image/")) {
-        showFormMessage(setMessage, createWarningMessage("Seules les images sont autorisees."));
-        return;
-      }
-
-      if (image.size > 5 * 1024 * 1024) {
-        showFormMessage(setMessage, createWarningMessage("Chaque image doit faire moins de 5 Mo."));
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -211,11 +212,11 @@ export function useEditEventForm(idResource: number) {
         address: trimmedAddress || null,
         idDepartment: typeof values.idDepartment === "number" ? values.idDepartment : null,
         replaceImages: values.images.length > 0,
-        defaultImageId: values.images.length === 0 && values.defaultImageSelection.startsWith("existing:")
-          ? Number(values.defaultImageSelection.slice(9))
+        defaultImageId: values.images.length === 0
+          ? getExistingDefaultImageId(values.defaultImageSelection)
           : undefined,
-        defaultImageIndex: values.images.length > 0 && values.defaultImageSelection.startsWith("new:")
-          ? Number(values.defaultImageSelection.slice(4))
+        defaultImageIndex: values.images.length > 0
+          ? getDefaultImageIndex(values.defaultImageSelection)
           : undefined,
         images: values.images
       };
