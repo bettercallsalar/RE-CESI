@@ -1,8 +1,6 @@
 using System.Net;
-using System.Net.Http.Json;
+using System.Text;
 using RESR.MAUI.Services;
-using RESR.Models.Departments;
-using RESR.Models.Resources;
 
 namespace RESR.MAUI.Tests.Services;
 
@@ -20,30 +18,33 @@ public sealed class ResourcesApiClientTests
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = JsonContent.Create(new PaginatedArticlesResponse(
-                    [
-                        new ArticleResponse(
-                            12,
-                            4,
-                            "Article test",
-                            "Description",
-                            "article",
-                            "PUBLIC",
-                            new DateTime(2026, 3, 13, 8, 0, 0, DateTimeKind.Utc),
-                            null,
-                            null,
-                            2,
-                            new ResourceAuthorResponse(2, "article-author", "Alice"),
-                            1,
-                            "Contenu",
-                            true,
-                            null,
-                            [])
-                    ],
-                    1,
-                    5,
-                    1,
-                    1))
+                Content = Json("""
+                {
+                  "items": [
+                    {
+                      "idResource": 12,
+                      "idArticle": 4,
+                      "title": "Article test",
+                      "description": "Description",
+                      "type": "article",
+                      "visibility": "PUBLIC",
+                      "createdAt": "2026-03-13T08:00:00Z",
+                      "modifiedAt": null,
+                      "deletedAt": null,
+                      "idUser": 2,
+                      "idCategory": 1,
+                      "content": "Contenu",
+                      "isApproved": true,
+                      "idDepartment": null,
+                      "files": []
+                    }
+                  ],
+                  "page": 1,
+                  "pageSize": 5,
+                  "totalCount": 1,
+                  "totalPages": 1
+                }
+                """)
             });
         });
 
@@ -72,7 +73,15 @@ public sealed class ResourcesApiClientTests
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = JsonContent.Create(new PaginatedArticlesResponse([], 2, 10, 0, 0))
+                Content = Json("""
+                {
+                  "items": [],
+                  "page": 2,
+                  "pageSize": 10,
+                  "totalCount": 0,
+                  "totalPages": 0
+                }
+                """)
             });
         });
 
@@ -104,32 +113,41 @@ public sealed class ResourcesApiClientTests
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = JsonContent.Create(new PaginatedEventsResponse(
-                    [
-                        new EventResponse(
-                            14,
-                            7,
-                            "Forum test",
-                            "Description evenement",
-                            "event",
-                            "PUBLIC",
-                            new DateTime(2026, 3, 13, 9, 0, 0, DateTimeKind.Utc),
-                            null,
-                            3,
-                            new ResourceAuthorResponse(3, "event-author", "Bob"),
-                            1,
-                            "Sous titre",
-                            new DateTime(2026, 3, 20, 10, 0, 0, DateTimeKind.Utc),
-                            new DateTime(2026, 3, 20, 18, 0, 0, DateTimeKind.Utc),
-                            "Paris",
-                            new Department { IdDepartment = 1, Name = "Paris", Code = 75 },
-                            true,
-                            [])
-                    ],
-                    1,
-                    3,
-                    1,
-                    1))
+                Content = Json("""
+                {
+                  "items": [
+                    {
+                      "idResource": 14,
+                      "idEvent": 7,
+                      "title": "Forum test",
+                      "description": "Description evenement",
+                      "type": "event",
+                      "visibility": "PUBLIC",
+                      "createdAt": "2026-03-13T09:00:00Z",
+                      "modifiedAt": null,
+                      "deletedAt": null,
+                      "idUser": 3,
+                      "idCategory": 1,
+                      "subtitle": "Sous titre",
+                      "startDate": "2026-03-20T10:00:00Z",
+                      "endDate": "2026-03-20T18:00:00Z",
+                      "address": "Paris",
+                      "idDepartment": 1,
+                      "department": {
+                        "idDepartment": 1,
+                        "name": "Paris",
+                        "code": 75
+                      },
+                      "isApproved": true,
+                      "files": []
+                    }
+                  ],
+                  "page": 1,
+                  "pageSize": 3,
+                  "totalCount": 1,
+                  "totalPages": 1
+                }
+                """)
             });
         });
 
@@ -172,4 +190,7 @@ public sealed class ResourcesApiClientTests
             Token = null;
         }
     }
+
+    private static StringContent Json(string value) =>
+        new(value, Encoding.UTF8, "application/json");
 }

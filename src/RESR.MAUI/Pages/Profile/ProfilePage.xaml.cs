@@ -88,7 +88,7 @@ public partial class ProfilePage : ContentPage
     private async void OnLogoutClicked(object? sender, EventArgs e)
     {
         _session.Clear();
-        await Shell.Current.GoToAsync($"//{nameof(HomePage)}");
+        await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
     }
 
     protected override void OnDisappearing()
