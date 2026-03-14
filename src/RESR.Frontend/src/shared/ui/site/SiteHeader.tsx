@@ -1,5 +1,5 @@
-import { Box, Collapse, Flex, HStack, IconButton, Link, Show, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
+import { Box, Collapse, Flex, HStack, IconButton, Link, Show, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
 interface SiteHeaderProps {
@@ -140,9 +140,9 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
             border="1px solid"
             borderColor="canvas.200"
             mt={3}
+            pb={3}
             pt={3}
             px={{ base: 3, sm: 4 }}
-            pb={3}
             spacing={2}
           >
             {navigationItems.map((item) => (

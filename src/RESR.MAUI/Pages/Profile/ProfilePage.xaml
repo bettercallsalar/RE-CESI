@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Profile.ProfilePage"
+             Title="Mon profil">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+            <Label Text="Mon profil"
+                   Style="{StaticResource Headline}"/>
+
+            <Label Text="Nom d'utilisateur"/>
+            <Label x:Name="UsernameLabel" FontAttributes="Bold"/>
+
+            <Label Text="Email"/>
+            <Label x:Name="EmailLabel" FontAttributes="Bold"/>
+
+            <Label Text="Prénom"/>
+            <Label x:Name="FirstNameLabel" FontAttributes="Bold"/>
+
+            <Label Text="Date de naissance"/>
+            <Label x:Name="BirthDateLabel" FontAttributes="Bold"/>
+
+            <Label Text="Biographie"/>
+            <Label x:Name="BioLabel" FontAttributes="Bold"/>
+
+            <Label Text="Département"/>
+            <Label x:Name="DepartmentLabel" FontAttributes="Bold"/>
+
+            <Label Text="Vérifié"/>
+            <Label x:Name="VerifiedLabel" FontAttributes="Bold"/>
+
+            <Button Text="Se déconnecter"
+                    Clicked="OnLogoutClicked"/>
+
+            <Label x:Name="StatusLabel"
+                   Text="Chargement du profil..."
+                   LineBreakMode="WordWrap"/>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

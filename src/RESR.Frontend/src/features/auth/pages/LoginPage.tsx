@@ -1,4 +1,4 @@
-import { Grid, GridItem, Text } from "@chakra-ui/react";
+import { Grid, GridItem } from "@chakra-ui/react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { ShowcasePanel } from "@/shared/ui/site/ShowcasePanel";

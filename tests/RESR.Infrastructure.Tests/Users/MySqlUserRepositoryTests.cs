@@ -204,6 +204,20 @@ public sealed class MySqlUserRepositoryTests
     }
 
     [Fact]
+    public async Task PatchAsync_SendsClearBioParameter_WhenRequested()
+    {
+        var updateCmd = NonQueryCommand(1);
+        var selectCmd = ReaderCommand(CreateUserTable(Row(8, "hank", "Hank", null, null, "hank@example.com", "hash", false, null, 1, 2)));
+        var repo = CreateRepo(updateCmd, selectCmd);
+
+        await repo.PatchAsync(new UpdateUserCommand(IdUser: 8, Bio: null, ClearBio: true), CancellationToken.None);
+
+        Assert.Contains("CASE WHEN @clear_bio THEN NULL", updateCmd.CommandText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("@clear_bio", updateCmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName));
+        Assert.Equal(true, updateCmd.Parameters.Cast<DbParameter>().Single(p => p.ParameterName == "@clear_bio").Value);
+    }
+
+    [Fact]
     public async Task PatchAsync_Throws_WhenNoRowsUpdated()
     {
         var updateCmd = NonQueryCommand(0);

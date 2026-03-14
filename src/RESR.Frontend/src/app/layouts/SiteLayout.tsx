@@ -30,11 +30,18 @@ export function SiteLayout({ children, intro, headerVariant = "public" }: SiteLa
           </Link>
           <SiteHeader variant={headerVariant} />
 
-          {intro ? (
-            <Stack align="center" mb={{ base: 10, md: 12 }} spacing={2}>
-              {intro}
-            </Stack>
-          ) : null}
+          <Stack align="center" mb={{ base: 10, md: 12 }} spacing={2}>
+            {intro ?? (
+              <>
+                <Text fontSize={{ base: "20px", sm: "24px", md: "30px" }} fontWeight="700" lineHeight="1.2" textAlign="center">
+                  Bienvenue sur (RE) Sources Relationnelles !
+                </Text>
+                <Text color="ink.500" fontSize={{ base: "16px", sm: "17px", md: "18px" }} maxW="720px" textAlign="center">
+                  La plateforme d'échange préférée des français
+                </Text>
+              </>
+            )}
+          </Stack>
 
           <Box as="main" id="main-content">
             {children}

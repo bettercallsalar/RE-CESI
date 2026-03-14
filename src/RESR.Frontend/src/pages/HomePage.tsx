@@ -1,13 +1,13 @@
 import { Box, Button, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ArticlesGrid } from "@/features/articles/components/ArticlesGrid";
 import { useLatestArticles } from "@/features/articles/hooks/useLatestArticles";
-import { ShowcasePanel } from "@/shared/ui/site/ShowcasePanel";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
+import { ShowcasePanel } from "@/shared/ui/site/ShowcasePanel";
 
 export function HomePage() {
   const { status, user, signOut } = useAuth();
@@ -25,19 +25,7 @@ export function HomePage() {
   }, []);
 
   return (
-    <SiteLayout
-      headerVariant={isAuthenticated ? "authenticated" : "public"}
-      intro={
-        <>
-          <Text fontSize={{ base: "20px", sm: "24px", md: "30px" }} fontWeight="700" lineHeight="1.2" textAlign="center">
-            Bienvenue sur (RE) Sources Relationnelles !
-          </Text>
-          <Text color="ink.500" fontSize={{ base: "16px", sm: "17px", md: "18px" }} maxW="720px" textAlign="center">
-            La plateforme d'échange préférée des français
-          </Text>
-        </>
-      }
-    >
+    <SiteLayout headerVariant={isAuthenticated ? "authenticated" : "public"}>
       <Stack spacing={{ base: 10, md: 12 }}>
         {flashMessage ? (
           <MessageBanner

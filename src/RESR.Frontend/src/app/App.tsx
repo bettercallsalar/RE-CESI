@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { useAuth } from "@/features/auth/hooks/useAuth";
 import { ArticleDetailPage } from "@/features/articles/pages/ArticleDetailPage";
 import { ArticlesPage } from "@/features/articles/pages/ArticlesPage";
 import { CreateArticlePage } from "@/features/articles/pages/CreateArticlePage";
 import { EditArticlePage } from "@/features/articles/pages/EditArticlePage";
 import { MyArticlesPage } from "@/features/articles/pages/MyArticlesPage";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { HomePage } from "@/pages/HomePage";
 import { AppLoader } from "@/shared/ui/AppLoader";
