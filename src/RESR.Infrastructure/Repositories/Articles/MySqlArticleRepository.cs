@@ -45,7 +45,7 @@ public sealed class MySqlArticleRepository : IArticleRepository
             a.default_image_id
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -73,7 +73,7 @@ public sealed class MySqlArticleRepository : IArticleRepository
         SELECT COUNT(*)
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -293,6 +293,11 @@ public sealed class MySqlArticleRepository : IArticleRepository
 
     private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, ArticleListingFilters filters)
     {
+        if (!filters.IncludeDeleted)
+        {
+            sql.AppendLine("  AND r.deleted_at IS NULL");
+        }
+
         if (filters.Keyword is not null)
         {
             sql.AppendLine("""

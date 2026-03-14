@@ -4,7 +4,7 @@ import { articlesService } from "@/features/articles/services/articles.service";
 import type { MyArticlesFilters } from "@/features/articles/types/article.types";
 import type { Article, Category } from "@/shared/types/article";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
-import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
+import { createErrorMessage, createSuccessMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
 
 const initialFilters: MyArticlesFilters = {
   keyword: "",
@@ -24,6 +24,7 @@ export function useMyArticlesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,17 +124,37 @@ export function useMyArticlesPage() {
     await loadArticles(nextPage, appliedFilters);
   }
 
+  async function deleteArticle(idResource: number) {
+    if (!token) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await articlesService.deleteArticle(token, idResource);
+      await loadArticles(page, appliedFilters);
+      showFormMessage(setMessage, createSuccessMessage("L'article a bien été supprimé. Cette suppression ne peut pas être annulée."));
+    } catch (deleteError) {
+      showFormMessage(setMessage, createErrorMessage(deleteError, "Suppression impossible"));
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return {
     filters,
     categories,
     articles,
     isLoading,
+    isDeleting,
     message,
     page,
     totalPages,
     totalCount,
     updateFilter,
     submitFilters,
-    goToPage
+    goToPage,
+    deleteArticle
   };
 }

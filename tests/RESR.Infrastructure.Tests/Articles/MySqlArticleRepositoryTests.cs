@@ -65,6 +65,37 @@ public sealed class MySqlArticleRepositoryTests
     }
 
     [Fact]
+    public async Task GetPaginatedAsync_DoesNotFilterDeleted_WhenIncludeDeletedIsTrue()
+    {
+        var table = CreateArticleTable(Row(
+            idResource: 10,
+            idArticle: 7,
+            title: "Post",
+            description: "Desc",
+            visibility: "private",
+            createdAt: new DateTime(2026, 1, 1),
+            modifiedAt: null,
+            deletedAt: new DateTime(2026, 1, 2),
+            idUser: 2,
+            idCategory: 3,
+            content: "Body",
+            isApproved: true,
+            defaultImageId: 4
+        ));
+        var cmd = ReaderCommand(table);
+        var repo = CreateRepo(cmd);
+
+        var list = await repo.GetPaginatedAsync(
+            1,
+            5,
+            new ArticleListingFilters(null, null, 2, null, null, null, null, IncludeDeleted: true),
+            CancellationToken.None);
+
+        Assert.Single(list);
+        Assert.DoesNotContain("r.deleted_at IS NULL", cmd.CommandText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task GetByResourceIdAsync_ReturnsArticle_WhenFound()
     {
         var table = CreateArticleTable(Row(

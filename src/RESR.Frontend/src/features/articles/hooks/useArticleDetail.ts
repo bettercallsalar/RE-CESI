@@ -4,7 +4,7 @@ import { articlesService } from "@/features/articles/services/articles.service";
 import { ApiError } from "@/shared/api/httpClient";
 import type { Article, Category } from "@/shared/types/article";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
-import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
+import { createErrorMessage, createWarningMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
 
 export function useArticleDetail(idResource: number) {
   const { status, user, token } = useAuth();
@@ -18,6 +18,7 @@ export function useArticleDetail(idResource: number) {
 
     async function load() {
       setIsLoading(true);
+      setArticle(null);
 
       try {
         const loadArticle = async () => {
@@ -41,11 +42,19 @@ export function useArticleDetail(idResource: number) {
           return;
         }
 
+        if (articleResponse.deletedAt) {
+          setArticle(null);
+          setCategories(categoriesResponse);
+          showFormMessage(setMessage, createWarningMessage("Cet article a été supprimé et n'est plus accessible."));
+          return;
+        }
+
         setArticle(articleResponse);
         setCategories(categoriesResponse);
         showFormMessage(setMessage, null);
       } catch (loadError) {
         if (!cancelled) {
+          setArticle(null);
           showFormMessage(setMessage, createErrorMessage(loadError, "Chargement impossible"));
         }
       } finally {

@@ -44,7 +44,8 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
             IdCategory: idCategory,
             IsApproved: true,
             CreatedFrom: createdFrom,
-            CreatedTo: createdTo
+            CreatedTo: createdTo,
+            IncludeDeleted: false
         );
 
         var (articles, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
@@ -79,7 +80,8 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
             IdCategory: idCategory,
             IsApproved: isApproved,
             CreatedFrom: createdFrom,
-            CreatedTo: createdTo
+            CreatedTo: createdTo,
+            IncludeDeleted: true
         );
 
         var (articles, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
@@ -252,6 +254,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
             article.Visibility.ToString(),
             article.CreatedAt,
             article.ModifiedAt,
+            article.DeletedAt,
             article.IdUser,
             article.IdCategory,
             article.Content,

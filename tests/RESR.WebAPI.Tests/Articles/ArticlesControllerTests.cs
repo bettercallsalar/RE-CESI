@@ -120,6 +120,26 @@ public sealed class ArticlesControllerTests
     }
 
     [Fact]
+    public async Task GetMyArticles_IncludesDeletedArticles()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Article>(), 0));
+        var controller = new ArticlesController(service.Object, tokenService.Object);
+
+        var result = await controller.GetMyArticles(7, ct: CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        service.Verify(s => s.GetPaginatedAsync(
+            1,
+            20,
+            It.Is<ArticleListingFilters>(filters => filters.IdUser == 7 && filters.IncludeDeleted),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task Create_ReturnsCreatedAtAction_WhenValid()
     {
         var service = new Mock<IArticleService>();

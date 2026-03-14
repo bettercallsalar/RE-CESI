@@ -41,6 +41,7 @@ public sealed record ArticleResponse(
     string Visibility,
     DateTime CreatedAt,
     DateTime? ModifiedAt,
+    DateTime? DeletedAt,
     int IdUser,
     int IdCategory,
     string Content,
@@ -64,7 +65,8 @@ public sealed record ArticleListingFilters(
     int? IdCategory,
     bool? IsApproved,
     DateTime? CreatedFrom,
-    DateTime? CreatedTo
+    DateTime? CreatedTo,
+    bool IncludeDeleted = false
 );
 
 public sealed record CreateEventRequest(

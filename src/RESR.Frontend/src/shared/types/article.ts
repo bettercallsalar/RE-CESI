@@ -24,6 +24,7 @@ export interface Article {
   visibility: ArticleVisibility;
   createdAt: string;
   modifiedAt: string | null;
+  deletedAt: string | null;
   idUser: number;
   idCategory: number;
   content: string;

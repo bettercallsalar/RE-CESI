@@ -5,9 +5,12 @@ import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import type { Article } from "@/shared/types/article";
 
 export interface ArticleCardAction {
-  href: string;
   label: string;
+  href?: string;
+  onClick?: () => void;
   variant?: "solid" | "outline";
+  tone?: "default" | "danger";
+  isDisabled?: boolean;
 }
 
 interface ArticleCardProps {
@@ -49,6 +52,7 @@ export function ArticleCard({
   const coverImageSrc = firstImage ? getResourceFileUrl(firstImage.path) : "/article-placeholder.svg";
   const visibilityLabel = article.visibility === "PUBLIC" ? "Public" : "Privé";
   const approvalLabel = article.isApproved ? "Validé" : "En attente";
+  const deletedLabel = article.deletedAt ? `Supprimé le ${formatArticleDate(article.deletedAt)}` : null;
   const isLinkedCard = !actions?.length;
 
   return (
@@ -98,6 +102,11 @@ export function ArticleCard({
                 {approvalLabel}
               </Badge>
             ) : null}
+            {showStatusBadges && deletedLabel ? (
+              <Badge bg="red.500" color="white" fontSize="12px" px={2.5} py={1} rounded="full">
+                {deletedLabel}
+              </Badge>
+            ) : null}
           </HStack>
 
           <Heading color="ink.800" fontSize={compact ? { base: "18px", md: "20px" } : { base: "20px", md: "24px" }} lineHeight="1.25">
@@ -112,10 +121,23 @@ export function ArticleCard({
             <HStack mt="auto" spacing={3}>
               {actions.map((action) => (
                 <Button
-                  key={action.href}
-                  onClick={() => navigateTo(action.href)}
+                  key={`${action.label}-${action.href ?? "action"}`}
+                  bg={action.tone === "danger" ? "red.500" : undefined}
+                  color={action.tone === "danger" ? "white" : undefined}
+                  isDisabled={action.isDisabled}
+                  onClick={() => {
+                    if (action.onClick) {
+                      action.onClick();
+                      return;
+                    }
+
+                    if (action.href) {
+                      navigateTo(action.href);
+                    }
+                  }}
                   size="sm"
                   variant={action.variant ?? "outline"}
+                  _hover={action.tone === "danger" ? { bg: "red.600" } : undefined}
                 >
                   {action.label}
                 </Button>

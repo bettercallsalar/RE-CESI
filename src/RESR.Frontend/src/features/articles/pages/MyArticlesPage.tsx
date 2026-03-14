@@ -1,12 +1,63 @@
-import { Button, FormControl, FormLabel, HStack, Input, Select, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { useRef, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  FormLabel,
+  HStack,
+  Input,
+  Select,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+  Text,
+  useDisclosure
+} from "@chakra-ui/react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { ArticlesGrid } from "@/features/articles/components/ArticlesGrid";
 import { useMyArticlesPage } from "@/features/articles/hooks/useMyArticlesPage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import type { Article } from "@/shared/types/article";
 
 export function MyArticlesPage() {
-  const { filters, categories, articles, isLoading, message, page, totalPages, totalCount, updateFilter, submitFilters, goToPage } =
+  const { filters, categories, articles, isLoading, isDeleting, message, page, totalPages, totalCount, updateFilter, submitFilters, goToPage, deleteArticle } =
     useMyArticlesPage();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
+  const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
+  const [isDeleteConfirmed, setIsDeleteConfirmed] = useState(false);
+
+  function openDeleteDialog(article: Article) {
+    setArticleToDelete(article);
+    setIsDeleteConfirmed(false);
+    onOpen();
+  }
+
+  function closeDeleteDialog() {
+    if (isDeleting) {
+      return;
+    }
+
+    setArticleToDelete(null);
+    setIsDeleteConfirmed(false);
+    onClose();
+  }
+
+  async function confirmDelete() {
+    if (!articleToDelete) {
+      return;
+    }
+
+    await deleteArticle(articleToDelete.idResource);
+    closeDeleteDialog();
+  }
 
   return (
     <SiteLayout
@@ -17,7 +68,7 @@ export function MyArticlesPage() {
             Mes articles
           </Text>
           <Text color="ink.500" fontSize={{ base: "16px", sm: "17px", md: "18px" }} maxW="820px" textAlign="center">
-            Retrouvez tous vos articles, qu&apos;ils soient publics ou privés, validés ou encore en attente de validation.
+            Retrouvez tous vos articles, qu&apos;ils soient publics ou privés, validés, en attente de validation ou déjà supprimés.
           </Text>
         </>
       }
@@ -32,7 +83,7 @@ export function MyArticlesPage() {
           <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
             {totalCount > 0
               ? `${totalCount} article${totalCount > 1 ? "s" : ""} trouve${totalCount > 1 ? "s" : ""}.`
-              : "Vous n'avez encore aucun article."}
+              : "Vous n'avez encore aucun article, même supprimé."}
           </Text>
 
           <Button as="a" href="/articles/nouveau">
@@ -106,10 +157,22 @@ export function MyArticlesPage() {
             articles={articles}
             categories={categories}
             emptyLabel="Aucun de vos articles ne correspond aux filtres sélectionnés."
-            resolveActions={(article) => [
-              { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline" },
-              { href: `/articles/${article.idResource}/modifier`, label: "Modifier" }
-            ]}
+            resolveActions={(article) =>
+              article.deletedAt
+                ? [
+                    {
+                      label: "Article supprimé",
+                      variant: "outline",
+                      tone: "danger",
+                      isDisabled: true
+                    }
+                  ]
+                : [
+                    { href: `/articles/${article.idResource}`, label: "Voir", variant: "outline" },
+                    { href: `/articles/${article.idResource}/modifier`, label: "Modifier" },
+                    { label: "Supprimer", onClick: () => openDeleteDialog(article), tone: "danger" }
+                  ]
+            }
             showStatusBadges
           />
         )}
@@ -137,6 +200,65 @@ export function MyArticlesPage() {
             Page suivante
           </Button>
         </HStack>
+
+        <AlertDialog isCentered isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={closeDeleteDialog}>
+          <AlertDialogOverlay bg="blackAlpha.600" backdropFilter="blur(6px)">
+            <AlertDialogContent
+              bg="white"
+              border="1px solid"
+              borderColor="red.100"
+              boxShadow="2xl"
+              color="ink.800"
+              mx={4}
+              rounded="20px"
+            >
+              <Box bg="linear-gradient(135deg, #fff5f5 0%, #ffffff 70%)" borderTopLeftRadius="20px" borderTopRightRadius="20px" px={6} pt={6}>
+                <AlertDialogHeader color="red.600" fontSize={{ base: "22px", md: "24px" }} fontWeight="800" px={0} py={0}>
+                  Confirmation de suppression
+                </AlertDialogHeader>
+                <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }} mt={2} pb={5}>
+                  Cette action retire définitivement l&apos;article de votre espace public et privé.
+                </Text>
+              </Box>
+
+              <AlertDialogBody pb={5} pt={2}>
+                <Stack spacing={4}>
+                  <Box bg="red.50" border="1px solid" borderColor="red.100" rounded="14px" px={4} py={4}>
+                    <Text color="ink.800" fontSize={{ base: "16px", md: "17px" }} lineHeight="1.7">
+                      Voulez-vous vraiment supprimer l&apos;article {articleToDelete ? `"${articleToDelete.title}"` : ""} ?
+                      Cette suppression est irréversible et l&apos;article ne pourra pas être restauré.
+                    </Text>
+                  </Box>
+
+                  <Checkbox colorScheme="red" isChecked={isDeleteConfirmed} onChange={(event) => setIsDeleteConfirmed(event.target.checked)}>
+                    <Text color="ink.800" fontSize={{ base: "14px", md: "15px" }}>
+                      Je confirme que cet article ne pourra pas être restauré.
+                    </Text>
+                  </Checkbox>
+                </Stack>
+              </AlertDialogBody>
+
+              <AlertDialogFooter gap={3} pb={6} pt={0}>
+                <Button ref={cancelRef} borderColor="canvas.300" color="ink.800" onClick={closeDeleteDialog} variant="outline">
+                  Annuler
+                </Button>
+                <Button
+                  bg="red.500"
+                  color="white"
+                  isDisabled={!isDeleteConfirmed}
+                  isLoading={isDeleting}
+                  loadingText="Suppression"
+                  onClick={() => {
+                    void confirmDelete();
+                  }}
+                  _hover={{ bg: "red.600" }}
+                >
+                  Supprimer définitivement
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogOverlay>
+        </AlertDialog>
       </Stack>
     </SiteLayout>
   );

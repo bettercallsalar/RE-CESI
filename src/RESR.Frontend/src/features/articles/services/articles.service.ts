@@ -78,6 +78,9 @@ export const articlesService = {
   },
   updateArticle(token: string, idResource: number, payload: UpdateArticlePayload) {
     return httpClient.patch<Article>(`/api/articles/${idResource}`, toArticleFormData(payload), { token });
+  },
+  deleteArticle(token: string, idResource: number) {
+    return httpClient.delete<void>(`/api/articles/${idResource}`, { token });
   }
 };
 
