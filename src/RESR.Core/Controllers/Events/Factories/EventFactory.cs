@@ -21,7 +21,8 @@ public sealed class EventFactory : IEventFactory
         DateTime? endDate,
         string? address,
         Department? department,
-        bool isApproved)
+        bool isApproved,
+        int? defaultImageId)
     {
         return new Event
         {
@@ -40,7 +41,8 @@ public sealed class EventFactory : IEventFactory
             StartDate = startDate,
             EndDate = endDate,
             Address = address,
-            Department = department
+            Department = department,
+            DefaultImageId = defaultImageId
         };
     }
 }

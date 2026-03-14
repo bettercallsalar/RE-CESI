@@ -47,12 +47,13 @@ public sealed class MySqlEventRepository : IEventRepository
             e.end_date,
             e.adress,
             e.id_department,
+            e.default_image_id,
             d.name AS department_name,
             d.code AS department_code
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
         LEFT JOIN department d ON d.id_department = e.id_department
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -80,7 +81,7 @@ public sealed class MySqlEventRepository : IEventRepository
         SELECT COUNT(*)
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -114,13 +115,13 @@ public sealed class MySqlEventRepository : IEventRepository
             e.end_date,
             e.adress,
             e.id_department,
+            e.default_image_id,
             d.name AS department_name,
             d.code AS department_code
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
         LEFT JOIN department d ON d.id_department = e.id_department
         WHERE r.id_ressource = @id_ressource
-          AND r.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -143,8 +144,8 @@ public sealed class MySqlEventRepository : IEventRepository
         """;
 
         const string insertEventSql = """
-        INSERT INTO event (subtitle, start_date, end_date, adress, id_department, id_ressource)
-        VALUES (@subtitle, @start_date, @end_date, @adress, @id_department, @id_ressource)
+        INSERT INTO event (subtitle, start_date, end_date, adress, id_department, id_ressource, default_image_id)
+        VALUES (@subtitle, @start_date, @end_date, @adress, @id_department, @id_ressource, NULL)
         """;
 
         await using var conn = _connectionFactory();
@@ -218,6 +219,24 @@ public sealed class MySqlEventRepository : IEventRepository
         return await GetByResourceIdAsync(cmd.IdResource, ct);
     }
 
+    public async Task SetDefaultImageAsync(int idResource, int? defaultImageId, CancellationToken ct)
+    {
+        const string sql = """
+        UPDATE event
+        SET default_image_id = @default_image_id
+        WHERE id_ressource = @id_ressource
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@id_ressource", idResource);
+        AddParameter(cmd, "@default_image_id", (object?)defaultImageId ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
     public async Task<Event?> SetApprovalAsync(SetEventApprovalCommand cmd, CancellationToken ct)
     {
         const string updateResourceSql = """
@@ -283,7 +302,8 @@ public sealed class MySqlEventRepository : IEventRepository
             endDate: reader["end_date"] == DBNull.Value ? null : Convert.ToDateTime(reader["end_date"]),
             address: reader["adress"] == DBNull.Value ? null : Convert.ToString(reader["adress"]),
             department: MapDepartment(reader),
-            isApproved: Convert.ToBoolean(reader["is_approved"])
+            isApproved: Convert.ToBoolean(reader["is_approved"]),
+            defaultImageId: reader["default_image_id"] == DBNull.Value ? null : Convert.ToInt32(reader["default_image_id"])
         );
     }
 
@@ -324,6 +344,11 @@ public sealed class MySqlEventRepository : IEventRepository
 
     private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, EventListingFilters filters)
     {
+        if (!filters.IncludeDeleted)
+        {
+            sql.AppendLine("  AND r.deleted_at IS NULL");
+        }
+
         if (filters.Keyword is not null)
         {
             sql.AppendLine("""

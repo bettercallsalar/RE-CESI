@@ -58,6 +58,55 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
     }
 
+    [AuthorizePermissionOrSelf("idUser")]
+    [HttpGet("{idUser:int}/my-events")]
+    public async Task<ActionResult<PaginatedEventsResponse>> GetMyEvents(
+        [FromRoute] int idUser,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? keyword = null,
+        [FromQuery] ResourceVisibility? visibility = null,
+        [FromQuery] int? idCategory = null,
+        [FromQuery] int? idDepartment = null,
+        [FromQuery] bool? isApproved = null,
+        [FromQuery] DateTime? startFrom = null,
+        [FromQuery] DateTime? startTo = null,
+        CancellationToken ct = default)
+    {
+        if (page <= 0 || pageSize <= 0 || idCategory is <= 0 || idDepartment is <= 0)
+            return BadRequest(new { message = "Page, PageSize, IdCategory and IdDepartment must be greater than 0." });
+        if (pageSize > MaxPageSize) return BadRequest(new { message = $"PageSize cannot be greater than {MaxPageSize}." });
+
+        var filters = new EventListingFilters(
+            Keyword: keyword,
+            Visibility: visibility,
+            IdUser: idUser,
+            IdCategory: idCategory,
+            IdDepartment: idDepartment,
+            IsApproved: isApproved,
+            StartFrom: startFrom,
+            StartTo: startTo,
+            IncludeDeleted: true
+        );
+
+        var (events, totalCount) = await _service.GetPaginatedAsync(page, pageSize, filters, ct);
+        var items = await ToResponsesAsync(events, ct);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return Ok(new PaginatedEventsResponse(items, page, pageSize, totalCount, totalPages));
+    }
+
+    [HttpGet("{idResource:int}")]
+    public async Task<ActionResult<EventResponse>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
+    {
+        var @event = await _service.GetByResourceIdAsync(idResource, ct);
+
+        if (@event is null || @event.DeletedAt is not null || @event.Visibility != ResourceVisibility.PUBLIC || !@event.IsApproved)
+            return NotFound();
+
+        return Ok(await ToResponseAsync(@event, ct));
+    }
+
     [HttpGet("me/{idResource:int}")]
     public async Task<ActionResult<EventResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
@@ -76,7 +125,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
 
     [AuthorizePermission(PermissionNames.ModerateContent)]
     [HttpGet("moderation/{idResource:int}")]
-    public async Task<ActionResult<EventResponse>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
+    public async Task<ActionResult<EventResponse>> GetByResourceIdForModeration([FromRoute] int idResource, CancellationToken ct)
     {
         var @event = await _service.GetByResourceIdAsync(idResource, ct);
         return @event is null ? NotFound() : Ok(await ToResponseAsync(@event, ct));
@@ -105,7 +154,8 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.EndDate,
                     req.Address,
                     req.IdDepartment,
-                    await ToUploadsAsync(req.Images, ct)
+                    await ToUploadsAsync(req.Images, ct),
+                    req.DefaultImageIndex
                     ),
                 ct);
 
@@ -148,7 +198,9 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.Address,
                     req.IdDepartment,
                     await ToUploadsAsync(req.Images, ct),
-                    req.ReplaceImages),
+                    req.ReplaceImages,
+                    req.DefaultImageId,
+                    req.DefaultImageIndex),
                 ct);
 
             return Ok(await ToResponseAsync(@event, ct));
@@ -259,7 +311,9 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             @event.Address,
             @event.Department,
             @event.IsApproved,
-            @event.Files.Select(ToFileResponse).ToList()
+            @event.Files.Select(ToFileResponse).ToList(),
+            @event.DeletedAt,
+            @event.DefaultImageId
         );
     }
 

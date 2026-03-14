@@ -1,14 +1,15 @@
-import { LinkIcon, createIcon } from "@chakra-ui/icons";
 import {
   Box,
   Divider,
   HStack,
+  Icon,
   IconButton,
   Stack,
   Text,
   Tooltip,
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState, type ReactElement } from "react";
+import { LuBold, LuEraser, LuHeading2, LuItalic, LuLink, LuList, LuListOrdered, LuTextQuote, LuUnderline } from "react-icons/lu";
 import {
   getArticleTextLength,
   hasMeaningfulArticleContent,
@@ -31,227 +32,6 @@ interface ToolbarAction {
   onTrigger?: () => void;
 }
 
-const BoldTextIcon = createIcon({
-  displayName: "BoldTextIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <path
-      d="M8 5h6a4 4 0 0 1 0 8H8zm0 8h7a4 4 0 0 1 0 8H8z"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-    />
-  ),
-});
-
-const ItalicTextIcon = createIcon({
-  displayName: "ItalicTextIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M10 5h8"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M6 19h8"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M14 5 10 19"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const UnderlineTextIcon = createIcon({
-  displayName: "UnderlineTextIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M8 5v6a4 4 0 0 0 8 0V5"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M6 19h12"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const HeadingTextIcon = createIcon({
-  displayName: "HeadingTextIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M5 6v12"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M13 6v12"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M5 12h8"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M17 8h2l-1 8h2"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const QuoteTextIcon = createIcon({
-  displayName: "QuoteTextIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M8 9H5v5h4v-3H7c0-2 1-3 3-4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M17 9h-3v5h4v-3h-2c0-2 1-3 3-4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const BulletListIcon = createIcon({
-  displayName: "BulletListIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <circle cx="5" cy="7" r="1.5" fill="currentColor" />
-      <circle cx="5" cy="12" r="1.5" fill="currentColor" />
-      <circle cx="5" cy="17" r="1.5" fill="currentColor" />
-      <path
-        d="M9 7h10M9 12h10M9 17h10"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const NumberListIcon = createIcon({
-  displayName: "NumberListIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M4 7h2V5M6 5v4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M4 11h2l-2 3h2"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M4 19h2a1 1 0 0 0 0-2H4m2 0a1 1 0 0 1 0-2H4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="M10 7h10M10 12h10M10 17h10"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
-const ClearFormatIcon = createIcon({
-  displayName: "ClearFormatIcon",
-  viewBox: "0 0 24 24",
-  path: (
-    <>
-      <path
-        d="M6 18 14 6l4 6H10"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-      />
-      <path
-        d="m15 15 4 4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-      <path
-        d="m19 15-4 4"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </>
-  ),
-});
-
 function ToolbarButton({
   label,
   icon,
@@ -267,11 +47,11 @@ function ToolbarButton({
         aria-label={label}
         bg="white"
         borderColor="canvas.200"
+        boxSize={{ base: "56px", md: "60px" }}
         color="ink.800"
         icon={icon}
-        onClick={onClick}
-        boxSize={{ base: "56px", md: "60px" }}
         minW="unset"
+        onClick={onClick}
         type="button"
         variant="ghost"
         _hover={{ bg: "canvas.200" }}
@@ -326,49 +106,49 @@ export function RichTextEditor({
   const actions: ToolbarAction[] = [
     {
       label: "Mettre en gras",
-      icon: <BoldTextIcon boxSize={6} />,
+      icon: <Icon as={LuBold} boxSize={6} />,
       command: "bold",
     },
     {
       label: "Mettre en italique",
-      icon: <ItalicTextIcon boxSize={6} />,
+      icon: <Icon as={LuItalic} boxSize={6} />,
       command: "italic",
     },
     {
       label: "Souligner",
-      icon: <UnderlineTextIcon boxSize={6} />,
+      icon: <Icon as={LuUnderline} boxSize={6} />,
       command: "underline",
     },
     {
       label: "Titre",
-      icon: <HeadingTextIcon boxSize={6} />,
+      icon: <Icon as={LuHeading2} boxSize={6} />,
       command: "formatBlock",
       commandValue: "h2",
     },
     {
       label: "Citation",
-      icon: <QuoteTextIcon boxSize={6} />,
+      icon: <Icon as={LuTextQuote} boxSize={6} />,
       command: "formatBlock",
       commandValue: "blockquote",
     },
     {
       label: "Liste à puces",
-      icon: <BulletListIcon boxSize={6} />,
+      icon: <Icon as={LuList} boxSize={6} />,
       command: "insertUnorderedList",
     },
     {
       label: "Liste numérotée",
-      icon: <NumberListIcon boxSize={6} />,
+      icon: <Icon as={LuListOrdered} boxSize={6} />,
       command: "insertOrderedList",
     },
     {
       label: "Insérer un lien",
-      icon: <LinkIcon boxSize={6} />,
+      icon: <Icon as={LuLink} boxSize={6} />,
       onTrigger: insertLink,
     },
     {
       label: "Retirer la mise en forme",
-      icon: <ClearFormatIcon boxSize={6} />,
+      icon: <Icon as={LuEraser} boxSize={6} />,
       command: "removeFormat",
     },
   ];

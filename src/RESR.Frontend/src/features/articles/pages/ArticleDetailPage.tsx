@@ -99,7 +99,6 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
               <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
                 <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
                   Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
-                  Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
                 </Text>
 
                 <HStack spacing={3}>

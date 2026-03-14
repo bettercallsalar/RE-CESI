@@ -10,7 +10,9 @@ const initialFilters: MyArticlesFilters = {
   keyword: "",
   idCategory: "",
   visibility: "",
-  approval: ""
+  approval: "",
+  createdFrom: "",
+  createdTo: ""
 };
 
 export function useMyArticlesPage() {
@@ -89,7 +91,9 @@ export function useMyArticlesPage() {
             ? true
             : nextFilters.approval === "pending"
               ? false
-              : undefined
+              : undefined,
+        createdFrom: nextFilters.createdFrom || undefined,
+        createdTo: nextFilters.createdTo || undefined
       });
 
       setArticles(response.items);

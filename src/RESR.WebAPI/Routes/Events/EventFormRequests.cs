@@ -14,6 +14,7 @@ public sealed class CreateEventFormRequest
     public string? Address { get; init; }
     public int? IdDepartment { get; init; }
     public List<IFormFile>? Images { get; init; }
+    public int? DefaultImageIndex { get; init; }
 }
 
 public sealed class UpdateEventFormRequest
@@ -29,4 +30,6 @@ public sealed class UpdateEventFormRequest
     public int? IdDepartment { get; init; }
     public bool ReplaceImages { get; init; }
     public List<IFormFile>? Images { get; init; }
+    public int? DefaultImageId { get; init; }
+    public int? DefaultImageIndex { get; init; }
 }

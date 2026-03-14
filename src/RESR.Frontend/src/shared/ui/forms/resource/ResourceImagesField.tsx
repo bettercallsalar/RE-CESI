@@ -21,6 +21,7 @@ interface ResourceImagesFieldProps {
   onFilesChange: (files: File[]) => void;
   existingLabel?: string;
   previewLabel?: string;
+  enableDefaultSelection?: boolean;
 }
 
 export function ResourceImagesField({
@@ -31,6 +32,7 @@ export function ResourceImagesField({
   onFilesChange,
   existingLabel = "Images actuelles",
   previewLabel = "Aperçu des images",
+  enableDefaultSelection = true,
 }: ResourceImagesFieldProps) {
   const showExistingFiles = existingFiles.length > 0 && previewUrls.length === 0;
   const totalVisibleImages =
@@ -54,7 +56,7 @@ export function ResourceImagesField({
       <Text color="ink.500" fontSize={{ base: "13px", md: "14px" }} mt={2}>
         Jusqu'à 6 images, 5 Mo maximum par image.
       </Text>
-      {totalVisibleImages > 1 ? (
+      {enableDefaultSelection && totalVisibleImages > 1 ? (
         <Text
           color="ink.800"
           fontSize={{ base: "14px", md: "15px" }}
@@ -96,16 +98,18 @@ export function ResourceImagesField({
                     <Text color="ink.500" fontSize="12px" wordBreak="break-word">
                       {file.originalName}
                     </Text>
-                    <HStack justify="space-between" spacing={3}>
-                      <Button
-                        onClick={() =>
-                          onDefaultImageSelectionChange(`existing:${file.idFile}`)
-                        }
-                        size="sm"
-                        variant={isDefault ? "solid" : "outline"}>
-                        {isDefault ? "Image par défaut" : "Définir par défaut"}
-                      </Button>
-                    </HStack>
+                    {enableDefaultSelection ? (
+                      <HStack justify="space-between" spacing={3}>
+                        <Button
+                          onClick={() =>
+                            onDefaultImageSelectionChange(`existing:${file.idFile}`)
+                          }
+                          size="sm"
+                          variant={isDefault ? "solid" : "outline"}>
+                          {isDefault ? "Image par défaut" : "Définir par défaut"}
+                        </Button>
+                      </HStack>
+                    ) : null}
                   </Stack>
                 </Box>
               );
@@ -146,14 +150,16 @@ export function ResourceImagesField({
                     <Text color="ink.500" fontSize="12px" wordBreak="break-word">
                       {preview.name}
                     </Text>
-                    <HStack justify="space-between" spacing={3}>
-                      <Button
-                        onClick={() => onDefaultImageSelectionChange(`new:${index}`)}
-                        size="sm"
-                        variant={isDefault ? "solid" : "outline"}>
-                        {isDefault ? "Image par défaut" : "Définir par défaut"}
-                      </Button>
-                    </HStack>
+                    {enableDefaultSelection ? (
+                      <HStack justify="space-between" spacing={3}>
+                        <Button
+                          onClick={() => onDefaultImageSelectionChange(`new:${index}`)}
+                          size="sm"
+                          variant={isDefault ? "solid" : "outline"}>
+                          {isDefault ? "Image par défaut" : "Définir par défaut"}
+                        </Button>
+                      </HStack>
+                    ) : null}
                   </Stack>
                 </Box>
               );

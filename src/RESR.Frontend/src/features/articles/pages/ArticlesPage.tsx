@@ -6,6 +6,7 @@ import { ArticlesGrid } from "@/features/articles/components/ArticlesGrid";
 import { useArticlesPage } from "@/features/articles/hooks/useArticlesPage";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { DatePickerField } from "@/shared/ui/forms/DatePickerField";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 
 export function ArticlesPage() {
@@ -26,7 +27,7 @@ export function ArticlesPage() {
             Articles publiés
           </Text>
           <Text color="ink.500" fontSize={{ base: "16px", sm: "17px", md: "18px" }} maxW="760px" textAlign="center">
-            Consultez les dernières publications validées et filtrez-les par mot-clé ou par catégorie.
+            Consultez les dernières publications validées et filtrez-les par mot-clé, catégorie ou période.
           </Text>
         </>
       }
@@ -53,7 +54,7 @@ export function ArticlesPage() {
           ) : null}
         </Stack>
 
-        <SimpleGrid bg="white" border="1px solid" borderColor="canvas.200" columns={{ base: 1, lg: 3 }} gap={5} p={{ base: 5, md: 6 }} rounded="16px">
+        <SimpleGrid bg="white" border="1px solid" borderColor="canvas.200" columns={{ base: 1, md: 2, xl: 5 }} gap={5} p={{ base: 5, md: 6 }} rounded="16px">
           <FormControl>
             <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
               Rechercher
@@ -82,7 +83,21 @@ export function ArticlesPage() {
             </Select>
           </FormControl>
 
-          <Stack align={{ base: "stretch", lg: "end" }} justify="end">
+          <DatePickerField
+            label="Publie depuis"
+            max={filters.createdTo || undefined}
+            onChange={(value) => updateFilter("createdFrom", value)}
+            value={filters.createdFrom}
+          />
+
+          <DatePickerField
+            label="Publie jusqu'au"
+            min={filters.createdFrom || undefined}
+            onChange={(value) => updateFilter("createdTo", value)}
+            value={filters.createdTo}
+          />
+
+          <Stack align={{ base: "stretch", xl: "end" }} justify="end">
             <Button onClick={() => {
               void submitFilters();
             }}>
