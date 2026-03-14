@@ -225,7 +225,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
                       {articlesTotalCount}
                     </Heading>
                     <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }} mt={2}>
-                      Ressources visibles actuellement sur la plateforme.
+                      Articles visibles actuellement sur la plateforme.
                     </Text>
                   </Box>
 

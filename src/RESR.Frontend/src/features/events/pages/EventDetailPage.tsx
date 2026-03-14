@@ -4,6 +4,7 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatEventDateRange, formatEventPublishedDate, getPrimaryEventImage } from "@/features/events/lib/eventDates";
 import { useEventDetail } from "@/features/events/hooks/useEventDetail";
+import { ReadLaterToggleButton } from "@/features/marks/components/ReadLaterToggleButton";
 import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
@@ -145,6 +146,7 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                   <Button onClick={() => navigateTo("/events")} variant="outline">
                     Retour aux evenements
                   </Button>
+                  {!event.deletedAt ? <ReadLaterToggleButton idResource={event.idResource} /> : null}
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/events/${event.idResource}/modifier`)}>
                       Modifier l'evenement
@@ -285,7 +287,7 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
 
             <ConfirmationDialog
               confirmLabel="Desapprouver"
-              description="Voulez-vous vraiment desapprouver cet evenement ? Il ne sera plus visible dans les ressources publiques."
+              description="Voulez-vous vraiment desapprouver cet evenement ? Il ne sera plus visible parmi les events publics."
               isLoading={isUpdatingApproval}
               isOpen={unapproveDialog.isOpen}
               onClose={unapproveDialog.onClose}

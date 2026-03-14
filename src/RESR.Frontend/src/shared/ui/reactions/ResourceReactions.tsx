@@ -123,7 +123,7 @@ export function ResourceReactions({ idResource }: ResourceReactionsProps) {
 
   async function handleReactionSelection(name: ReactionName) {
     if (!isAuthenticated || !token || !user) {
-      showFormMessage(setMessage, createInfoMessage("Connectez-vous pour reagir a cette ressource.", "Connexion requise"));
+      showFormMessage(setMessage, createInfoMessage("Connectez-vous pour reagir.", "Connexion requise"));
       return;
     }
 

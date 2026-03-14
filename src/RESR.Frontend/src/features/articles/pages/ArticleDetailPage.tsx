@@ -4,6 +4,7 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getPrimaryArticleImage, sanitizeArticleHtml } from "@/features/articles/lib/articleContent";
 import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
+import { ReadLaterToggleButton } from "@/features/marks/components/ReadLaterToggleButton";
 import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
@@ -134,6 +135,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                   <Button onClick={() => navigateTo("/articles")} variant="outline">
                     Retour aux articles
                   </Button>
+                  {!article.deletedAt ? <ReadLaterToggleButton idResource={article.idResource} /> : null}
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/articles/${article.idResource}/modifier`)}>
                       Modifier l'article
@@ -245,7 +247,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
             <ConfirmationDialog
               confirmLabel="Desapprouver"
-              description="Voulez-vous vraiment desapprouver cet article ? Il ne sera plus visible dans les ressources publiques."
+              description="Voulez-vous vraiment desapprouver cet article ? Il ne sera plus visible parmi les articles publics."
               isLoading={isUpdatingApproval}
               isOpen={unapproveDialog.isOpen}
               onClose={unapproveDialog.onClose}

@@ -20,6 +20,7 @@ import { MyEventsPage } from "@/features/events/pages/MyEventsPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { FollowingFeedPage } from "@/features/follows/pages/FollowingFeedPage";
+import { ReadLaterPage } from "@/features/marks/pages/ReadLaterPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { UserProfilePage } from "@/features/profile/pages/UserProfilePage";
 import { HomePage } from "@/pages/HomePage";
@@ -58,6 +59,10 @@ function App() {
       setPathname("/login");
     }
     if (pathname === "/suivis" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/marques" && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
@@ -240,6 +245,18 @@ function App() {
 
     if (status === "authenticated") {
       return <FollowingFeedPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/marques") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de vos articles et events enregistres" />;
+    }
+
+    if (status === "authenticated") {
+      return <ReadLaterPage />;
     }
 
     return <AppLoader label="Redirection vers la connexion" />;
