@@ -90,7 +90,7 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        await NavigateToArticleAsync(TryGetHomeResourceCard(sender));
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -100,7 +100,7 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        await NavigateToArticleAsync(TryGetHomeResourceCard(sender));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -205,6 +205,7 @@ public partial class MainPage : ContentPage
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         return new HomeResourceCard(
+            article.IdResource,
             Badge: "Article public",
             HeroCaption: "ARTICLE",
             Title: article.Title,
@@ -219,6 +220,7 @@ public partial class MainPage : ContentPage
         var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
 
         return new HomeResourceCard(
+            @event.IdResource,
             Badge: "Evenement public",
             HeroCaption: "EVENT",
             Title: @event.Title,
@@ -290,6 +292,17 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private async Task NavigateToArticleAsync(HomeResourceCard? card)
+    {
+        if (card is null)
+        {
+            await NavigateToAsync(nameof(ArticlesPage));
+            return;
+        }
+
+        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={card.IdResource}");
+    }
+
     private async Task NavigateToRootAsync()
     {
         if (Shell.Current is null)
@@ -305,7 +318,15 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private static HomeResourceCard? TryGetHomeResourceCard(object? sender)
+    {
+        return sender is BindableObject bindable
+            ? bindable.BindingContext as HomeResourceCard
+            : null;
+    }
+
     private sealed record HomeResourceCard(
+        int IdResource,
         string Badge,
         string HeroCaption,
         string Title,

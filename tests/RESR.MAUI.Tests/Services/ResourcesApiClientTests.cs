@@ -164,6 +164,108 @@ public sealed class ResourcesApiClientTests
         Assert.Equal("Forum test", page.Items[0].Title);
     }
 
+    [Fact]
+    public async Task GetArticleByIdAsync_ReturnsPayload_FromPublicEndpoint()
+    {
+        var session = new StubApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles/12", request.RequestUri?.PathAndQuery);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idResource": 12,
+                  "idArticle": 4,
+                  "title": "Article detail",
+                  "description": "Description detail",
+                  "type": "article",
+                  "visibility": "PUBLIC",
+                  "createdAt": "2026-03-13T08:00:00Z",
+                  "modifiedAt": null,
+                  "deletedAt": null,
+                  "idUser": 2,
+                  "author": { "idUser": 2, "username": "alice", "firstName": "Alice" },
+                  "idCategory": 1,
+                  "content": "Corps complet",
+                  "isApproved": true,
+                  "defaultImageId": null,
+                  "files": []
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        var article = await sut.GetArticleByIdAsync(12, CancellationToken.None);
+
+        Assert.NotNull(article);
+        Assert.Equal("Article detail", article!.Title);
+    }
+
+    [Fact]
+    public async Task GetEventByIdAsync_ReturnsPayload_FromPublicEndpoint()
+    {
+        var session = new StubApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/events/14", request.RequestUri?.PathAndQuery);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idResource": 14,
+                  "idEvent": 7,
+                  "title": "Event detail",
+                  "description": "Description evenement",
+                  "type": "event",
+                  "visibility": "PUBLIC",
+                  "createdAt": "2026-03-13T09:00:00Z",
+                  "modifiedAt": null,
+                  "idUser": 3,
+                  "author": { "idUser": 3, "username": "bob", "firstName": "Bob" },
+                  "idCategory": 1,
+                  "subtitle": "Sous titre",
+                  "startDate": "2026-03-20T10:00:00Z",
+                  "endDate": "2026-03-20T18:00:00Z",
+                  "address": "Paris",
+                  "department": {
+                    "idDepartment": 1,
+                    "name": "Paris",
+                    "code": 75
+                  },
+                  "isApproved": true,
+                  "files": [],
+                  "deletedAt": null,
+                  "defaultImageId": null
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        var @event = await sut.GetEventByIdAsync(14, CancellationToken.None);
+
+        Assert.NotNull(@event);
+        Assert.Equal("Event detail", @event!.Title);
+    }
+
     private sealed class StubHttpMessageHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _handler;

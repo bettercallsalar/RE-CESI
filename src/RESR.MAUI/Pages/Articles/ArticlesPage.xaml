@@ -88,6 +88,9 @@
                                     Stroke="#E3DDD6"
                                     StrokeShape="RoundRectangle 24"
                                     Padding="20">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticleCardTapped" />
+                                </Border.GestureRecognizers>
                                 <VerticalStackLayout Spacing="10">
                                     <Border BackgroundColor="#2E2AA5"
                                             HorizontalOptions="Start"
@@ -109,6 +112,9 @@
                                            Style="{StaticResource CardMetaStyle}" />
                                     <Label Text="{Binding Summary}"
                                            Style="{StaticResource CardSummaryStyle}" />
+                                    <Button Text="Lire l'article"
+                                            HorizontalOptions="End"
+                                            Clicked="OnArticleOpenClicked" />
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>

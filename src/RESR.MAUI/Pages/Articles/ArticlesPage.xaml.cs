@@ -71,6 +71,35 @@ public partial class ArticlesPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
+    private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async void OnArticleOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async Task OpenArticleAsync(object? sender)
+    {
+        var article = sender is BindableObject bindable
+            ? bindable.BindingContext as ArticleListItem
+            : null;
+
+        if (article is null || Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={article.IdResource}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private async Task ReloadAsync(bool triggeredByRefresh)
     {
         _currentKeyword = NormalizeKeyword(KeywordSearchBar.Text);
@@ -169,6 +198,7 @@ public partial class ArticlesPage : ContentPage
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
 
         return new ArticleListItem(
+            article.IdResource,
             article.Title,
             $"Publie le {article.CreatedAt:dd/MM/yyyy}",
             $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
@@ -212,6 +242,7 @@ public partial class ArticlesPage : ContentPage
     }
 
     private sealed record ArticleListItem(
+        int IdResource,
         string Title,
         string Subtitle,
         string Meta,

@@ -26,6 +26,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
     }
 
+    public async Task<ArticleResponse?> GetArticleByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<ArticleResponse?>($"api/articles/{idResource}", fallback: null, ct);
+    }
+
     public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct)
     {
         return await GetEventsAsync(page, pageSize, keyword: null, ct);
@@ -35,6 +40,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
     {
         var uri = BuildListingUri("api/events", page, pageSize, keyword);
         return await GetAsync(uri, new PaginatedEventsResponse([], page, pageSize, 0, 0), ct);
+    }
+
+    public async Task<EventResponse?> GetEventByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<EventResponse?>($"api/events/{idResource}", fallback: null, ct);
     }
 
     private async Task<TResponse> GetAsync<TResponse>(string uri, TResponse fallback, CancellationToken ct)
