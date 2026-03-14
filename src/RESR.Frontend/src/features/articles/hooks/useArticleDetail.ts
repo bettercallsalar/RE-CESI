@@ -43,9 +43,9 @@ export function useArticleDetail(idResource: number) {
         }
 
         if (articleResponse.deletedAt) {
-          setArticle(null);
+          setArticle(articleResponse);
           setCategories(categoriesResponse);
-          showFormMessage(setMessage, createWarningMessage("Cet article a été supprimé et n'est plus accessible."));
+          showFormMessage(setMessage, createWarningMessage("Cet article a été supprimé. Il reste consultable mais ne peut plus être modifié."));
           return;
         }
 
@@ -81,6 +81,6 @@ export function useArticleDetail(idResource: number) {
     categoryName,
     isLoading,
     message,
-    canEdit: status === "authenticated" && user?.idUser === article?.idUser
+    canEdit: status === "authenticated" && user?.idUser === article?.idUser && !article?.deletedAt
   };
 }

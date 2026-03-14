@@ -84,6 +84,32 @@ public sealed class ArticlesControllerTests
     }
 
     [Fact]
+    public async Task GetByResourceId_ReturnsNotFound_WhenArticleIsDeleted()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 1,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PUBLIC,
+                CreatedAt = DateTime.UtcNow,
+                DeletedAt = DateTime.UtcNow,
+                IdUser = 1,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = true
+            });
+
+        var controller = new ArticlesController(service.Object, tokenService.Object);
+        var result = await controller.GetByResourceId(1, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
     public async Task GetOwnByResourceId_ReturnsOk_WhenOwnerMatches()
     {
         var service = new Mock<IArticleService>();

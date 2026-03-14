@@ -9,7 +9,7 @@ export interface ArticleCardAction {
   href?: string;
   onClick?: () => void;
   variant?: "solid" | "outline";
-  tone?: "default" | "danger";
+  tone?: "default" | "danger" | "dangerSoft";
   isDisabled?: boolean;
 }
 
@@ -62,7 +62,8 @@ export function ArticleCard({
       bg="white"
       border="1px solid"
       borderColor="canvas.200"
-      display="block"
+      display="flex"
+      flexDirection="column"
       h="100%"
       rounded={{ base: "12px", md: "16px" }}
       shadow="sm"
@@ -72,8 +73,8 @@ export function ArticleCard({
       <Box bg="canvas.200" h={compact ? "180px" : "220px"} overflow="hidden">
         <Image alt={article.title} h="100%" objectFit="cover" src={coverImageSrc} w="100%" />
       </Box>
-      <CardBody p={{ base: 5, md: 6 }}>
-        <Stack h="100%" spacing={compact ? 3 : 4}>
+      <CardBody display="flex" flex="1" flexDirection="column" p={{ base: 5, md: 6 }}>
+        <Stack flex="1" spacing={compact ? 3 : 4}>
           <HStack flexWrap="wrap" spacing={3}>
             <Badge bg="canvas.200" color="ink.800" fontSize="12px" px={2.5} py={1} rounded="full">
               {formatArticleDate(article.createdAt)}
@@ -118,12 +119,14 @@ export function ArticleCard({
           </Text>
 
           {actions?.length ? (
-            <HStack mt="auto" spacing={3}>
+            <HStack align="stretch" mt="auto" pt={3} spacing={3} wrap="nowrap">
               {actions.map((action) => (
                 <Button
                   key={`${action.label}-${action.href ?? "action"}`}
                   bg={action.tone === "danger" ? "red.500" : undefined}
-                  color={action.tone === "danger" ? "white" : undefined}
+                  borderColor={action.tone === "dangerSoft" ? "red.200" : undefined}
+                  color={action.tone === "danger" ? "white" : action.tone === "dangerSoft" ? "red.300" : undefined}
+                  flexShrink={0}
                   isDisabled={action.isDisabled}
                   onClick={() => {
                     if (action.onClick) {
@@ -137,7 +140,18 @@ export function ArticleCard({
                   }}
                   size="sm"
                   variant={action.variant ?? "outline"}
-                  _hover={action.tone === "danger" ? { bg: "red.600" } : undefined}
+                  _hover={
+                    action.tone === "danger"
+                      ? { bg: "red.600" }
+                      : action.tone === "dangerSoft"
+                        ? { bg: "red.50" }
+                        : undefined
+                  }
+                  _disabled={
+                    action.tone === "dangerSoft"
+                      ? { bg: "red.100", borderColor: "red.200", color: "white", opacity: 1, cursor: "not-allowed" }
+                      : undefined
+                  }
                 >
                   {action.label}
                 </Button>

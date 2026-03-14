@@ -96,7 +96,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     {
         var article = await _service.GetByResourceIdAsync(idResource, ct);
 
-        if (article is null || article.Visibility != ResourceVisibility.PUBLIC || !article.IsApproved)
+        if (article is null || article.DeletedAt is not null || article.Visibility != ResourceVisibility.PUBLIC || !article.IsApproved)
             return NotFound();
 
         return Ok(ToResponse(article));

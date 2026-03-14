@@ -57,6 +57,14 @@ export function useEditArticleForm(idResource: number) {
           return;
         }
 
+        if (articleResponse.deletedAt) {
+          setArticle(articleResponse);
+          setValues(null);
+          setCategories(categoriesResponse);
+          showFormMessage(setMessage, createWarningMessage("Un article supprimé ne peut plus être modifié."));
+          return;
+        }
+
         setArticle(articleResponse);
         setValues(toFormValues(articleResponse));
         setCategories(categoriesResponse);
@@ -191,7 +199,7 @@ export function useEditArticleForm(idResource: number) {
     values,
     categories,
     existingFiles: article?.files ?? [],
-    canEdit: !!article && !!user && article.idUser === user.idUser,
+    canEdit: !!article && !!user && article.idUser === user.idUser && !article.deletedAt,
     isLoading,
     isLoadingCategories,
     isSubmitting,

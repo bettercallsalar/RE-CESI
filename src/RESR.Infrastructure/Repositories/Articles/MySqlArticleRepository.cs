@@ -107,7 +107,6 @@ public sealed class MySqlArticleRepository : IArticleRepository
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
         WHERE r.id_ressource = @id_ressource
-          AND r.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
