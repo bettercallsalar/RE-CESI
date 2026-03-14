@@ -35,7 +35,7 @@ public partial class LoginPage : ContentPage
         {
             await _usersApiClient.LoginAsync(new Login(EmailEntry.Text.Trim(), PasswordEntry.Text), _loginCts.Token);
             StatusLabel.Text = "Login reussi.";
-            await Shell.Current.GoToAsync($"//{nameof(HomePage)}");
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
         catch (ApiException ex)
         {

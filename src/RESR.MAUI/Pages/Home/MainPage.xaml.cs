@@ -1,5 +1,7 @@
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Events;
+using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
 
@@ -20,7 +22,7 @@ public partial class MainPage : ContentPage
         _session = session;
         InitializeComponent();
 
-        HeaderAccountLabel.Text = _session.IsAuthenticated ? "MonCompte" : "Connexion";
+        UpdateAuthState();
         ApplyArticleState();
         ApplyEventState();
     }
@@ -28,6 +30,7 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        UpdateAuthState();
 
         if (_hasLoadedOnce)
             return;
@@ -62,6 +65,29 @@ public partial class MainPage : ContentPage
         await NavigateToAsync(nameof(EventsPage));
     }
 
+    private async void OnAccountHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(_session.IsAuthenticated ? nameof(ProfilePage) : nameof(LoginPage));
+    }
+
+    private async void OnCreateArticleHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(CreateArticlePage));
+    }
+
+    private async void OnRegisterHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(RegisterPage));
+    }
+
+    private async void OnLogoutHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        _session.Clear();
+        UpdateAuthState();
+        StatusLabel.Text = "Deconnexion reussie.";
+        await NavigateToRootAsync();
+    }
+
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
         await NavigateToAsync(nameof(ArticlesPage));
@@ -84,7 +110,9 @@ public partial class MainPage : ContentPage
 
     private void OnMenuClicked(object? sender, EventArgs e)
     {
-        StatusLabel.Text = "Utilise les liens Articles et Evenements pour ouvrir les listes de recherche.";
+        StatusLabel.Text = _session.IsAuthenticated
+            ? "Utilise les liens pour parcourir les ressources, creer un article ou acceder a ton profil."
+            : "Utilise les liens Articles et Evenements pour ouvrir les listes de recherche, ou connecte-toi.";
     }
 
     private async Task LoadResourcesAsync(bool triggeredByRefresh)
@@ -112,7 +140,7 @@ public partial class MainPage : ContentPage
             ApplyEventState();
 
             StatusLabel.Text = BuildStatusMessage(articles.TotalCount, events.TotalCount);
-            HeaderAccountLabel.Text = _session.IsAuthenticated ? "MonCompte" : "Connexion";
+            UpdateAuthState();
         }
         catch (ApiException ex)
         {
@@ -162,6 +190,15 @@ public partial class MainPage : ContentPage
 
         if (triggeredByRefresh || !isLoading)
             RefreshContainer.IsRefreshing = isLoading && triggeredByRefresh;
+    }
+
+    private void UpdateAuthState()
+    {
+        var isAuthenticated = _session.IsAuthenticated;
+        HeaderAccountLabel.Text = isAuthenticated ? "Mon profil" : "Connexion";
+        HeaderRegisterLabel.IsVisible = !isAuthenticated;
+        HeaderCreateArticleLabel.IsVisible = isAuthenticated;
+        HeaderLogoutLabel.IsVisible = isAuthenticated;
     }
 
     private static HomeResourceCard ToArticleCard(ArticleResponse article)
@@ -238,12 +275,34 @@ public partial class MainPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
-    private static async Task NavigateToAsync(string route)
+    private async Task NavigateToAsync(string route)
     {
         if (Shell.Current is null)
             return;
 
-        await Shell.Current.GoToAsync(route);
+        try
+        {
+            await Shell.Current.GoToAsync(route);
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
+    private async Task NavigateToRootAsync()
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+        }
     }
 
     private sealed record HomeResourceCard(

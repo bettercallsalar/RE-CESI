@@ -56,6 +56,7 @@
             <Setter Property="MinimumHeightRequest" Value="34" />
             <Setter Property="MinimumWidthRequest" Value="44" />
         </Style>
+
     </ContentPage.Resources>
 
     <RefreshView x:Name="RefreshContainer"
@@ -132,9 +133,36 @@
                                     <TapGestureRecognizer Tapped="OnEventsHeaderTapped" />
                                 </Label.GestureRecognizers>
                             </Label>
+                            <Label x:Name="HeaderRegisterLabel"
+                                   Text="Inscription"
+                                   Style="{StaticResource HeaderLinkLabelStyle}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRegisterHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label x:Name="HeaderCreateArticleLabel"
+                                   Text="Creer un article"
+                                   Style="{StaticResource HeaderLinkLabelStyle}"
+                                   IsVisible="False">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnCreateArticleHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                            <Label x:Name="HeaderLogoutLabel"
+                                   Text="Logout"
+                                   Style="{StaticResource HeaderLinkLabelStyle}"
+                                   IsVisible="False">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLogoutHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                             <Label x:Name="HeaderAccountLabel"
                                    Text="Connexion"
-                                   Style="{StaticResource HeaderLinkLabelStyle}" />
+                                   Style="{StaticResource HeaderLinkLabelStyle}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnAccountHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                         </HorizontalStackLayout>
                     </Grid>
                 </Border>
