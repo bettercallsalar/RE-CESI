@@ -1,18 +1,35 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using RESR.Core;
+using RESR.Core.Controllers.Resources.Ports;
+using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Infrastructure;
 using RESR.WebAPI;
+using RESR.WebAPI.Files;
 
 var builder = WebApplication.CreateBuilder(args);
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddWebApiServices();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.AllowAnyHeader()
+              .AllowAnyMethod();
+
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins);
+    });
+});
 
 builder.Services.AddInfrastructure(builder.Configuration)
                 .AddCoreServices(builder.Configuration);
+builder.Services.AddScoped<IResourceFileStorage, LocalResourceFileStorage>();
 
 var jwtSecret = builder.Configuration[$"{JwtSettings.SectionName}:SecretKey"]
     ?? throw new InvalidOperationException("Missing JwtSettings:SecretKey.");
@@ -65,6 +82,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+var uploadsRootDirectory = LocalResourceFileStorage.GetUploadsRootDirectory();
+Directory.CreateDirectory(uploadsRootDirectory);
 
 if (app.Environment.IsDevelopment())
 {
@@ -72,6 +91,36 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (ValidationException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+    }
+    catch (ConflictException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+        await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+    }
+    catch (NotFoundException ex)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+    }
+});
+
+app.UseCors("Frontend");
+app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRootDirectory),
+    RequestPath = LocalResourceFileStorage.PublicRequestPath
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

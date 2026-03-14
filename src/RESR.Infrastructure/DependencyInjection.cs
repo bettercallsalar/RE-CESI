@@ -2,20 +2,38 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RESR.Core.Controllers.Departments.Ports;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using RESR.Core.Controllers.Comments.Factories;
+using RESR.Core.Controllers.Comments.Ports;
 using RESR.Core.Controllers.Categories.Factories;
 using RESR.Core.Controllers.Categories.Ports;
 using RESR.Core.Controllers.Permissions.Factories;
 using RESR.Core.Controllers.Permissions.Ports;
+using RESR.Core.Controllers.Reactions.Factories;
+using RESR.Core.Controllers.Reactions.Ports;
 using RESR.Core.Controllers.Roles.Factories;
 using RESR.Core.Controllers.Roles.Ports;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
 using RESR.Core.Controllers.Departments.Factories;
+using RESR.Core.Controllers.Articles.Factories;
+using RESR.Core.Controllers.Articles.Ports;
+using RESR.Core.Controllers.Events.Factories;
+using RESR.Core.Controllers.Events.Ports;
+using RESR.Core.Controllers.Follows.Ports;
+using RESR.Core.Controllers.Marks.Ports;
 using RESR.Infrastructure.Departments;
+using RESR.Infrastructure.Comments;
 using RESR.Infrastructure.Categories;
+using RESR.Infrastructure.Reactions;
 using RESR.Infrastructure.Permissions;
 using RESR.Infrastructure.Roles;
 using RESR.Infrastructure.Users;
+using RESR.Infrastructure.Articles;
+using RESR.Infrastructure.Events;
+using RESR.Infrastructure.Follows;
+using RESR.Infrastructure.Marks;
+using RESR.Infrastructure.Resources;
+using RESR.Core.Controllers.Resources.Ports;
 
 namespace RESR.Infrastructure;
 
@@ -28,6 +46,8 @@ public static class DependencyInjection
 
         // Ensure category factory is available even if Core DI isn't wired as expected.
         services.TryAddScoped<ICategoryFactory, CategoryFactory>();
+        services.TryAddScoped<ICommentFactory, CommentFactory>();
+        services.TryAddScoped<IReactionFactory, ReactionFactory>();
 
         services.AddScoped<IUserRepository>(sp =>
             new MySqlUserRepository(
@@ -62,6 +82,50 @@ public static class DependencyInjection
             new MySqlCategoryRepository(
                 connectionString,
                 _.GetRequiredService<ICategoryFactory>()
+            )
+        );
+
+        services.AddScoped<IArticleRepository>(sp =>
+            new MySqlArticleRepository(
+                connectionString,
+                sp.GetRequiredService<IArticleFactory>()
+            )
+        );
+
+        services.AddScoped<IResourceFileRepository>(_ =>
+            new MySqlResourceFileRepository(connectionString)
+        );
+
+        services.AddScoped<IEventRepository>(sp =>
+            new MySqlEventRepository(
+                connectionString,
+                sp.GetRequiredService<IEventFactory>()
+            )
+        );
+
+        services.AddScoped<IFollowsRepository>(sp =>
+            new MySqlFollowsRepository(
+                connectionString
+            )
+        );
+
+        services.AddScoped<ICommentRepository>(sp =>
+            new MySqlCommentRepository(
+                connectionString,
+                sp.GetRequiredService<ICommentFactory>()
+            )
+        );
+
+        services.AddScoped<IMarksRepository>(sp =>
+            new MySqlMarksRepository(
+                connectionString
+            )
+        );
+
+        services.AddScoped<IReactionRepository>(sp =>
+            new MySqlReactionRepository(
+                connectionString,
+                sp.GetRequiredService<IReactionFactory>()
             )
         );
 

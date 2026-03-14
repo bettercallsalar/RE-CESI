@@ -1,4 +1,8 @@
 <Project>
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/artifacts/**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
     <!-- Only measure coverage for product assemblies, never the test assemblies -->
     <Include>[RESR.*]*</Include>

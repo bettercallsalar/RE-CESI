@@ -16,10 +16,20 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore src/RESR.sln
+        run: |
+          dotnet restore tests/RESR.Core.Tests/RESR.Core.Tests.csproj
+          dotnet restore tests/RESR.Infrastructure.Tests/RESR.Infrastructure.Tests.csproj
+          dotnet restore tests/RESR.Models.Tests/RESR.Models.Tests.csproj
+          dotnet restore tests/RESR.WebAPI.Tests/RESR.WebAPI.Tests.csproj
+          dotnet restore tests/RESR.MAUI.Tests/RESR.MAUI.Tests.csproj
 
       - name: Test With Coverage
-        run: dotnet test src/RESR.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+        run: |
+          dotnet test tests/RESR.Core.Tests/RESR.Core.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+          dotnet test tests/RESR.Infrastructure.Tests/RESR.Infrastructure.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+          dotnet test tests/RESR.Models.Tests/RESR.Models.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+          dotnet test tests/RESR.WebAPI.Tests/RESR.WebAPI.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
+          dotnet test tests/RESR.MAUI.Tests/RESR.MAUI.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --settings coverlet.runsettings
 
       - name: Install ReportGenerator
         run: |

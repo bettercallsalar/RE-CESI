@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Auth.LoginPage"
+             Title="Connexion"
+             BackgroundColor="{StaticResource FormPageBackground}">
+
+    <ScrollView>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="720"
+                             Padding="20,24,20,32"
+                             Spacing="22">
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Connexion"
+                       Style="{StaticResource FormHeroTitleStyle}" />
+                <Label Text="Retrouve tes ressources, ton profil et tes actions depuis un espace unifie."
+                       Style="{StaticResource FormHeroSubtitleStyle}" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource FormCardStyle}">
+                <VerticalStackLayout Spacing="18">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Acceder a ton compte"
+                               Style="{StaticResource FormSectionTitleStyle}" />
+                        <Label Text="Renseigne ton email et ton mot de passe pour continuer."
+                               Style="{StaticResource FormCaptionStyle}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Courriel"
+                               Style="{StaticResource FormFieldLabelStyle}" />
+                        <Border Style="{StaticResource FormEntryBorderStyle}">
+                            <Entry x:Name="EmailEntry"
+                                   Placeholder="nom@exemple.fr"
+                                   Keyboard="Email" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Mot de passe"
+                               Style="{StaticResource FormFieldLabelStyle}" />
+                        <Border Style="{StaticResource FormEntryBorderStyle}">
+                            <Entry x:Name="PasswordEntry"
+                                   Placeholder="Ton mot de passe"
+                                   IsPassword="True" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Button Text="Se connecter"
+                            Clicked="OnLoginClicked"
+                            Style="{StaticResource FormPrimaryButtonStyle}" />
+
+                    <Label x:Name="StatusLabel"
+                           Text="Renseigne ton email et ton mot de passe."
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource FormCardStyle}"
+                    Padding="18">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Pas encore de compte ?"
+                           Style="{StaticResource FormFieldLabelStyle}"
+                           HorizontalTextAlignment="Center" />
+                    <Button Text="S'inscrire"
+                            Clicked="OnGoToRegisterClicked"
+                            Style="{StaticResource FormSecondaryButtonStyle}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

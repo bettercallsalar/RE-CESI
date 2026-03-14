@@ -18,6 +18,7 @@ public sealed record UpdateUserCommand(
     string? FirstName = null,
     DateOnly? BirthDate = null,
     string? Bio = null,
+    bool ClearBio = false,
     int? IdDepartment = null,
     int? IdRole = null
 );

@@ -1,8 +1,12 @@
 using RESR.Models.Departments;
+using RESR.Models.Follows;
+using RESR.Models.Comments;
 using RESR.Models.Permissions;
+using RESR.Models.Reactions;
 using RESR.Models.Roles;
 using RESR.Models.Users;
 using RESR.Models.Categories;
+using RESR.Models.Marks;
 
 namespace RESR.Models.Tests;
 
@@ -22,7 +26,7 @@ public sealed class ModelsTests
             Bio = "bio",
             IsVerified = true,
             DeletedAt = DateTime.UtcNow,
-            IdDepartment = 1,
+            Department = new Department { IdDepartment = 1, Name = "IT", Code = 10 },
             IdRole = 2
         };
 
@@ -35,7 +39,7 @@ public sealed class ModelsTests
         Assert.Equal("bio", user.Bio);
         Assert.True(user.IsVerified);
         Assert.NotNull(user.DeletedAt);
-        Assert.Equal(1, user.IdDepartment);
+        Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal(2, user.IdRole);
     }
 
@@ -98,13 +102,84 @@ public sealed class ModelsTests
     }
 
     [Fact]
+    public void Follow_AllowsPropertyAssignment()
+    {
+        var follow = new Follow
+        {
+            IdFollower = 3,
+            IdFollowing = 9
+        };
+
+        Assert.Equal(3, follow.IdFollower);
+        Assert.Equal(9, follow.IdFollowing);
+    }
+
+    [Fact]
+    public void FollowUser_AllowsPropertyAssignment()
+    {
+        var followUser = new FollowUser
+        {
+            IdUser = 5,
+            Username = "user",
+            FirstName = "User"
+        };
+
+        Assert.Equal(5, followUser.IdUser);
+        Assert.Equal("user", followUser.Username);
+        Assert.Equal("User", followUser.FirstName);
+    }
+
+    [Fact]
+    public void Comment_AllowsPropertyAssignment()
+    {
+        var comment = new Comment
+        {
+            IdComment = 5,
+            Content = "Hello",
+            CreatedAt = new DateTime(2026, 3, 11, 12, 0, 0, DateTimeKind.Utc),
+            ModifiedAt = new DateTime(2026, 3, 11, 13, 0, 0, DateTimeKind.Utc),
+            DeletedAt = null,
+            IdResource = 9,
+            IdUser = 3,
+            IdParentComment = 1
+        };
+
+        Assert.Equal(5, comment.IdComment);
+        Assert.Equal("Hello", comment.Content);
+        Assert.Equal(9, comment.IdResource);
+        Assert.Equal(3, comment.IdUser);
+        Assert.Equal(1, comment.IdParentComment);
+    }
+
+    [Fact]
+    public void Reaction_AllowsPropertyAssignment()
+    {
+        var reaction = new Reaction
+        {
+            IdReaction = 3,
+            Name = ReactionNames.Love,
+            IdResource = 9,
+            IdUser = 4,
+            Username = "user4",
+            FirstName = "User Four"
+        };
+
+        Assert.Equal(3, reaction.IdReaction);
+        Assert.Equal(ReactionNames.Love, reaction.Name);
+        Assert.Equal(9, reaction.IdResource);
+        Assert.Equal(4, reaction.IdUser);
+        Assert.Equal("user4", reaction.Username);
+        Assert.Equal("User Four", reaction.FirstName);
+    }
+
+    [Fact]
     public void UserDtos_AssignValues()
     {
         var register = new RegisterUserRequest("u", "e", "p", "f", null, null, 1);
         var update = new UpdateUserRequest("u", "e", "f", null, "b", 1, 2);
         var updateOwn = new UpdateOwnProfileRequest("u", "e", "f", null, "b", 1);
         var verification = new SetUserVerificationRequest(true);
-        var response = new UserResponse(1, "u", "e", "f", null, "b", true, 1, 2);
+        var response = new UserResponse(1, "u", "e", "f", null, "b", true, new Department { IdDepartment = 1, Name = "IT", Code = 10 }, 2);
         var paginated = new PaginatedUsersResponse(new List<UserResponse> { response }, 1, 10, 1, 1);
         var filters = new UserListingFilters("k", new List<int> { 1 }, new List<int> { 2 }, null, true, false);
         var login = new Login("e", "p");
@@ -117,6 +192,67 @@ public sealed class ModelsTests
         Assert.Single(paginated.Items);
         Assert.Equal("k", filters.Keyword);
         Assert.Equal("e", login.Email);
+    }
+
+    [Fact]
+    public void FollowDtos_AssignValues()
+    {
+        var request = new FollowRequest(1, 2);
+        var response = new FollowResponse(1, 2);
+        var user = new FollowUserResponse(3, "user", "User");
+        var paginated = new PaginatedFollowUsersResponse(new List<FollowUserResponse> { user }, 1, 10, 1, 1);
+
+        Assert.Equal(1, request.IdFollower);
+        Assert.Equal(2, response.IdFollowing);
+        Assert.Equal("user", user.Username);
+        Assert.Single(paginated.Items);
+        Assert.Equal(1, paginated.TotalCount);
+    }
+
+    [Fact]
+    public void CommentDtos_AssignValues()
+    {
+        var create = new CreateCommentRequest("Hello", 1);
+        var update = new UpdateCommentRequest("Updated");
+        var response = new CommentResponse(
+            7,
+            "Hello",
+            new DateTime(2026, 3, 11, 12, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 3, 11, 13, 0, 0, DateTimeKind.Utc),
+            new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc),
+            10,
+            2,
+            1
+        );
+
+        Assert.Equal("Hello", create.Content);
+        Assert.Equal(1, create.IdParentComment);
+        Assert.Equal("Updated", update.Content);
+        Assert.Equal(7, response.IdComment);
+        Assert.Equal(new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc), response.DeletedAt);
+        Assert.Equal(10, response.IdResource);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal(1, response.IdParentComment);
+    }
+
+    [Fact]
+    public void ReactionDtos_AssignValues()
+    {
+        var create = new CreateReactionRequest(ReactionNames.Like);
+        var update = new UpdateReactionRequest(ReactionNames.Dislike);
+        var user = new ReactionUserResponse(2, "user2", "User Two");
+        var response = new ReactionResponse(8, ReactionNames.Love, 11, 2, user);
+        var userReactions = new UserReactionsResponse(2, 1, new List<ReactionResponse> { response });
+
+        Assert.Equal(ReactionNames.Like, create.Name);
+        Assert.Equal(ReactionNames.Dislike, update.Name);
+        Assert.Equal(8, response.IdReaction);
+        Assert.Equal(11, response.IdResource);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal("user2", response.User.Username);
+        Assert.Equal(2, userReactions.IdUser);
+        Assert.Equal(1, userReactions.TotalCount);
+        Assert.Single(userReactions.Items);
     }
 
     [Fact]
@@ -153,7 +289,7 @@ public sealed class ModelsTests
     [Fact]
     public void UserResponse_ExposesAllProperties()
     {
-        var response = new UserResponse(10, "user", "user@example.com", "User", new DateOnly(1999, 12, 31), "bio", false, 3, 4);
+        var response = new UserResponse(10, "user", "user@example.com", "User", new DateOnly(1999, 12, 31), "bio", false, new Department { IdDepartment = 3, Name = "HR", Code = 20 }, 4);
 
         Assert.Equal(10, response.IdUser);
         Assert.Equal("user", response.Username);
@@ -162,7 +298,7 @@ public sealed class ModelsTests
         Assert.Equal(new DateOnly(1999, 12, 31), response.BirthDate);
         Assert.Equal("bio", response.Bio);
         Assert.False(response.IsVerified);
-        Assert.Equal(3, response.IdDepartment);
+        Assert.Equal(3, response.Department.IdDepartment);
         Assert.Equal(4, response.IdRole);
     }
 
@@ -188,5 +324,28 @@ public sealed class ModelsTests
 
         Assert.Equal("Desc", permission.Description);
         Assert.Equal("RoleDesc", role.Description);
+    }
+
+    [Fact]
+    public void MarkDtos_AssignValues()
+    {
+        var create = new CreateMarkRequest(true, false, 4);
+        var update = new UpdateMarkRequest(false, true, 4);
+        var response = new MarkResponse(7, true, false, 4, 2);
+        var paginated = new PaginatedMarksResponse(new List<MarkResponse> { response }, 1, 10, 1, 1);
+        var mark = new Mark
+        {
+            IdMark = 7,
+            IsFavorite = true,
+            IsReadLater = false,
+            IdRessource = 4,
+            IdUser = 2
+        };
+
+        Assert.True(create.IsFavorite);
+        Assert.True(update.IsReadLater);
+        Assert.Equal(7, response.IdMark);
+        Assert.Single(paginated.Items);
+        Assert.Equal(4, mark.IdRessource);
     }
 }

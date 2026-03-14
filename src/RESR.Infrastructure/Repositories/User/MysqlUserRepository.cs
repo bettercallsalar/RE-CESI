@@ -1,6 +1,7 @@
 using RESR.Core.Controllers.Users;
 using RESR.Core.Controllers.Users.Factories;
 using RESR.Core.Controllers.Users.Ports;
+using RESR.Models.Departments;
 using RESR.Models.Users;
 using MySql.Data.MySqlClient;
 using System.Data.Common;
@@ -28,9 +29,23 @@ public sealed class MySqlUserRepository : IUserRepository
     public async Task<User?> GetByIdAsync(int idUser, CancellationToken ct)
     {
         const string sql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE id_user = @id_user AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.id_user = @id_user AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -47,9 +62,23 @@ public sealed class MySqlUserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email, CancellationToken ct)
     {
         const string sql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE email = @email AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.email = @email AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -66,9 +95,23 @@ public sealed class MySqlUserRepository : IUserRepository
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken ct)
     {
         const string sql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE username = @username AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.username = @username AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -86,8 +129,22 @@ public sealed class MySqlUserRepository : IUserRepository
     {
         var offset = (page - 1) * pageSize;
         var sql = new StringBuilder("""
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
         WHERE 1 = 1
         """);
 
@@ -115,7 +172,7 @@ public sealed class MySqlUserRepository : IUserRepository
     {
         var sql = new StringBuilder("""
         SELECT COUNT(*)
-        FROM `user`
+        FROM `user` u
         WHERE 1 = 1
         """);
 
@@ -150,7 +207,7 @@ public sealed class MySqlUserRepository : IUserRepository
         AddParameter(cmd, "@hashed_password", user.HashedPassword);
         AddParameter(cmd, "@is_verified", user.IsVerified);
         AddParameter(cmd, "@deleted_at", (object?)user.DeletedAt ?? DBNull.Value);
-        AddParameter(cmd, "@id_department", user.IdDepartment);
+        AddParameter(cmd, "@id_department", user.Department.IdDepartment);
         AddParameter(cmd, "@id_role", user.IdRole);
 
         var id = await cmd.ExecuteScalarAsync(ct);
@@ -165,7 +222,7 @@ public sealed class MySqlUserRepository : IUserRepository
             username = COALESCE(@username, username),
             first_name = COALESCE(@first_name, first_name),
             birth_date = COALESCE(@birth_date, birth_date),
-            bio = COALESCE(@bio, bio),
+            bio = CASE WHEN @clear_bio THEN NULL ELSE COALESCE(@bio, bio) END,
             email = COALESCE(@email, email),
             id_department = COALESCE(@id_department, id_department),
             id_role = COALESCE(@id_role, id_role)
@@ -173,9 +230,23 @@ public sealed class MySqlUserRepository : IUserRepository
         """;
 
         const string selectSql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE id_user = @id_user AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.id_user = @id_user AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -227,9 +298,23 @@ public sealed class MySqlUserRepository : IUserRepository
         """;
 
         const string selectSql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE id_user = @id_user AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.id_user = @id_user AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -277,7 +362,7 @@ public sealed class MySqlUserRepository : IUserRepository
             reader["bio"] == DBNull.Value ? null : Convert.ToString(reader["bio"]),
             Convert.ToBoolean(reader["is_verified"]),
             reader["deleted_at"] == DBNull.Value ? null : Convert.ToDateTime(reader["deleted_at"]),
-            Convert.ToInt32(reader["id_department"]),
+            MapDepartment(reader),
             Convert.ToInt32(reader["id_role"])
         );
     }
@@ -285,9 +370,23 @@ public sealed class MySqlUserRepository : IUserRepository
     public async Task<User?> GetByEmailAndPasswordHashAsync(string email, string passwordHash, CancellationToken ct)
     {
         const string sql = """
-        SELECT id_user, username, first_name, birth_date, bio, email, hashed_password, is_verified, deleted_at, id_department, id_role
-        FROM `user`
-        WHERE email = @email AND hashed_password = @hashed_password AND deleted_at IS NULL
+        SELECT
+            u.id_user,
+            u.username,
+            u.first_name,
+            u.birth_date,
+            u.bio,
+            u.email,
+            u.hashed_password,
+            u.is_verified,
+            u.deleted_at,
+            u.id_department,
+            u.id_role,
+            d.name AS department_name,
+            d.code AS department_code
+        FROM `user` u
+        INNER JOIN `department` d ON d.id_department = u.id_department
+        WHERE u.email = @email AND u.hashed_password = @hashed_password AND u.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -309,6 +408,7 @@ public sealed class MySqlUserRepository : IUserRepository
         AddParameter(cmd, "@first_name", (object?)user.FirstName ?? DBNull.Value);
         AddParameter(cmd, "@birth_date", user.BirthDate is null ? DBNull.Value : user.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         AddParameter(cmd, "@bio", (object?)user.Bio ?? DBNull.Value);
+        AddParameter(cmd, "@clear_bio", user.ClearBio);
         AddParameter(cmd, "@email", (object?)user.Email ?? DBNull.Value);
         AddParameter(cmd, "@id_department", (object?)user.IdDepartment ?? DBNull.Value);
         AddParameter(cmd, "@id_role", (object?)user.IdRole ?? DBNull.Value);
@@ -317,16 +417,16 @@ public sealed class MySqlUserRepository : IUserRepository
     private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, UserListingFilters filters)
     {
         if (!filters.IncludeDeleted)
-            sql.AppendLine("  AND deleted_at IS NULL");
+            sql.AppendLine("  AND u.deleted_at IS NULL");
 
         if (filters.Keyword is not null)
         {
             sql.AppendLine("""
               AND (
-                username LIKE @keyword
-                OR email LIKE @keyword
-                OR first_name LIKE @keyword
-                OR bio LIKE @keyword
+                u.username LIKE @keyword
+                OR u.email LIKE @keyword
+                OR u.first_name LIKE @keyword
+                OR u.bio LIKE @keyword
               )
             """);
             AddParameter(cmd, "@keyword", $"%{filters.Keyword}%");
@@ -334,18 +434,34 @@ public sealed class MySqlUserRepository : IUserRepository
 
         if (filters.BirthDate is not null)
         {
-            sql.AppendLine("  AND birth_date = @birth_date");
+            sql.AppendLine("  AND u.birth_date = @birth_date");
             AddParameter(cmd, "@birth_date", filters.BirthDate.Value.ToDateTime(TimeOnly.MinValue));
         }
 
         if (filters.IsVerified is not null)
         {
-            sql.AppendLine("  AND is_verified = @is_verified");
+            sql.AppendLine("  AND u.is_verified = @is_verified");
             AddParameter(cmd, "@is_verified", filters.IsVerified.Value);
         }
 
-        AddIntInFilter(sql, cmd, filters.DepartmentIds, "id_department", "dep");
-        AddIntInFilter(sql, cmd, filters.RoleIds, "id_role", "role");
+        AddIntInFilter(sql, cmd, filters.DepartmentIds, "u.id_department", "dep");
+        AddIntInFilter(sql, cmd, filters.RoleIds, "u.id_role", "role");
+    }
+
+    private static Department MapDepartment(DbDataReader reader)
+    {
+        if (reader["department_name"] == DBNull.Value)
+            throw new InvalidOperationException("User department_name cannot be NULL. Run latest DB migrations.");
+
+        if (reader["department_code"] == DBNull.Value)
+            throw new InvalidOperationException("User department_code cannot be NULL. Run latest DB migrations.");
+
+        return new Department
+        {
+            IdDepartment = Convert.ToInt32(reader["id_department"]),
+            Name = Convert.ToString(reader["department_name"]) ?? string.Empty,
+            Code = Convert.ToInt32(reader["department_code"])
+        };
     }
 
     private static void AddIntInFilter(StringBuilder sql, DbCommand cmd, IReadOnlyList<int>? values, string columnName, string parameterPrefix)
