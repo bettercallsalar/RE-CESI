@@ -15,6 +15,12 @@ export interface ResourceFile {
   createdAt: string;
 }
 
+export interface ResourceAuthor {
+  idUser: number;
+  username: string;
+  firstName: string;
+}
+
 export interface Article {
   idResource: number;
   idArticle: number;
@@ -26,6 +32,7 @@ export interface Article {
   modifiedAt: string | null;
   deletedAt: string | null;
   idUser: number;
+  author: ResourceAuthor;
   idCategory: number;
   content: string;
   isApproved: boolean;

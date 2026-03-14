@@ -32,6 +32,12 @@ public sealed record ResourceFileResponse(
     DateTime CreatedAt
 );
 
+public sealed record ResourceAuthorResponse(
+    int IdUser,
+    string Username,
+    string FirstName
+);
+
 public sealed record ArticleResponse(
     int IdResource,
     int IdArticle,
@@ -43,6 +49,7 @@ public sealed record ArticleResponse(
     DateTime? ModifiedAt,
     DateTime? DeletedAt,
     int IdUser,
+    ResourceAuthorResponse Author,
     int IdCategory,
     string Content,
     bool IsApproved,
@@ -103,6 +110,7 @@ public sealed record EventResponse(
     DateTime CreatedAt,
     DateTime? ModifiedAt,
     int IdUser,
+    ResourceAuthorResponse Author,
     int IdCategory,
     string? Subtitle,
     DateTime StartDate,
