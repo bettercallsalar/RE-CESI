@@ -20,7 +20,6 @@ export interface ResourceAuthor {
   username: string;
   firstName: string;
 }
-
 export interface Article {
   idResource: number;
   idArticle: number;

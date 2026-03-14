@@ -45,7 +45,6 @@ function getAuthorLabel(article: Article) {
 
   return username || firstName || `Utilisateur #${article.idUser}`;
 }
-
 export function ArticleCard({
   article,
   categoryName,
@@ -124,7 +123,6 @@ export function ArticleCard({
           <Text color="ink.500" fontSize={{ base: "13px", md: "14px" }} fontWeight="600">
             Par {getAuthorLabel(article)}
           </Text>
-
           <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }} lineHeight="1.65" noOfLines={compact ? 4 : 5}>
             {getExcerpt(article)}
           </Text>

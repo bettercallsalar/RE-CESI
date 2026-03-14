@@ -21,7 +21,6 @@ function formatArticleDate(value: string) {
 function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
   return username?.trim() || firstName?.trim() || `utilisateur #${idUser}`;
 }
-
 export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
   const { status } = useAuth();
   const { article, categoryName, isLoading, message, canEdit } = useArticleDetail(idResource);
@@ -99,6 +98,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
               <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
                 <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
+                  Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
                   Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
                 </Text>
 

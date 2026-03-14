@@ -37,7 +37,6 @@ public sealed record ResourceAuthorResponse(
     string Username,
     string FirstName
 );
-
 public sealed record ArticleResponse(
     int IdResource,
     int IdArticle,
