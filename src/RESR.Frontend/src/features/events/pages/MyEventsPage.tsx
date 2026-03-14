@@ -24,6 +24,7 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { EventsGrid } from "@/features/events/components/EventsGrid";
 import { useMyEventsPage } from "@/features/events/hooks/useMyEventsPage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { DatePickerField } from "@/shared/ui/forms/DatePickerField";
 import type { Event } from "@/shared/types/event";
 
 export function MyEventsPage() {
@@ -158,19 +159,19 @@ export function MyEventsPage() {
             </Select>
           </FormControl>
 
-          <FormControl>
-            <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
-              A partir du
-            </FormLabel>
-            <Input type="date" value={filters.startFrom} onChange={(event) => updateFilter("startFrom", event.target.value)} />
-          </FormControl>
+          <DatePickerField
+            label="A partir du"
+            max={filters.startTo || undefined}
+            onChange={(value) => updateFilter("startFrom", value)}
+            value={filters.startFrom}
+          />
 
-          <FormControl>
-            <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
-              Jusqu'au
-            </FormLabel>
-            <Input type="date" value={filters.startTo} onChange={(event) => updateFilter("startTo", event.target.value)} />
-          </FormControl>
+          <DatePickerField
+            label="Jusqu'au"
+            min={filters.startFrom || undefined}
+            onChange={(value) => updateFilter("startTo", value)}
+            value={filters.startTo}
+          />
 
           <Stack align={{ base: "stretch", xl: "end" }} gridColumn={{ base: "auto", xl: "span 5" }} justify="end">
             <Button onClick={() => {

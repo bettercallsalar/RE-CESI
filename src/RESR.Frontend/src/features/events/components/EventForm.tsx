@@ -13,11 +13,11 @@ import {
   Text
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
-import { DateTimeField } from "@/shared/ui/forms/DateTimeField";
+import { DatePickerField } from "@/shared/ui/forms/DatePickerField";
+import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import { ResourceDescriptionField } from "@/shared/ui/forms/resource/ResourceDescriptionField";
 import { ResourceImagesField } from "@/shared/ui/forms/resource/ResourceImagesField";
 import { ResourceTitleField } from "@/shared/ui/forms/resource/ResourceTitleField";
-import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import type { EventFormValues } from "@/features/events/types/event.types";
 import type { Category, ResourceFile } from "@/shared/types/article";
 import type { Department } from "@/shared/types/user";
@@ -115,18 +115,20 @@ export function EventForm({
           </FormControl>
 
           <Stack direction={{ base: "column", md: "row" }} spacing={4}>
-            <DateTimeField
+            <DatePickerField
               isRequired
               label="Debut"
               max={values.endDate || undefined}
               onChange={(value) => updateField("startDate", value)}
+              type="datetime-local"
               value={values.startDate}
             />
 
-            <DateTimeField
+            <DatePickerField
               label="Fin"
               min={values.startDate || undefined}
               onChange={(value) => updateField("endDate", value)}
+              type="datetime-local"
               value={values.endDate}
             />
           </Stack>

@@ -1,17 +1,26 @@
-import { CalendarIcon } from "@chakra-ui/icons";
-import { FormControl, FormLabel, IconButton, Input, InputGroup, InputRightElement } from "@chakra-ui/react";
+import { FormControl, FormLabel, Icon, IconButton, Input, InputGroup, InputRightElement } from "@chakra-ui/react";
 import { useRef } from "react";
+import { FiCalendar } from "react-icons/fi";
 
-interface DateTimeFieldProps {
+interface DatePickerFieldProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
   isRequired?: boolean;
   min?: string;
   max?: string;
+  type?: "date" | "datetime-local";
 }
 
-export function DateTimeField({ label, value, onChange, isRequired = false, min, max }: DateTimeFieldProps) {
+export function DatePickerField({
+  label,
+  value,
+  onChange,
+  isRequired = false,
+  min,
+  max,
+  type = "date"
+}: DatePickerFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   function openPicker() {
@@ -30,13 +39,13 @@ export function DateTimeField({ label, value, onChange, isRequired = false, min,
           min={min}
           onChange={(event) => onChange(event.target.value)}
           ref={inputRef}
-          type="datetime-local"
+          type={type}
           value={value}
         />
         <InputRightElement>
           <IconButton
             aria-label={`Choisir ${label.toLowerCase()}`}
-            icon={<CalendarIcon />}
+            icon={<Icon as={FiCalendar} boxSize={4.5} />}
             onClick={openPicker}
             size="sm"
             variant="ghost"

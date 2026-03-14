@@ -1,10 +1,10 @@
-import { ChevronDownIcon, ChevronUpIcon, HamburgerIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
   Collapse,
   Flex,
   HStack,
+  Icon,
   IconButton,
   Link,
   Menu,
@@ -16,6 +16,8 @@ import {
   Text,
   useDisclosure
 } from "@chakra-ui/react";
+import type { IconType } from "react-icons";
+import { FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiUser } from "react-icons/fi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
@@ -23,64 +25,20 @@ interface SiteHeaderProps {
   variant?: "public" | "authenticated";
 }
 
-type NavGlyphType = "chart" | "grid" | "calendar" | "user";
-
 interface NavLinkItem {
   label: string;
-  glyph: NavGlyphType;
+  icon: IconType;
   href: string;
 }
 
-function NavGlyph({ type }: { type: NavGlyphType }) {
-  if (type === "chart") {
-    return (
-      <Box display="inline-flex" gap="3px" h="18px" w="18px">
-        <Box alignSelf="end" bg="brand.500" h="8px" w="3px" />
-        <Box alignSelf="end" bg="brand.500" h="12px" w="3px" />
-        <Box alignSelf="end" bg="brand.500" h="16px" w="3px" />
-      </Box>
-    );
-  }
-
-  if (type === "grid") {
-    return (
-      <Box border="1px solid" borderColor="brand.500" display="grid" gap="2px" gridTemplateColumns="repeat(2, 1fr)" h="18px" p="2px" w="18px">
-        <Box bg="brand.500" />
-        <Box bg="brand.500" />
-        <Box bg="brand.500" />
-        <Box bg="brand.500" />
-      </Box>
-    );
-  }
-
-  if (type === "calendar") {
-    return (
-      <Box border="1px solid" borderColor="brand.500" borderRadius="6px" h="18px" position="relative" w="18px">
-        <Box bg="brand.500" h="4px" left="0" position="absolute" top="0" w="100%" />
-        <Box bg="brand.500" borderRadius="999px" h="3px" left="4px" position="absolute" top="-1px" w="2px" />
-        <Box bg="brand.500" borderRadius="999px" h="3px" position="absolute" right="4px" top="-1px" w="2px" />
-        <Box bg="brand.500" h="2px" left="4px" position="absolute" top="8px" w="10px" />
-        <Box bg="brand.500" h="2px" left="4px" position="absolute" top="12px" w="7px" />
-      </Box>
-    );
-  }
-
+function HeaderLink({ label, icon, href }: NavLinkItem) {
   return (
-    <Box border="1px solid" borderColor="brand.500" borderRadius="999px" h="18px" position="relative" w="18px">
-      <Box bg="brand.500" borderRadius="999px" h="4px" left="6px" position="absolute" top="3px" w="4px" />
-      <Box borderColor="brand.500" borderRadius="999px 999px 6px 6px" borderStyle="solid" borderWidth="1px 1px 0" h="6px" left="4px" position="absolute" top="8px" w="9px" />
-    </Box>
-  );
-}
-
-function HeaderLink({ label, glyph, href }: NavLinkItem) {
-  return (
-    <Link _hover={{ textDecoration: "none", color: "ink.800" }} color="brand.500" href={href}>
-      <HStack minH="44px" px={1} spacing={2.5}>
+    <Link _hover={{ color: "ink.800", textDecoration: "none" }} color="brand.500" href={href}>
+      <HStack align="center" minH="44px" px={1} spacing={2.5}>
+        <Icon as={icon} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" flexShrink={0} strokeWidth={1.75} />
         <Text fontSize={{ base: "15px", xl: "16px" }} fontWeight="600">
           {label}
         </Text>
-        <NavGlyph type={glyph} />
       </HStack>
     </Link>
   );
@@ -92,44 +50,50 @@ function getUserLabel(firstName?: string, username?: string) {
 
 function UserMenu({ label }: { label: string }) {
   const items: NavLinkItem[] = [
-    { label: "Mon compte", glyph: "user", href: "/mon-compte" },
-    { label: "Mes articles", glyph: "grid", href: "/mes-articles" },
-    { label: "Mes events", glyph: "calendar", href: "/mes-events" }
+    { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+    { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+    { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
   ];
 
   return (
     <Menu>
       <MenuButton
         as={Button}
+        alignItems="center"
+        _active={{ bg: "transparent" }}
+        _hover={{ bg: "transparent", color: "ink.800" }}
         color="brand.500"
         fontSize={{ base: "15px", xl: "16px" }}
         fontWeight="600"
+        h="44px"
+        lineHeight="1"
+        minH="44px"
+        minW="auto"
         px={1}
-        rightIcon={<ChevronDownIcon boxSize={5} />}
-        variant="ghost"
-        _active={{ bg: "transparent" }}
-        _hover={{ bg: "transparent", color: "ink.800" }}
+        rightIcon={<Icon as={FiChevronDown} boxSize={{ base: 5, xl: 5.5 }} color="brand.500" strokeWidth={2} />}
+        variant="unstyled"
       >
-        <HStack spacing={2.5}>
-          <Text>{label}</Text>
-          <NavGlyph type="user" />
+        <HStack align="center" color="brand.500" spacing={2.5}>
+          <Icon as={FiUser} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" strokeWidth={1.75} />
+          <Text color="brand.500">{label}</Text>
         </HStack>
       </MenuButton>
       <MenuList bg="white" borderColor="canvas.200" boxShadow="xl" minW="220px" p={2}>
         {items.map((item) => (
           <MenuItem
             as="a"
+            _focus={{ bg: "canvas.100", color: "ink.800" }}
+            _hover={{ bg: "canvas.100", color: "ink.800" }}
             bg="white"
             borderRadius="10px"
             color="brand.500"
+            fontSize="16px"
             fontWeight="600"
             href={item.href}
             key={item.label}
-            _focus={{ bg: "canvas.100", color: "ink.800" }}
-            _hover={{ bg: "canvas.100", color: "ink.800" }}
           >
             <HStack spacing={3}>
-              <NavGlyph type={item.glyph} />
+              <Icon as={item.icon} boxSize={5.5} color="brand.500" flexShrink={0} strokeWidth={1.75} />
               <Text>{item.label}</Text>
             </HStack>
           </MenuItem>
@@ -148,52 +112,52 @@ function MobileNavigation({
 }) {
   const userDisclosure = useDisclosure();
   const publicItems: NavLinkItem[] = [
-    { label: "Statistiques", glyph: "chart", href: "/" },
-    { label: "Articles", glyph: "grid", href: "/articles" },
-    { label: "Events", glyph: "calendar", href: "/events" },
-    { label: "Mon compte", glyph: "user", href: "/login" }
+    { label: "Accueil", icon: FiHome, href: "/" },
+    { label: "Articles", icon: FiFileText, href: "/articles" },
+    { label: "Events", icon: FiCalendar, href: "/events" },
+    { label: "Mon compte", icon: FiUser, href: "/login" }
   ];
-
   const userItems: NavLinkItem[] = [
-    { label: "Mon compte", glyph: "user", href: "/mon-compte" },
-    { label: "Mes articles", glyph: "grid", href: "/mes-articles" },
-    { label: "Mes events", glyph: "calendar", href: "/mes-events" }
+    { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+    { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
+    { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
   ];
   const topLevelItems: NavLinkItem[] = variant === "authenticated"
     ? [
-        { label: "Articles", glyph: "grid", href: "/articles" },
-        { label: "Events", glyph: "calendar", href: "/events" }
+        { label: "Accueil", icon: FiHome, href: "/" },
+        { label: "Articles", icon: FiFileText, href: "/articles" },
+        { label: "Events", icon: FiCalendar, href: "/events" }
       ]
     : publicItems;
 
   return (
     <Stack align={{ base: "stretch", sm: "flex-end" }} bg="white" border="1px solid" borderColor="canvas.200" mt={3} pb={3} pt={3} px={{ base: 3, sm: 4 }} spacing={2}>
       {topLevelItems.map((item) => (
-        <HeaderLink glyph={item.glyph} href={item.href} key={item.label} label={item.label} />
+        <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
       ))}
 
       {variant === "authenticated" ? (
         <Box w="100%">
           <Button
+            _hover={{ bg: "canvas.100" }}
             color="brand.500"
             justifyContent="space-between"
             onClick={userDisclosure.onToggle}
-            rightIcon={userDisclosure.isOpen ? <ChevronUpIcon boxSize={5} /> : <ChevronDownIcon boxSize={5} />}
+            rightIcon={<Icon as={userDisclosure.isOpen ? FiChevronUp : FiChevronDown} boxSize={5} strokeWidth={2} />}
             variant="ghost"
             w="100%"
-            _hover={{ bg: "canvas.100" }}
           >
             <HStack spacing={2.5}>
+              <Icon as={FiUser} boxSize={5.5} color="brand.500" strokeWidth={1.75} />
               <Text fontSize="15px" fontWeight="600">
                 {userLabel}
               </Text>
-              <NavGlyph type="user" />
             </HStack>
           </Button>
           <Collapse in={userDisclosure.isOpen}>
             <Stack pl={4} pt={2} spacing={1}>
               {userItems.map((item) => (
-                <HeaderLink glyph={item.glyph} href={item.href} key={item.label} label={item.label} />
+                <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
             </Stack>
           </Collapse>
@@ -208,14 +172,15 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const { user } = useAuth();
   const userLabel = getUserLabel(user?.firstName, user?.username);
   const publicItems: NavLinkItem[] = [
-    { label: "Statistiques", glyph: "chart", href: "/" },
-    { label: "Articles", glyph: "grid", href: "/articles" },
-    { label: "Events", glyph: "calendar", href: "/events" },
-    { label: "Mon compte", glyph: "user", href: "/login" }
+    { label: "Accueil", icon: FiHome, href: "/" },
+    { label: "Articles", icon: FiFileText, href: "/articles" },
+    { label: "Events", icon: FiCalendar, href: "/events" },
+    { label: "Mon compte", icon: FiUser, href: "/login" }
   ];
   const authenticatedItems: NavLinkItem[] = [
-    { label: "Articles", glyph: "grid", href: "/articles" },
-    { label: "Events", glyph: "calendar", href: "/events" }
+    { label: "Accueil", icon: FiHome, href: "/" },
+    { label: "Articles", icon: FiFileText, href: "/articles" },
+    { label: "Events", icon: FiCalendar, href: "/events" }
   ];
 
   return (
@@ -233,7 +198,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
           <Show above="lg">
             <HStack justify="flex-end" spacing={4}>
               {(variant === "authenticated" ? authenticatedItems : publicItems).map((item) => (
-                <HeaderLink glyph={item.glyph} href={item.href} key={item.label} label={item.label} />
+                <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
               {variant === "authenticated" ? <UserMenu label={userLabel} /> : null}
             </HStack>
@@ -244,7 +209,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
                 aria-label="Ouvrir le menu"
                 boxSize={{ base: "44px", md: "48px" }}
                 color="brand.500"
-                icon={<HamburgerIcon boxSize={7} />}
+                icon={<Icon as={FiMenu} boxSize={6} strokeWidth={2} />}
                 minW="auto"
                 onClick={onToggle}
                 variant="ghost"

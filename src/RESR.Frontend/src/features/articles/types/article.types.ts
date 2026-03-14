@@ -4,6 +4,8 @@ import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 export interface ArticleListFilters {
   keyword: string;
   idCategory: number | "";
+  createdFrom: string;
+  createdTo: string;
 }
 
 export interface MyArticlesFilters {
@@ -11,6 +13,8 @@ export interface MyArticlesFilters {
   idCategory: number | "";
   visibility: ArticleVisibility | "";
   approval: "approved" | "pending" | "";
+  createdFrom: string;
+  createdTo: string;
 }
 
 export interface CreateArticlePayload {
