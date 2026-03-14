@@ -3,13 +3,8 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { PendingResourceCard } from "@/features/admin/components/PendingResourceCard";
 import { usePendingEventsPage } from "@/features/admin/hooks/usePendingEventsPage";
 import { formatEventDateRange } from "@/features/events/lib/eventDates";
+import { formatPublicationDate } from "@/shared/lib/dates/formatPublicationDate";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
-
-function formatPublicationDate(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "long"
-  }).format(new Date(value));
-}
 
 export function PendingEventsPage() {
   const { events, isLoading, message } = usePendingEventsPage();

@@ -4,7 +4,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { eventsService } from "@/features/events/services/events.service";
 import { followsService } from "@/features/follows/services/follows.service";
 import type { FollowUser } from "@/features/follows/types/follows.types";
-import type { Article, Category, PaginatedResponse } from "@/shared/types/article";
+import { collectAllPages } from "@/shared/lib/api/collectAllPages";
+import type { Article, Category } from "@/shared/types/article";
 import type { Event } from "@/shared/types/event";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
@@ -23,18 +24,6 @@ function dedupeByResourceId<T extends { idResource: number }>(items: T[]) {
   }
 
   return Array.from(seen.values());
-}
-
-async function collectAllPages<T>(loadPage: (page: number) => Promise<PaginatedResponse<T>>) {
-  const firstPage = await loadPage(1);
-  const items = [...firstPage.items];
-
-  for (let page = 2; page <= firstPage.totalPages; page += 1) {
-    const nextPage = await loadPage(page);
-    items.push(...nextPage.items);
-  }
-
-  return items;
 }
 
 export function useFollowingFeedPage() {

@@ -3,8 +3,9 @@ import { articlesService } from "@/features/articles/services/articles.service";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { eventsService } from "@/features/events/services/events.service";
 import { marksService } from "@/features/marks/services/marks.service";
-import type { Mark, PaginatedMarksResponse } from "@/features/marks/types/marks.types";
+import type { Mark } from "@/features/marks/types/marks.types";
 import { ApiError } from "@/shared/api/httpClient";
+import { collectAllPages } from "@/shared/lib/api/collectAllPages";
 import type { Article, Category } from "@/shared/types/article";
 import type { Event } from "@/shared/types/event";
 import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showFormMessage";
@@ -16,18 +17,6 @@ type MarkedResourceResult =
   | { kind: "article"; item: Article }
   | { kind: "event"; item: Event }
   | null;
-
-async function collectAllPages(loadPage: (page: number) => Promise<PaginatedMarksResponse>) {
-  const firstPage = await loadPage(1);
-  const items = [...firstPage.items];
-
-  for (let page = 2; page <= firstPage.totalPages; page += 1) {
-    const nextPage = await loadPage(page);
-    items.push(...nextPage.items);
-  }
-
-  return items;
-}
 
 async function loadMarkedResource(idResource: number): Promise<MarkedResourceResult> {
   try {

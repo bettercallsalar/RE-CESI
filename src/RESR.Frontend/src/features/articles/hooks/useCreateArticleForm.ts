@@ -8,6 +8,12 @@ import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import {
+  getDefaultImageIndex,
+  getDefaultImageSelectionAfterImageChange,
+  getImageValidationMessage,
+  validateImageFiles
+} from "@/shared/lib/forms/images";
+import {
   createErrorMessage,
   createSuccessMessage,
   createWarningMessage,
@@ -67,7 +73,7 @@ export function useCreateArticleForm() {
         return {
           ...current,
           images: nextImages,
-          defaultImageSelection: nextImages.length > 0 ? "new:0" : ""
+          defaultImageSelection: getDefaultImageSelectionAfterImageChange(nextImages)
         };
       }
 
@@ -114,21 +120,11 @@ export function useCreateArticleForm() {
       return;
     }
 
-    if (values.images.length > 6) {
-      showFormMessage(setMessage, createWarningMessage("Vous ne pouvez pas envoyer plus de 6 images."));
+    const imageValidationError = validateImageFiles(values.images);
+
+    if (imageValidationError) {
+      showFormMessage(setMessage, createWarningMessage(getImageValidationMessage(imageValidationError)));
       return;
-    }
-
-    for (const image of values.images) {
-      if (!image.type.startsWith("image/")) {
-        showFormMessage(setMessage, createWarningMessage("Seules les images sont autorisées."));
-        return;
-      }
-
-      if (image.size > 5 * 1024 * 1024) {
-        showFormMessage(setMessage, createWarningMessage("Chaque image doit faire moins de 5 Mo."));
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -141,7 +137,7 @@ export function useCreateArticleForm() {
         visibility: values.visibility,
         idCategory: values.idCategory,
         content: trimmedContent,
-        defaultImageIndex: values.defaultImageSelection.startsWith("new:") ? Number(values.defaultImageSelection.slice(4)) : undefined,
+        defaultImageIndex: getDefaultImageIndex(values.defaultImageSelection),
         images: values.images
       });
 

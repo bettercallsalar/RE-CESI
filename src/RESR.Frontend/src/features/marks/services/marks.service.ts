@@ -1,29 +1,15 @@
 import { httpClient } from "@/shared/api/httpClient";
 import type { Mark, PaginatedMarksResponse } from "@/features/marks/types/marks.types";
+import { buildQueryString } from "@/shared/lib/http/buildQueryString";
 
 interface MarksQuery {
   page?: number;
   pageSize?: number;
 }
 
-function buildQuery(query: MarksQuery) {
-  const params = new URLSearchParams();
-
-  if (query.page) {
-    params.set("page", String(query.page));
-  }
-
-  if (query.pageSize) {
-    params.set("pageSize", String(query.pageSize));
-  }
-
-  const raw = params.toString();
-  return raw ? `?${raw}` : "";
-}
-
 export const marksService = {
   getReadLaterMarks(token: string, query: MarksQuery = {}) {
-    return httpClient.get<PaginatedMarksResponse>(`/api/marks/readLater${buildQuery(query)}`, { token });
+    return httpClient.get<PaginatedMarksResponse>(`/api/marks/readLater${buildQueryString(query)}`, { token });
   },
 
   getReadLaterMark(token: string, idResource: number) {
