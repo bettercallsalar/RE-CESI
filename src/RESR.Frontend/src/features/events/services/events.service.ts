@@ -68,8 +68,14 @@ export const eventsService = {
   getPublicEvents(query: EventQuery = {}) {
     return httpClient.get<EventPaginatedResponse>(`/api/events${buildQuery(query)}`);
   },
+  getPendingEvents(token: string, query: EventQuery = {}) {
+    return httpClient.get<EventPaginatedResponse>(`/api/events/approval/pending${buildQuery(query)}`, { token });
+  },
   getEventById(idResource: number) {
     return httpClient.get<Event>(`/api/events/${idResource}`);
+  },
+  getApprovalEventById(token: string, idResource: number) {
+    return httpClient.get<Event>(`/api/events/approval/${idResource}`, { token });
   },
   getOwnEventById(token: string, idResource: number) {
     return httpClient.get<Event>(`/api/events/me/${idResource}`, { token });
@@ -88,6 +94,9 @@ export const eventsService = {
   },
   updateEvent(token: string, idResource: number, payload: UpdateEventPayload) {
     return httpClient.patch<Event>(`/api/events/${idResource}`, toEventFormData(payload), { token });
+  },
+  setEventApproval(token: string, idResource: number, isApproved: boolean) {
+    return httpClient.patch<Event>(`/api/events/${idResource}/approval`, { isApproved }, { token });
   },
   deleteEvent(token: string, idResource: number) {
     return httpClient.delete<void>(`/api/events/${idResource}`, { token });

@@ -61,8 +61,14 @@ export const articlesService = {
   getPublicArticles(query: ArticleQuery = {}) {
     return httpClient.get<PaginatedResponse<Article>>(`/api/articles${buildQuery(query)}`);
   },
+  getPendingArticles(token: string, query: ArticleQuery = {}) {
+    return httpClient.get<PaginatedResponse<Article>>(`/api/articles/approval/pending${buildQuery(query)}`, { token });
+  },
   getArticleById(idResource: number) {
     return httpClient.get<Article>(`/api/articles/${idResource}`);
+  },
+  getApprovalArticleById(token: string, idResource: number) {
+    return httpClient.get<Article>(`/api/articles/approval/${idResource}`, { token });
   },
   getOwnArticleById(token: string, idResource: number) {
     return httpClient.get<Article>(`/api/articles/me/${idResource}`, { token });
@@ -78,6 +84,9 @@ export const articlesService = {
   },
   updateArticle(token: string, idResource: number, payload: UpdateArticlePayload) {
     return httpClient.patch<Article>(`/api/articles/${idResource}`, toArticleFormData(payload), { token });
+  },
+  setArticleApproval(token: string, idResource: number, isApproved: boolean) {
+    return httpClient.patch<Article>(`/api/articles/${idResource}/approval`, { isApproved }, { token });
   },
   deleteArticle(token: string, idResource: number) {
     return httpClient.delete<void>(`/api/articles/${idResource}`, { token });

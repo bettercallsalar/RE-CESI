@@ -154,6 +154,59 @@ public sealed class ArticlesControllerTests
     }
 
     [Fact]
+    public async Task GetPendingApprovalArticles_ReturnsOnlyPendingFilters()
+    {
+        var service = new Mock<IArticleService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Article>(), 0));
+        var controller = new ArticlesController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetPendingApprovalArticles(ct: CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        service.Verify(s => s.GetPaginatedAsync(
+            1,
+            20,
+            It.Is<ArticleListingFilters>(filters =>
+                filters.Visibility == null &&
+                filters.IsApproved == false &&
+                filters.IncludeDeleted == false),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetByResourceIdForApproval_ReturnsOk_ForUnapprovedPrivateArticle()
+    {
+        var service = new Mock<IArticleService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 6,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                IdUser = 7,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = false
+            });
+        var controller = new ArticlesController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetByResourceIdForApproval(6, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<ArticleResponse>(ok.Value);
+        Assert.False(response.IsApproved);
+        Assert.Equal("PRIVATE", response.Visibility);
+    }
+
+    [Fact]
     public async Task GetMyArticles_IncludesDeletedArticles()
     {
         var service = new Mock<IArticleService>();
@@ -379,6 +432,33 @@ public sealed class ArticlesControllerTests
         Assert.True(response.IsApproved);
         Assert.Equal(12, response.DefaultImageId);
         Assert.Equal("User 1", response.Author.FirstName);
+    }
+
+    [Fact]
+    public async Task GetByResourceIdForApproval_ReturnsNotFound_WhenArticleIsDeleted()
+    {
+        var service = new Mock<IArticleService>();
+        var users = CreateUserRepository();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 6,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                DeletedAt = DateTime.UtcNow,
+                IdUser = 7,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = false
+            });
+        var controller = new ArticlesController(service.Object, users.Object, tokenService.Object);
+
+        var result = await controller.GetByResourceIdForApproval(6, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
     }
 
     private static Mock<IUserRepository> CreateUserRepository()

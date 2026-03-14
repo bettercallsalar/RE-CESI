@@ -44,6 +44,28 @@ function HeaderLink({ label, icon, href }: NavLinkItem) {
   );
 }
 
+function MobileHeaderLink({ label, icon, href }: NavLinkItem) {
+  return (
+    <Link
+      _hover={{ bg: "canvas.100", color: "ink.800", textDecoration: "none" }}
+      borderRadius="12px"
+      color="brand.500"
+      display="block"
+      href={href}
+      px={3}
+      py={2.5}
+      w="100%"
+    >
+      <HStack align="center" minH="24px" spacing={3}>
+        <Icon as={icon} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={1.9} />
+        <Text fontSize="15px" fontWeight="600" lineHeight="1.3">
+          {label}
+        </Text>
+      </HStack>
+    </Link>
+  );
+}
+
 function getUserLabel(firstName?: string, username?: string) {
   return firstName?.trim() || username?.trim() || "Mon compte";
 }
@@ -105,7 +127,7 @@ function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard:
             minH="52px"
           >
             <HStack align="center" spacing={3}>
-              <Icon as={item.icon} boxSize="20px" color="brand.500" flexShrink={0} strokeWidth={1.9} />
+              <Icon as={item.icon} boxSize="18px" color="brand.500" flexShrink={0} strokeWidth={1.9} />
               <Text>{item.label}</Text>
             </HStack>
           </MenuItem>
@@ -153,33 +175,51 @@ function MobileNavigation({
     : publicItems;
 
   return (
-    <Stack align={{ base: "stretch", sm: "flex-end" }} bg="white" border="1px solid" borderColor="canvas.200" mt={3} pb={3} pt={3} px={{ base: 3, sm: 4 }} spacing={2}>
+    <Stack
+      align="stretch"
+      bg="white"
+      border="1px solid"
+      borderColor="canvas.200"
+      borderRadius="16px"
+      boxShadow="sm"
+      maxW={{ base: "100%", sm: "420px" }}
+      ml="auto"
+      mt={3}
+      px={{ base: 2.5, sm: 3 }}
+      py={2.5}
+      spacing={1.5}
+      w="100%"
+    >
       {topLevelItems.map((item) => (
-        <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
+        <MobileHeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
       ))}
 
       {variant === "authenticated" ? (
-        <Box w="100%">
+        <Box borderTop="1px solid" borderColor="canvas.200" mt={1} pt={2} w="100%">
           <Button
             _hover={{ bg: "canvas.100" }}
+            borderRadius="12px"
             color="brand.500"
-            justifyContent="space-between"
+            h="48px"
             onClick={userDisclosure.onToggle}
-            rightIcon={<Icon as={userDisclosure.isOpen ? FiChevronUp : FiChevronDown} boxSize={5} strokeWidth={2} />}
+            px={3}
             variant="ghost"
             w="100%"
           >
-            <HStack spacing={2.5}>
-              <Icon as={FiUser} boxSize={5.5} color="brand.500" strokeWidth={1.75} />
-              <Text fontSize="15px" fontWeight="600">
-                {userLabel}
-              </Text>
+            <HStack justify="space-between" spacing={3} w="100%">
+              <HStack minW={0} spacing={3}>
+                <Icon as={FiUser} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={1.9} />
+                <Text fontSize="15px" fontWeight="600" lineHeight="1.3" noOfLines={1}>
+                  {userLabel}
+                </Text>
+              </HStack>
+              <Icon as={userDisclosure.isOpen ? FiChevronUp : FiChevronDown} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={2} />
             </HStack>
           </Button>
           <Collapse in={userDisclosure.isOpen}>
-            <Stack pl={4} pt={2} spacing={1}>
+            <Stack pt={1.5} spacing={1}>
               {userItems.map((item) => (
-                <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
+                <MobileHeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
             </Stack>
           </Collapse>
@@ -207,16 +247,16 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
 
   return (
     <Box pb={{ base: 7, md: 8 }} pt={{ base: 5, md: 7 }}>
-      <Flex align={{ base: "start", md: "center" }} gap={{ base: 3, md: 5 }} justify="space-between">
+      <Flex align={{ base: "start", md: "center" }} gap={{ base: 2.5, md: 5 }} justify="space-between">
         <GovernmentBrand />
 
-        <Stack align="center" flex="1" px={{ base: 2, sm: 6, md: 10 }} spacing={1}>
-          <Text color="brand.500" fontSize={{ base: "18px", sm: "24px", md: "30px", xl: "34px" }} fontWeight="700" lineHeight="1.1" textAlign="center">
+        <Stack align="center" flex="1" px={{ base: 1, sm: 4, md: 10 }} spacing={1}>
+          <Text color="brand.500" fontSize={{ base: "16px", sm: "22px", md: "30px", xl: "34px" }} fontWeight="700" lineHeight="1.1" textAlign="center">
             (RE) Sources Relationnelles
           </Text>
         </Stack>
 
-        <Box minW={{ base: "48px", lg: "420px" }}>
+        <Box minW={{ base: "44px", lg: "420px" }}>
           <Show above="lg">
             <HStack align="center" justify="flex-end" spacing={4}>
               {(variant === "authenticated" ? authenticatedItems : publicItems).map((item) => (
@@ -229,9 +269,10 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
             <Flex justify="flex-end">
               <IconButton
                 aria-label="Ouvrir le menu"
-                boxSize={{ base: "44px", md: "48px" }}
+                borderRadius="12px"
+                boxSize={{ base: "42px", md: "46px" }}
                 color="brand.500"
-                icon={<Icon as={FiMenu} boxSize={6} strokeWidth={2} />}
+                icon={<Icon as={FiMenu} boxSize={5.5} strokeWidth={2} />}
                 minW="auto"
                 onClick={onToggle}
                 variant="ghost"

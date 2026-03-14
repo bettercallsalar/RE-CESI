@@ -5,7 +5,10 @@ import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 
 export function AdminDashboardPage() {
   const { hasPermission, isSuperAdmin } = useAuth();
+  const canApproveArticles = hasPermission(PermissionNames.approveArticle);
+  const canApproveEvents = hasPermission(PermissionNames.approveEvent);
   const canManageUsers = hasPermission(PermissionNames.manageUsers);
+  const canApproveResources = canApproveArticles || canApproveEvents;
 
   return (
     <SiteLayout
@@ -22,6 +25,31 @@ export function AdminDashboardPage() {
       }
     >
       <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={{ base: 5, md: 6 }}>
+        {canApproveResources ? (
+          <Stack bg="white" border="1px solid" borderColor="canvas.200" borderRadius="16px" minH="220px" p={{ base: 5, md: 6 }} spacing={5}>
+            <Stack spacing={2}>
+              <Text color="ink.800" fontSize={{ base: "20px", md: "22px" }} fontWeight="700">
+                Ressources a approuver
+              </Text>
+              <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
+                Ouvrez la liste des articles et evenements encore non approuves, puis validez-les depuis leur page detail.
+              </Text>
+            </Stack>
+            <HStack justify="space-between" spacing={4}>
+              <Text color="brand.500" fontSize={{ base: "14px", md: "15px" }} fontWeight="700">
+                {canApproveArticles && canApproveEvents
+                  ? "Permissions ApproveArticle et/ou ApproveEvent"
+                  : canApproveArticles
+                    ? "Permission ApproveArticle requise"
+                    : "Permission ApproveEvent requise"}
+              </Text>
+              <Button as="a" href="/admin/resources/pending">
+                Ouvrir
+              </Button>
+            </HStack>
+          </Stack>
+        ) : null}
+
         {isSuperAdmin ? (
           <Stack bg="white" border="1px solid" borderColor="canvas.200" borderRadius="16px" minH="220px" p={{ base: 5, md: 6 }} spacing={5}>
             <Stack spacing={2}>

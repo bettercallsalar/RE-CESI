@@ -24,7 +24,7 @@ function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
 }
 export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
   const { status } = useAuth();
-  const { article, categoryName, isLoading, message, canEdit } = useArticleDetail(idResource);
+  const { article, categoryName, isLoading, isApproving, message, canEdit, canApprove, approveArticle } = useArticleDetail(idResource);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const albumImages = article?.files ?? [];
@@ -80,6 +80,11 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 <Badge bg="canvas.200" color="ink.800" fontSize="12px" px={2.5} py={1} rounded="full">
                   {formatArticleDate(article.createdAt)}
                 </Badge>
+                {!article.isApproved ? (
+                  <Badge bg="#FEEBC8" color="#9C4221" fontSize="12px" px={2.5} py={1} rounded="full">
+                    En attente d'approbation
+                  </Badge>
+                ) : null}
                 {categoryName ? (
                   <Badge bg="white" border="1px solid" borderColor="brand.500" color="brand.500" fontSize="12px" px={2.5} py={1} rounded="full">
                     {categoryName}
@@ -103,12 +108,27 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 </Text>
 
                 <HStack spacing={3}>
+                  {canApprove && !article.isApproved ? (
+                    <Button as="a" href="/admin/resources/pending" variant="outline">
+                      Retour aux validations
+                    </Button>
+                  ) : null}
                   <Button onClick={() => navigateTo("/articles")} variant="outline">
                     Retour aux articles
                   </Button>
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/articles/${article.idResource}/modifier`)}>
                       Modifier l'article
+                    </Button>
+                  ) : null}
+                  {canApprove && !article.isApproved ? (
+                    <Button
+                      isDisabled={isApproving}
+                      onClick={() => {
+                        void approveArticle();
+                      }}
+                    >
+                      Approuver l'article
                     </Button>
                   ) : null}
                 </HStack>

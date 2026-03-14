@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminAccessDeniedPage } from "@/features/admin/pages/AdminAccessDeniedPage";
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage";
 import { ManageUsersPage } from "@/features/admin/pages/ManageUsersPage";
+import { PendingResourcesPage } from "@/features/admin/pages/PendingResourcesPage";
 import { RolePermissionsPage } from "@/features/admin/pages/RolePermissionsPage";
 import { RolesManagementPage } from "@/features/admin/pages/RolesManagementPage";
 import { SuperAdminAccessDeniedPage } from "@/features/admin/pages/SuperAdminAccessDeniedPage";
@@ -74,6 +75,10 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
+    if (pathname === "/admin/resources/pending" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
     if (pathname === "/admin/roles" && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
@@ -103,6 +108,22 @@ function App() {
 
     if (status === "authenticated") {
       return <AdminAccessDeniedPage message="Votre compte ne dispose pas des permissions necessaires pour ouvrir le tableau de bord administration." />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/admin/resources/pending") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement des ressources en attente d'approbation" />;
+    }
+
+    if (status === "authenticated" && (hasPermission(PermissionNames.approveArticle) || hasPermission(PermissionNames.approveEvent))) {
+      return <PendingResourcesPage />;
+    }
+
+    if (status === "authenticated") {
+      return <AdminAccessDeniedPage message="Cette page requiert la permission ApproveArticle ou ApproveEvent dans votre token." />;
     }
 
     return <AppLoader label="Redirection vers la connexion" />;

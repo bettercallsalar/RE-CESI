@@ -19,7 +19,7 @@ function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
 
 export function EventDetailPage({ idResource }: EventDetailPageProps) {
   const { status } = useAuth();
-  const { event, categoryName, isLoading, message, canEdit } = useEventDetail(idResource);
+  const { event, categoryName, isLoading, isApproving, message, canEdit, canApprove, approveEvent } = useEventDetail(idResource);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const albumImages = event?.files ?? [];
@@ -90,6 +90,11 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                     Supprime le {formatEventPublishedDate(event.deletedAt)}
                   </Badge>
                 ) : null}
+                {!event.deletedAt && !event.isApproved ? (
+                  <Badge bg="#FEEBC8" color="#9C4221" fontSize="12px" px={2.5} py={1} rounded="full">
+                    En attente d'approbation
+                  </Badge>
+                ) : null}
               </HStack>
 
               <Heading color="ink.800" fontSize={{ base: "30px", md: "40px" }} lineHeight="1.1">
@@ -114,12 +119,27 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                 </Text>
 
                 <HStack spacing={3}>
+                  {canApprove && !event.isApproved ? (
+                    <Button as="a" href="/admin/resources/pending" variant="outline">
+                      Retour aux validations
+                    </Button>
+                  ) : null}
                   <Button onClick={() => navigateTo("/events")} variant="outline">
                     Retour aux evenements
                   </Button>
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/events/${event.idResource}/modifier`)}>
                       Modifier l'evenement
+                    </Button>
+                  ) : null}
+                  {canApprove && !event.isApproved ? (
+                    <Button
+                      isDisabled={isApproving}
+                      onClick={() => {
+                        void approveEvent();
+                      }}
+                    >
+                      Approuver l'evenement
                     </Button>
                   ) : null}
                 </HStack>

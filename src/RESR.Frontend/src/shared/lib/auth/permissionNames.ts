@@ -1,5 +1,7 @@
 export const PermissionNames = {
   accessAdminPanel: "AccessAdminPanel",
+  approveArticle: "ApproveArticle",
+  approveEvent: "ApproveEvent",
   banUser: "BanUser",
   deleteComment: "DeleteComment",
   manageRoles: "ManageRoles",
@@ -8,6 +10,8 @@ export const PermissionNames = {
 
 export const adminDashboardPermissions = [
   PermissionNames.accessAdminPanel,
+  PermissionNames.approveArticle,
+  PermissionNames.approveEvent,
   PermissionNames.manageRoles,
   PermissionNames.manageUsers,
   PermissionNames.banUser
