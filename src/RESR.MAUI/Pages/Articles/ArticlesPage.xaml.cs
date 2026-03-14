@@ -71,6 +71,12 @@ public partial class ArticlesPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
+    private async void OnArticleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is BindableObject bindable && bindable.BindingContext is ArticleListItem item)
+            await NavigateToArticleDetailAsync(item.IdResource);
+    }
+
     private async Task ReloadAsync(bool triggeredByRefresh)
     {
         _currentKeyword = NormalizeKeyword(KeywordSearchBar.Text);
@@ -169,6 +175,7 @@ public partial class ArticlesPage : ContentPage
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
 
         return new ArticleListItem(
+            article.IdResource,
             article.Title,
             $"Publie le {article.CreatedAt:dd/MM/yyyy}",
             $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
@@ -211,7 +218,23 @@ public partial class ArticlesPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private sealed record ArticleListItem(
+        int IdResource,
         string Title,
         string Subtitle,
         string Meta,

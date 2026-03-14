@@ -90,7 +90,8 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -100,7 +101,8 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -205,6 +207,7 @@ public partial class MainPage : ContentPage
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         return new HomeResourceCard(
+            article.IdResource,
             Badge: "Article public",
             HeroCaption: "ARTICLE",
             Title: article.Title,
@@ -219,6 +222,7 @@ public partial class MainPage : ContentPage
         var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
 
         return new HomeResourceCard(
+            @event.IdResource,
             Badge: "Evenement public",
             HeroCaption: "EVENT",
             Title: @event.Title,
@@ -275,6 +279,11 @@ public partial class MainPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
+    }
+
     private async Task NavigateToAsync(string route)
     {
         if (Shell.Current is null)
@@ -305,7 +314,20 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item)
+    {
+        if (sender is BindableObject bindable && bindable.BindingContext is TItem typedItem)
+        {
+            item = typedItem;
+            return true;
+        }
+
+        item = default!;
+        return false;
+    }
+
     private sealed record HomeResourceCard(
+        int IdResource,
         string Badge,
         string HeroCaption,
         string Title,
