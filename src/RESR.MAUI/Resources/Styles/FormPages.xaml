@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Color x:Key="FormPageBackground">#F4F1EC</Color>
+    <Color x:Key="FormCardStroke">#E5E0DA</Color>
+    <Color x:Key="FormPrimaryText">#1E1C44</Color>
+    <Color x:Key="FormSecondaryText">#6A678A</Color>
+    <Color x:Key="FormAccent">#2E2AA5</Color>
+    <Color x:Key="FormAccentSoft">#F1EEF9</Color>
+    <Color x:Key="FormInputBackground">#FBF9F6</Color>
+
+    <Style x:Key="FormHeroTitleStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormPrimaryText}" />
+        <Setter Property="FontSize" Value="34" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="FormHeroSubtitleStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormSecondaryText}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="FormCardStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="White" />
+        <Setter Property="Stroke" Value="{StaticResource FormCardStroke}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 26" />
+        <Setter Property="Padding" Value="22" />
+    </Style>
+
+    <Style x:Key="FormSectionTitleStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormPrimaryText}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="FormCaptionStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormSecondaryText}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="FormFieldLabelStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormPrimaryText}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontAttributes" Value="Bold" />
+    </Style>
+
+    <Style x:Key="FormHelperLabelStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormSecondaryText}" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style x:Key="FormStatusLabelStyle" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource FormPrimaryText}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <Style x:Key="FormEntryBorderStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource FormInputBackground}" />
+        <Setter Property="Stroke" Value="{StaticResource FormCardStroke}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 18" />
+        <Setter Property="Padding" Value="14,8" />
+    </Style>
+
+    <Style x:Key="FormPrimaryButtonStyle" TargetType="Button">
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="BackgroundColor" Value="{StaticResource FormAccent}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="MinimumHeightRequest" Value="46" />
+    </Style>
+
+    <Style x:Key="FormSecondaryButtonStyle" TargetType="Button">
+        <Setter Property="TextColor" Value="{StaticResource FormAccent}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource FormAccentSoft}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="MinimumHeightRequest" Value="46" />
+    </Style>
+</ResourceDictionary>
