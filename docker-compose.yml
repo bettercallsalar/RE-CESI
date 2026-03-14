@@ -41,6 +41,7 @@ services:
       FLYWAY_PASSWORD: ${MYSQL_PASSWORD}
       FLYWAY_LOCATIONS: filesystem:/flyway/sql
       FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_OUT_OF_ORDER: "true"
     volumes:
       - ./db/migrations:/flyway/sql:ro
 

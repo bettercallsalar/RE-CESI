@@ -65,6 +65,52 @@ wait_for_service_health() {
   done
 }
 
+wait_for_service_completion() {
+  local service="$1"
+  local timeout_seconds="${2:-180}"
+  local start_ts current_ts container_id status exit_code
+
+  container_id="$(docker_compose ps -q "$service" 2>/dev/null || true)"
+  if [ -z "${container_id}" ]; then
+    echo "Could not find container for service '$service'."
+    return 1
+  fi
+
+  echo "Waiting for '$service' to complete (timeout: ${timeout_seconds}s)..."
+  start_ts="$(date +%s)"
+
+  while true; do
+    status="$(docker inspect --format '{{.State.Status}}' "$container_id" 2>/dev/null || echo "missing")"
+
+    case "$status" in
+      exited)
+        exit_code="$(docker inspect --format '{{.State.ExitCode}}' "$container_id" 2>/dev/null || echo "1")"
+        if [ "$exit_code" = "0" ]; then
+          return 0
+        fi
+
+        echo "Service '$service' failed with exit code $exit_code."
+        docker_compose logs --no-color "$service" || true
+        return 1
+        ;;
+      dead|missing)
+        echo "Service '$service' is unavailable (status: $status)."
+        docker_compose logs --no-color "$service" || true
+        return 1
+        ;;
+    esac
+
+    current_ts="$(date +%s)"
+    if [ $((current_ts - start_ts)) -ge "$timeout_seconds" ]; then
+      echo "Timed out waiting for '$service' to complete."
+      docker_compose logs --no-color "$service" || true
+      return 1
+    fi
+
+    sleep 2
+  done
+}
+
 if [ ! -f .env ]; then
   echo "Missing .env. Creating from template..."
   if [ -f .env.example ]; then
@@ -94,6 +140,10 @@ docker_compose exec -T db mysql -uroot "-p${root_password}" -e \
    GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'%'; \
    FLUSH PRIVILEGES;"
 
-# Ensure API/frontend/migrate containers restart so config and DI changes are picked up.
-docker_compose up -d --build --force-recreate migrate api frontend
+# Run migrations first and fail fast if Flyway cannot apply them.
+docker_compose up -d --build --force-recreate migrate
+wait_for_service_completion migrate "${MIGRATE_TIMEOUT_SECONDS:-180}"
+
+# Start long-running application services after a successful migration pass.
+docker_compose up -d --build --force-recreate api frontend
 docker_compose ps
