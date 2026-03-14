@@ -235,9 +235,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         var loveCount = CountReactions(ReactionNames.Love);
         var totalCount = _reactions.Count;
 
-        LikeButton.Text = $"Like ({likeCount})";
-        DislikeButton.Text = $"Dislike ({dislikeCount})";
-        LoveButton.Text = $"Love ({loveCount})";
+        LikeButton.Text = $"👍 Like ({likeCount})";
+        DislikeButton.Text = $"👎 Dislike ({dislikeCount})";
+        LoveButton.Text = $"❤️ Love ({loveCount})";
 
         ReactionsSummaryLabel.Text = totalCount == 0
             ? "Aucune reaction pour le moment."
