@@ -47,6 +47,11 @@ public static class MauiProgram
 			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
+		builder.Services.AddHttpClient<ICommentsApiClient, CommentsApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
 		builder.Services.AddHttpClient<IArticlesApiClient, ArticlesApiClient>(httpClient =>
 		{
 			httpClient.BaseAddress = apiBaseAddress;
