@@ -21,23 +21,27 @@ export interface ResourceAuthor {
   username: string;
   firstName: string;
 }
-export interface Article {
+
+export interface Resource {
   idResource: number;
-  idArticle: number;
   title: string;
   description: string | null;
   type: string;
-  visibility: ArticleVisibility;
+  visibility: ResourceVisibility;
   createdAt: string;
   modifiedAt: string | null;
   deletedAt: string | null;
   idUser: number;
   author: ResourceAuthor;
   idCategory: number;
-  content: string;
   isApproved: boolean;
   defaultImageId: number | null;
   files: ResourceFile[];
+}
+
+export interface Article extends Resource {
+  idArticle: number;
+  content: string;
 }
 
 export interface PaginatedResponse<T> {
