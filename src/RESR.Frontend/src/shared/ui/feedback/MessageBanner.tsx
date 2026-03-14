@@ -1,6 +1,7 @@
-import { Box, CloseButton, HStack, Icon, Stack, Text } from "@chakra-ui/react";
+import { CloseButton, HStack, Stack, Text } from "@chakra-ui/react";
 import type { IconType } from "react-icons";
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
+import { AppIcon } from "@/shared/ui/icons/AppIcon";
 import type { MessageTone } from "@/shared/ui/feedback/message.types";
 
 interface MessageBannerProps {
@@ -79,19 +80,14 @@ export function MessageBanner({
       py={{ base: 3.5, md: 4 }}
       spacing={4}
       width="100%">
-      <Box
-        alignItems="center"
+      <AppIcon
         bg={style.iconBg}
         borderRadius="999px"
         color={style.iconColor}
-        display="inline-flex"
-        flexShrink={0}
-        h="36px"
-        justifyContent="center"
+        icon={style.icon}
         mt="2px"
-        w="36px">
-        <Icon as={style.icon} boxSize={5} />
-      </Box>
+        size="lg"
+      />
 
       <Stack flex="1" spacing={0.5}>
         {title ? (

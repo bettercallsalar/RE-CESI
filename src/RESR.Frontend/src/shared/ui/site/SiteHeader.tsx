@@ -4,7 +4,6 @@ import {
   Collapse,
   Flex,
   HStack,
-  Icon,
   IconButton,
   Link,
   Menu,
@@ -19,6 +18,7 @@ import {
 import type { IconType } from "react-icons";
 import { FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiShield, FiUser } from "react-icons/fi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { AppIcon } from "@/shared/ui/icons/AppIcon";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
 interface SiteHeaderProps {
@@ -34,8 +34,8 @@ interface NavLinkItem {
 function HeaderLink({ label, icon, href }: NavLinkItem) {
   return (
     <Link _hover={{ color: "ink.800", textDecoration: "none" }} color="brand.500" display="inline-flex" href={href} verticalAlign="middle">
-      <HStack align="center" minH="44px" px={1} spacing={2.5}>
-        <Icon as={icon} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" flexShrink={0} strokeWidth={1.75} />
+      <HStack align="center" minH="44px" px={1} spacing={1.5}>
+        <AppIcon color="brand.500" icon={icon} size="lg" />
         <Text fontSize={{ base: "15px", xl: "16px" }} fontWeight="600">
           {label}
         </Text>
@@ -56,8 +56,8 @@ function MobileHeaderLink({ label, icon, href }: NavLinkItem) {
       py={2.5}
       w="100%"
     >
-      <HStack align="center" minH="24px" spacing={3}>
-        <Icon as={icon} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={1.9} />
+      <HStack align="center" minH="24px" spacing={2}>
+        <AppIcon color="brand.500" icon={icon} size="lg" />
         <Text fontSize="15px" fontWeight="600" lineHeight="1.3">
           {label}
         </Text>
@@ -104,10 +104,10 @@ function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard:
         variant="unstyled"
         verticalAlign="middle"
       >
-        <HStack align="center" color="brand.500" h="44px" spacing={2.5}>
-          <Icon as={FiUser} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" strokeWidth={1.75} />
+        <HStack align="center" color="brand.500" h="44px" spacing={1.5}>
+          <AppIcon color="brand.500" icon={FiUser} size="lg" />
           <Text color="brand.500">{label}</Text>
-          <Icon as={FiChevronDown} boxSize={{ base: 4.5, xl: 5 }} color="brand.500" strokeWidth={2} />
+          <AppIcon color="brand.500" icon={FiChevronDown} size="sm" strokeWidth={2} />
         </HStack>
       </MenuButton>
       <MenuList bg="white" borderColor="canvas.200" boxShadow="xl" minW="220px" p={2}>
@@ -126,8 +126,8 @@ function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard:
             key={item.label}
             minH="52px"
           >
-            <HStack align="center" spacing={3}>
-              <Icon as={item.icon} boxSize="18px" color="brand.500" flexShrink={0} strokeWidth={1.9} />
+            <HStack align="center" spacing={2}>
+              <AppIcon color="brand.500" icon={item.icon} size="lg" />
               <Text>{item.label}</Text>
             </HStack>
           </MenuItem>
@@ -207,13 +207,13 @@ function MobileNavigation({
             w="100%"
           >
             <HStack justify="space-between" spacing={3} w="100%">
-              <HStack minW={0} spacing={3}>
-                <Icon as={FiUser} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={1.9} />
+              <HStack minW={0} spacing={2}>
+                <AppIcon color="brand.500" icon={FiUser} size="lg" />
                 <Text fontSize="15px" fontWeight="600" lineHeight="1.3" noOfLines={1}>
                   {userLabel}
                 </Text>
               </HStack>
-              <Icon as={userDisclosure.isOpen ? FiChevronUp : FiChevronDown} boxSize={4.5} color="brand.500" flexShrink={0} strokeWidth={2} />
+              <AppIcon color="brand.500" icon={userDisclosure.isOpen ? FiChevronUp : FiChevronDown} size="sm" strokeWidth={2} />
             </HStack>
           </Button>
           <Collapse in={userDisclosure.isOpen}>
@@ -272,7 +272,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
                 borderRadius="12px"
                 boxSize={{ base: "42px", md: "46px" }}
                 color="brand.500"
-                icon={<Icon as={FiMenu} boxSize={5.5} strokeWidth={2} />}
+                icon={<AppIcon color="brand.500" icon={FiMenu} size="xl" strokeWidth={2} />}
                 minW="auto"
                 onClick={onToggle}
                 variant="ghost"

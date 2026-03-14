@@ -2,18 +2,19 @@ import {
   Box,
   Divider,
   HStack,
-  Icon,
   IconButton,
   Stack,
   Text,
   Tooltip,
 } from "@chakra-ui/react";
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { IconType } from "react-icons";
 import { LuBold, LuEraser, LuHeading2, LuItalic, LuLink, LuList, LuListOrdered, LuTextQuote, LuUnderline } from "react-icons/lu";
 import {
   getArticleTextLength,
   hasMeaningfulArticleContent,
 } from "@/features/articles/lib/articleContent";
+import { AppIcon } from "@/shared/ui/icons/AppIcon";
 
 interface RichTextEditorProps {
   label?: string;
@@ -26,7 +27,7 @@ interface RichTextEditorProps {
 
 interface ToolbarAction {
   label: string;
-  icon: ReactElement;
+  icon: IconType;
   command?: string;
   commandValue?: string;
   onTrigger?: () => void;
@@ -38,7 +39,7 @@ function ToolbarButton({
   onClick,
 }: {
   label: string;
-  icon: ReactElement;
+  icon: IconType;
   onClick: () => void;
 }) {
   return (
@@ -49,7 +50,7 @@ function ToolbarButton({
         borderColor="canvas.200"
         boxSize={{ base: "56px", md: "60px" }}
         color="ink.800"
-        icon={icon}
+        icon={<AppIcon color="ink.800" icon={icon} size="lg" />}
         minW="unset"
         onClick={onClick}
         type="button"
@@ -106,49 +107,49 @@ export function RichTextEditor({
   const actions: ToolbarAction[] = [
     {
       label: "Mettre en gras",
-      icon: <Icon as={LuBold} boxSize={6} />,
+      icon: LuBold,
       command: "bold",
     },
     {
       label: "Mettre en italique",
-      icon: <Icon as={LuItalic} boxSize={6} />,
+      icon: LuItalic,
       command: "italic",
     },
     {
       label: "Souligner",
-      icon: <Icon as={LuUnderline} boxSize={6} />,
+      icon: LuUnderline,
       command: "underline",
     },
     {
       label: "Titre",
-      icon: <Icon as={LuHeading2} boxSize={6} />,
+      icon: LuHeading2,
       command: "formatBlock",
       commandValue: "h2",
     },
     {
       label: "Citation",
-      icon: <Icon as={LuTextQuote} boxSize={6} />,
+      icon: LuTextQuote,
       command: "formatBlock",
       commandValue: "blockquote",
     },
     {
       label: "Liste à puces",
-      icon: <Icon as={LuList} boxSize={6} />,
+      icon: LuList,
       command: "insertUnorderedList",
     },
     {
       label: "Liste numérotée",
-      icon: <Icon as={LuListOrdered} boxSize={6} />,
+      icon: LuListOrdered,
       command: "insertOrderedList",
     },
     {
       label: "Insérer un lien",
-      icon: <Icon as={LuLink} boxSize={6} />,
+      icon: LuLink,
       onTrigger: insertLink,
     },
     {
       label: "Retirer la mise en forme",
-      icon: <Icon as={LuEraser} boxSize={6} />,
+      icon: LuEraser,
       command: "removeFormat",
     },
   ];
