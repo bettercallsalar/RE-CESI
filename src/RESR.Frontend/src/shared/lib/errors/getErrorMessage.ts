@@ -14,6 +14,7 @@ const directTranslations: Record<string, string> = {
   "Missing or invalid Authorization header.": "En-tete d'autorisation manquant ou invalide.",
   "Invalid token or unauthorized access.": "Jeton invalide ou acces non autorise.",
   "Invalid token or missing subject claim.": "Jeton invalide ou identifiant utilisateur manquant.",
+  "A user cannot follow themselves": "Vous ne pouvez pas vous suivre vous-meme.",
   "Title is required.": "Le titre est obligatoire.",
   "The request payload is invalid.": "Les donnees envoyees sont invalides.",
   "The Content field is required.": "Le contenu est obligatoire.",
@@ -78,6 +79,14 @@ function translateKnownMessage(message: string) {
   if (/^User (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^User (\d+) not found\.?$/);
     return `Utilisateur ${match?.[1]} introuvable.`;
+  }
+
+  if (/^Follow (\d+)->(\d+) already exists\.?$/.test(message)) {
+    return "Vous suivez deja cet utilisateur.";
+  }
+
+  if (/^Follow (\d+)->(\d+) not found\.?$/.test(message)) {
+    return "Vous ne suivez pas ou plus cet utilisateur.";
   }
 
   if (/^Article resource (\d+) not found\.?$/.test(message)) {

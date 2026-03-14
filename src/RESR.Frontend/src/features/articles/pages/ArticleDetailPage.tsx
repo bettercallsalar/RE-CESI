@@ -1,9 +1,10 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Link, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getPrimaryArticleImage, sanitizeArticleHtml } from "@/features/articles/lib/articleContent";
 import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
@@ -114,7 +115,10 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
               <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
                 <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
+                  Publication proposee par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}{" "}
+                  <Link color="brand.500" fontWeight="700" href={getUserProfileHref(article.idUser)}>
+                    Voir son profil
+                  </Link>
                 </Text>
 
                 <HStack flexWrap="wrap" justify="flex-end" spacing={3}>

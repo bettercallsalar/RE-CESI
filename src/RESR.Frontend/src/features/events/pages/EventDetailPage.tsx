@@ -1,9 +1,10 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, SimpleGrid, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Link, SimpleGrid, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatEventDateRange, formatEventPublishedDate, getPrimaryEventImage } from "@/features/events/lib/eventDates";
 import { useEventDetail } from "@/features/events/hooks/useEventDetail";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
@@ -125,7 +126,10 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
 
               <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
                 <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}
+                  Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}{" "}
+                  <Link color="brand.500" fontWeight="700" href={getUserProfileHref(event.idUser)}>
+                    Voir son profil
+                  </Link>
                 </Text>
 
                 <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
