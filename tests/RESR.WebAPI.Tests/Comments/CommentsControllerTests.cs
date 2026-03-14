@@ -5,6 +5,7 @@ using RESR.Core.Controllers.Comments;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Comments;
+using RESR.Models.Resources;
 using RESR.WebAPI.Routes.Comments;
 
 namespace RESR.WebAPI.Tests.Comments;
@@ -27,6 +28,7 @@ public sealed class CommentsControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var responses = Assert.IsType<List<CommentResponse>>(ok.Value);
         Assert.Equal(2, responses.Count);
+        Assert.Equal(new ResourceAuthorResponse(2, "user_2", "User Two"), responses[0].Author);
         Assert.NotNull(responses[1].DeletedAt);
     }
 
@@ -166,6 +168,8 @@ public sealed class CommentsControllerTests
             DeletedAt = deletedAt,
             IdResource = 4,
             IdUser = 2,
+            Username = "user_2",
+            FirstName = "User Two",
             IdParentComment = idParentComment
         };
     }

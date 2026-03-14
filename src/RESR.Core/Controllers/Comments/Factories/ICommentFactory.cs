@@ -19,6 +19,8 @@ public interface ICommentFactory
         DateTime? deletedAt,
         int idResource,
         int idUser,
+        string? username,
+        string? firstName,
         int? idParentComment
     );
 }

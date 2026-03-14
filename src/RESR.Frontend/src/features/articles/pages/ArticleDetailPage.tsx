@@ -6,6 +6,7 @@ import { getPrimaryArticleImage, sanitizeArticleHtml } from "@/features/articles
 import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
+import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
 interface ArticleDetailPageProps {
@@ -190,6 +191,8 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 />
               </CardBody>
             </Card>
+
+            {!article.deletedAt ? <CommentsSection idResource={article.idResource} resourceOwnerId={article.idUser} /> : null}
           </>
         ) : null}
       </Stack>

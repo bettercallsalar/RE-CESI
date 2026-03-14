@@ -81,6 +81,8 @@ ScaffoldingReadMe.txt
 node_modules/
 dist/
 .vite/
+storage/uploads/*
+!storage/uploads/.gitkeep
 
 # StyleCop
 StyleCopReport.xml

@@ -1,13 +1,36 @@
+using RESR.Models.Resources;
+
 namespace RESR.Models.Comments;
 
-public sealed record CreateCommentRequest(
-    string Content,
-    int? IdParentComment = null
-);
+public sealed class CreateCommentRequest
+{
+    public CreateCommentRequest()
+    {
+    }
 
-public sealed record UpdateCommentRequest(
-    string Content
-);
+    public CreateCommentRequest(string content, int? idParentComment = null)
+    {
+        Content = content;
+        IdParentComment = idParentComment;
+    }
+
+    public string Content { get; set; } = string.Empty;
+    public int? IdParentComment { get; set; }
+}
+
+public sealed class UpdateCommentRequest
+{
+    public UpdateCommentRequest()
+    {
+    }
+
+    public UpdateCommentRequest(string content)
+    {
+        Content = content;
+    }
+
+    public string Content { get; set; } = string.Empty;
+}
 
 public sealed record CommentResponse(
     int IdComment,
@@ -17,5 +40,6 @@ public sealed record CommentResponse(
     DateTime? DeletedAt,
     int IdResource,
     int IdUser,
+    ResourceAuthorResponse Author,
     int? IdParentComment
 );

@@ -82,7 +82,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
-var uploadsRootDirectory = LocalResourceFileStorage.GetUploadsRootDirectory();
+var uploadsRootDirectory = LocalResourceFileStorage.GetUploadsRootDirectory(builder.Configuration, builder.Environment);
 Directory.CreateDirectory(uploadsRootDirectory);
 
 if (app.Environment.IsDevelopment())

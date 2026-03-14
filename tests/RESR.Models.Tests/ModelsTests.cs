@@ -7,6 +7,7 @@ using RESR.Models.Roles;
 using RESR.Models.Users;
 using RESR.Models.Categories;
 using RESR.Models.Marks;
+using RESR.Models.Resources;
 
 namespace RESR.Models.Tests;
 
@@ -143,6 +144,8 @@ public sealed class ModelsTests
             DeletedAt = null,
             IdResource = 9,
             IdUser = 3,
+            Username = "alice",
+            FirstName = "Alice",
             IdParentComment = 1
         };
 
@@ -150,6 +153,8 @@ public sealed class ModelsTests
         Assert.Equal("Hello", comment.Content);
         Assert.Equal(9, comment.IdResource);
         Assert.Equal(3, comment.IdUser);
+        Assert.Equal("alice", comment.Username);
+        Assert.Equal("Alice", comment.FirstName);
         Assert.Equal(1, comment.IdParentComment);
     }
 
@@ -226,6 +231,7 @@ public sealed class ModelsTests
             new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc),
             10,
             2,
+            new ResourceAuthorResponse(2, "alice", "Alice"),
             1
         );
 
@@ -236,6 +242,8 @@ public sealed class ModelsTests
         Assert.Equal(new DateTime(2026, 3, 11, 14, 0, 0, DateTimeKind.Utc), response.DeletedAt);
         Assert.Equal(10, response.IdResource);
         Assert.Equal(2, response.IdUser);
+        Assert.Equal("alice", response.Author.Username);
+        Assert.Equal("Alice", response.Author.FirstName);
         Assert.Equal(1, response.IdParentComment);
     }
 

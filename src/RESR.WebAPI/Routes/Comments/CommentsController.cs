@@ -3,6 +3,7 @@ using RESR.Core.Controllers.Comments;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Comments;
+using RESR.Models.Resources;
 using RESR.WebAPI.Security;
 
 namespace RESR.WebAPI.Routes.Comments;
@@ -171,6 +172,7 @@ public sealed class CommentsController : AuthenticatedResourceControllerBase
             comment.DeletedAt,
             comment.IdResource,
             comment.IdUser,
+            new ResourceAuthorResponse(comment.IdUser, comment.Username, comment.FirstName),
             comment.IdParentComment
         );
 }

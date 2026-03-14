@@ -1,6 +1,7 @@
 export const PermissionNames = {
   accessAdminPanel: "AccessAdminPanel",
   banUser: "BanUser",
+  deleteComment: "DeleteComment",
   manageRoles: "ManageRoles",
   manageUsers: "ManageUsers"
 } as const;
