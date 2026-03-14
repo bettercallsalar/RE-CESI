@@ -39,6 +39,12 @@ function getExcerpt(article: Article) {
   return `${base.slice(0, 177).trim()}...`;
 }
 
+function getAuthorLabel(article: Article) {
+  const username = article.author?.username?.trim();
+  const firstName = article.author?.firstName?.trim();
+
+  return username || firstName || `Utilisateur #${article.idUser}`;
+}
 export function ArticleCard({
   article,
   categoryName,
@@ -114,6 +120,9 @@ export function ArticleCard({
             {article.title}
           </Heading>
 
+          <Text color="ink.500" fontSize={{ base: "13px", md: "14px" }} fontWeight="600">
+            Par {getAuthorLabel(article)}
+          </Text>
           <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }} lineHeight="1.65" noOfLines={compact ? 4 : 5}>
             {getExcerpt(article)}
           </Text>
