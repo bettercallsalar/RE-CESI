@@ -13,7 +13,7 @@ export function useEventDetail(idResource: number) {
   const [event, setEvent] = useState<Event | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isApproving, setIsApproving] = useState(false);
+  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const canApproveEvent = hasPermission(PermissionNames.approveEvent);
 
@@ -84,21 +84,32 @@ export function useEventDetail(idResource: number) {
     };
   }, [canApproveEvent, idResource, token]);
 
-  async function approveEvent() {
-    if (!token || !event || event.deletedAt || event.isApproved || !canApproveEvent) {
-      return;
+  async function setEventApproval(nextIsApproved: boolean) {
+    if (!token || !event || event.deletedAt || event.isApproved === nextIsApproved || !canApproveEvent) {
+      return false;
     }
 
-    setIsApproving(true);
+    setIsUpdatingApproval(true);
 
     try {
-      const updatedEvent = await eventsService.setEventApproval(token, event.idResource, true);
+      const updatedEvent = await eventsService.setEventApproval(token, event.idResource, nextIsApproved);
       setEvent(updatedEvent);
-      showFormMessage(setMessage, createSuccessMessage("L'evenement a ete approuve et devient maintenant visible publiquement."));
+
+      showFormMessage(
+        setMessage,
+        createSuccessMessage(
+          nextIsApproved
+            ? "L'evenement a ete approuve et devient maintenant visible publiquement."
+            : "L'evenement a ete desapprouve et n'apparait plus dans les ressources publiques."
+        )
+      );
+
+      return true;
     } catch (approvalError) {
       showFormMessage(setMessage, createErrorMessage(approvalError, "Approbation impossible"));
+      return false;
     } finally {
-      setIsApproving(false);
+      setIsUpdatingApproval(false);
     }
   }
 
@@ -111,10 +122,11 @@ export function useEventDetail(idResource: number) {
     event,
     categoryName,
     isLoading,
-    isApproving,
+    isUpdatingApproval,
     message,
     canEdit: status === "authenticated" && user?.idUser === event?.idUser && !event?.deletedAt,
     canApprove: status === "authenticated" && canApproveEvent && !event?.deletedAt,
-    approveEvent
+    approveEvent: () => setEventApproval(true),
+    unapproveEvent: () => setEventApproval(false)
   };
 }

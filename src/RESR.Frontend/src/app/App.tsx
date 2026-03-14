@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { AdminAccessDeniedPage } from "@/features/admin/pages/AdminAccessDeniedPage";
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage";
 import { ManageUsersPage } from "@/features/admin/pages/ManageUsersPage";
-import { PendingResourcesPage } from "@/features/admin/pages/PendingResourcesPage";
+import { PendingArticlesPage } from "@/features/admin/pages/PendingArticlesPage";
+import { PendingEventsPage } from "@/features/admin/pages/PendingEventsPage";
 import { RolePermissionsPage } from "@/features/admin/pages/RolePermissionsPage";
 import { RolesManagementPage } from "@/features/admin/pages/RolesManagementPage";
 import { SuperAdminAccessDeniedPage } from "@/features/admin/pages/SuperAdminAccessDeniedPage";
@@ -25,6 +26,8 @@ import { AppLoader } from "@/shared/ui/AppLoader";
 
 function App() {
   const { canAccessAdminDashboard, hasPermission, isSuperAdmin, status } = useAuth();
+  const canApproveArticles = hasPermission(PermissionNames.approveArticle);
+  const canApproveEvents = hasPermission(PermissionNames.approveEvent);
   const [pathname, setPathname] = useState(() => window.location.pathname);
   const adminRoleDetailMatch = pathname.match(/^\/admin\/roles\/(\d+)$/);
   const articleDetailMatch = pathname.match(/^\/articles\/(\d+)$/);
@@ -75,7 +78,7 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
-    if (pathname === "/admin/resources/pending" && status === "unauthenticated") {
+    if ((pathname === "/admin/articles/pending" || pathname === "/admin/events/pending" || pathname === "/admin/resources/pending") && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
@@ -95,7 +98,17 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
-  }, [adminRoleDetailMatch, articleEditMatch, eventEditMatch, pathname, status]);
+    if (pathname === "/admin/resources/pending" && status === "authenticated") {
+      const redirectPath = canApproveArticles
+        ? "/admin/articles/pending"
+        : canApproveEvents
+          ? "/admin/events/pending"
+          : "/admin";
+
+      window.history.replaceState({}, "", redirectPath);
+      setPathname(redirectPath);
+    }
+  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, pathname, status]);
 
   if (pathname === "/admin") {
     if (status === "loading") {
@@ -114,16 +127,36 @@ function App() {
   }
 
   if (pathname === "/admin/resources/pending") {
+    return <AppLoader label="Redirection vers la page de validation adaptee a vos permissions" />;
+  }
+
+  if (pathname === "/admin/articles/pending") {
     if (status === "loading") {
-      return <AppLoader label="Chargement des ressources en attente d'approbation" />;
+      return <AppLoader label="Chargement des articles en attente de validation" />;
     }
 
-    if (status === "authenticated" && (hasPermission(PermissionNames.approveArticle) || hasPermission(PermissionNames.approveEvent))) {
-      return <PendingResourcesPage />;
+    if (status === "authenticated" && canApproveArticles) {
+      return <PendingArticlesPage />;
     }
 
     if (status === "authenticated") {
-      return <AdminAccessDeniedPage message="Cette page requiert la permission ApproveArticle ou ApproveEvent dans votre token." />;
+      return <AdminAccessDeniedPage message="Cette page requiert la permission ApproveArticle dans votre token." />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/admin/events/pending") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement des evenements en attente de validation" />;
+    }
+
+    if (status === "authenticated" && canApproveEvents) {
+      return <PendingEventsPage />;
+    }
+
+    if (status === "authenticated") {
+      return <AdminAccessDeniedPage message="Cette page requiert la permission ApproveEvent dans votre token." />;
     }
 
     return <AppLoader label="Redirection vers la connexion" />;

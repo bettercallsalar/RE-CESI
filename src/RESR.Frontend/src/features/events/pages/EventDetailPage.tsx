@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, SimpleGrid, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -7,6 +7,7 @@ import { useEventDetail } from "@/features/events/hooks/useEventDetail";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
+import { ConfirmationDialog } from "@/shared/ui/feedback/ConfirmationDialog";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
 interface EventDetailPageProps {
@@ -19,7 +20,8 @@ function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
 
 export function EventDetailPage({ idResource }: EventDetailPageProps) {
   const { status } = useAuth();
-  const { event, categoryName, isLoading, isApproving, message, canEdit, canApprove, approveEvent } = useEventDetail(idResource);
+  const { event, categoryName, isLoading, isUpdatingApproval, message, canEdit, canApprove, approveEvent, unapproveEvent } = useEventDetail(idResource);
+  const unapproveDialog = useDisclosure();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const albumImages = event?.files ?? [];
@@ -53,6 +55,14 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
     }
 
     setCurrentImageIndex((current) => (current === albumImages.length - 1 ? 0 : current + 1));
+  }
+
+  async function confirmUnapprove() {
+    const didUnapprove = await unapproveEvent();
+
+    if (didUnapprove) {
+      unapproveDialog.onClose();
+    }
   }
 
   return (
@@ -118,9 +128,9 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                   Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}
                 </Text>
 
-                <HStack spacing={3}>
+                <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
                   {canApprove && !event.isApproved ? (
-                    <Button as="a" href="/admin/resources/pending" variant="outline">
+                    <Button as="a" href="/admin/events/pending" variant="outline">
                       Retour aux validations
                     </Button>
                   ) : null}
@@ -134,12 +144,23 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                   ) : null}
                   {canApprove && !event.isApproved ? (
                     <Button
-                      isDisabled={isApproving}
+                      isDisabled={isUpdatingApproval}
                       onClick={() => {
                         void approveEvent();
                       }}
                     >
                       Approuver l'evenement
+                    </Button>
+                  ) : null}
+                  {canApprove && event.isApproved ? (
+                    <Button
+                      _hover={{ bg: "#9B2C2C" }}
+                      bg="#C53030"
+                      color="white"
+                      isDisabled={isUpdatingApproval}
+                      onClick={unapproveDialog.onOpen}
+                    >
+                      Desapprouver l'evenement
                     </Button>
                   ) : null}
                 </HStack>
@@ -253,6 +274,16 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
             ) : null}
 
             {!event.deletedAt ? <CommentsSection idResource={event.idResource} resourceOwnerId={event.idUser} /> : null}
+
+            <ConfirmationDialog
+              confirmLabel="Desapprouver"
+              description="Voulez-vous vraiment desapprouver cet evenement ? Il ne sera plus visible dans les ressources publiques."
+              isLoading={isUpdatingApproval}
+              isOpen={unapproveDialog.isOpen}
+              onClose={unapproveDialog.onClose}
+              onConfirm={confirmUnapprove}
+              title="Confirmation de desapprobation"
+            />
           </>
         ) : null}
       </Stack>

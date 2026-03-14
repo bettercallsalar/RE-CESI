@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -7,6 +7,7 @@ import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
+import { ConfirmationDialog } from "@/shared/ui/feedback/ConfirmationDialog";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
 interface ArticleDetailPageProps {
@@ -24,7 +25,8 @@ function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
 }
 export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
   const { status } = useAuth();
-  const { article, categoryName, isLoading, isApproving, message, canEdit, canApprove, approveArticle } = useArticleDetail(idResource);
+  const { article, categoryName, isLoading, isUpdatingApproval, message, canEdit, canApprove, approveArticle, unapproveArticle } = useArticleDetail(idResource);
+  const unapproveDialog = useDisclosure();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const albumImages = article?.files ?? [];
@@ -58,6 +60,14 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
     }
 
     setCurrentImageIndex((current) => (current === albumImages.length - 1 ? 0 : current + 1));
+  }
+
+  async function confirmUnapprove() {
+    const didUnapprove = await unapproveArticle();
+
+    if (didUnapprove) {
+      unapproveDialog.onClose();
+    }
   }
 
   return (
@@ -107,9 +117,9 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                   Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
                 </Text>
 
-                <HStack spacing={3}>
+                <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
                   {canApprove && !article.isApproved ? (
-                    <Button as="a" href="/admin/resources/pending" variant="outline">
+                    <Button as="a" href="/admin/articles/pending" variant="outline">
                       Retour aux validations
                     </Button>
                   ) : null}
@@ -123,12 +133,23 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                   ) : null}
                   {canApprove && !article.isApproved ? (
                     <Button
-                      isDisabled={isApproving}
+                      isDisabled={isUpdatingApproval}
                       onClick={() => {
                         void approveArticle();
                       }}
                     >
                       Approuver l'article
+                    </Button>
+                  ) : null}
+                  {canApprove && article.isApproved ? (
+                    <Button
+                      _hover={{ bg: "#9B2C2C" }}
+                      bg="#C53030"
+                      color="white"
+                      isDisabled={isUpdatingApproval}
+                      onClick={unapproveDialog.onOpen}
+                    >
+                      Desapprouver l'article
                     </Button>
                   ) : null}
                 </HStack>
@@ -213,6 +234,16 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
             </Card>
 
             {!article.deletedAt ? <CommentsSection idResource={article.idResource} resourceOwnerId={article.idUser} /> : null}
+
+            <ConfirmationDialog
+              confirmLabel="Desapprouver"
+              description="Voulez-vous vraiment desapprouver cet article ? Il ne sera plus visible dans les ressources publiques."
+              isLoading={isUpdatingApproval}
+              isOpen={unapproveDialog.isOpen}
+              onClose={unapproveDialog.onClose}
+              onConfirm={confirmUnapprove}
+              title="Confirmation de desapprobation"
+            />
           </>
         ) : null}
       </Stack>

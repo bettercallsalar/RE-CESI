@@ -32,10 +32,10 @@ export function AdminDashboardPage() {
                 Ressources a approuver
               </Text>
               <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
-                Ouvrez la liste des articles et evenements encore non approuves, puis validez-les depuis leur page detail.
+                Ouvrez la page articles ou evenements selon vos permissions, puis approuvez ou desapprouvez chaque ressource depuis son detail.
               </Text>
             </Stack>
-            <HStack justify="space-between" spacing={4}>
+            <HStack flexWrap="wrap" justify="space-between" spacing={4}>
               <Text color="brand.500" fontSize={{ base: "14px", md: "15px" }} fontWeight="700">
                 {canApproveArticles && canApproveEvents
                   ? "Permissions ApproveArticle et/ou ApproveEvent"
@@ -43,9 +43,18 @@ export function AdminDashboardPage() {
                     ? "Permission ApproveArticle requise"
                     : "Permission ApproveEvent requise"}
               </Text>
-              <Button as="a" href="/admin/resources/pending">
-                Ouvrir
-              </Button>
+              <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
+                {canApproveArticles ? (
+                  <Button as="a" href="/admin/articles/pending">
+                    Articles
+                  </Button>
+                ) : null}
+                {canApproveEvents ? (
+                  <Button as="a" href="/admin/events/pending">
+                    Evenements
+                  </Button>
+                ) : null}
+              </HStack>
             </HStack>
           </Stack>
         ) : null}

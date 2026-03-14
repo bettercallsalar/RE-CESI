@@ -12,7 +12,7 @@ export function useArticleDetail(idResource: number) {
   const [article, setArticle] = useState<Article | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isApproving, setIsApproving] = useState(false);
+  const [isUpdatingApproval, setIsUpdatingApproval] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
   const canApproveArticle = hasPermission(PermissionNames.approveArticle);
 
@@ -84,21 +84,32 @@ export function useArticleDetail(idResource: number) {
     };
   }, [canApproveArticle, idResource, token]);
 
-  async function approveArticle() {
-    if (!token || !article || article.deletedAt || article.isApproved || !canApproveArticle) {
-      return;
+  async function setArticleApproval(nextIsApproved: boolean) {
+    if (!token || !article || article.deletedAt || article.isApproved === nextIsApproved || !canApproveArticle) {
+      return false;
     }
 
-    setIsApproving(true);
+    setIsUpdatingApproval(true);
 
     try {
-      const updatedArticle = await articlesService.setArticleApproval(token, article.idResource, true);
+      const updatedArticle = await articlesService.setArticleApproval(token, article.idResource, nextIsApproved);
       setArticle(updatedArticle);
-      showFormMessage(setMessage, createSuccessMessage("L'article a ete approuve et devient maintenant visible publiquement."));
+
+      showFormMessage(
+        setMessage,
+        createSuccessMessage(
+          nextIsApproved
+            ? "L'article a ete approuve et devient maintenant visible publiquement."
+            : "L'article a ete desapprouve et n'apparait plus dans les ressources publiques."
+        )
+      );
+
+      return true;
     } catch (approvalError) {
       showFormMessage(setMessage, createErrorMessage(approvalError, "Approbation impossible"));
+      return false;
     } finally {
-      setIsApproving(false);
+      setIsUpdatingApproval(false);
     }
   }
 
@@ -111,10 +122,11 @@ export function useArticleDetail(idResource: number) {
     article,
     categoryName,
     isLoading,
-    isApproving,
+    isUpdatingApproval,
     message,
     canEdit: status === "authenticated" && user?.idUser === article?.idUser && !article?.deletedAt,
     canApprove: status === "authenticated" && canApproveArticle && !article?.deletedAt,
-    approveArticle
+    approveArticle: () => setArticleApproval(true),
+    unapproveArticle: () => setArticleApproval(false)
   };
 }
