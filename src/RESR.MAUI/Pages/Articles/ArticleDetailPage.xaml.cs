@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using RESR.MAUI.Services;
 using RESR.Models.Comments;
+using RESR.Models.Reactions;
 using RESR.Models.Resources;
 
 namespace RESR.MAUI.Pages.Articles;
@@ -9,25 +10,39 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 {
     private readonly IResourcesApiClient _resourcesApiClient;
     private readonly ICommentsApiClient _commentsApiClient;
+    private readonly IReactionsApiClient _reactionsApiClient;
     private readonly IApiSession _session;
+    private readonly IUsersApiClient _usersApiClient;
     private CancellationTokenSource? _loadCts;
     private CancellationTokenSource? _commentActionCts;
+    private CancellationTokenSource? _reactionActionCts;
     private int? _idResource;
     private bool _shouldLoad;
     private ArticleResponse? _article;
     private IReadOnlyList<CommentResponse> _comments = Array.Empty<CommentResponse>();
+    private IReadOnlyList<ReactionResponse> _reactions = Array.Empty<ReactionResponse>();
     private readonly HashSet<int> _expandedCommentIds = [];
     private readonly ObservableCollection<CommentThreadItem> _visibleCommentItems = [];
     private int? _replyToCommentId;
+    private int? _currentUserId;
+    private ReactionResponse? _currentUserReaction;
 
-    public ArticleDetailPage(IResourcesApiClient resourcesApiClient, ICommentsApiClient commentsApiClient, IApiSession session)
+    public ArticleDetailPage(
+        IResourcesApiClient resourcesApiClient,
+        ICommentsApiClient commentsApiClient,
+        IReactionsApiClient reactionsApiClient,
+        IUsersApiClient usersApiClient,
+        IApiSession session)
     {
         _resourcesApiClient = resourcesApiClient;
         _commentsApiClient = commentsApiClient;
+        _reactionsApiClient = reactionsApiClient;
+        _usersApiClient = usersApiClient;
         _session = session;
         InitializeComponent();
         BindableLayout.SetItemsSource(CommentsListLayout, _visibleCommentItems);
         UpdateCommentComposerState();
+        UpdateReactionControlsState();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -57,6 +72,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     {
         _loadCts?.Cancel();
         _commentActionCts?.Cancel();
+        _reactionActionCts?.Cancel();
         base.OnDisappearing();
     }
 
@@ -67,7 +83,10 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 
         _loadCts = new CancellationTokenSource();
         SetLoadingState(true);
+        _currentUserId = null;
+        _currentUserReaction = null;
         CommentsCard.IsVisible = false;
+        ReactionsCard.IsVisible = false;
 
         try
         {
@@ -78,10 +97,12 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
                 HeaderCaptionLabel.Text = "Aucun contenu a afficher.";
                 ArticleContentLayout.IsVisible = false;
                 CommentsCard.IsVisible = false;
+                ReactionsCard.IsVisible = false;
                 return;
             }
 
             _article = article;
+            _currentUserId = await TryResolveCurrentUserIdAsync(_loadCts.Token);
             Title = article.Title;
             HeaderCaptionLabel.Text = $"Article #{article.IdResource}";
             TitleLabel.Text = article.Title;
@@ -94,7 +115,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             ContentLabel.Text = Normalize(article.Content);
             StatusLabel.Text = string.Empty;
             ArticleContentLayout.IsVisible = true;
+            ReactionsCard.IsVisible = true;
             CommentsCard.IsVisible = true;
+            await LoadReactionsAsync(article.IdResource, _loadCts.Token);
             await LoadCommentsAsync(article.IdResource, preserveExpansion: false, _loadCts.Token);
         }
         catch (ApiException ex)
@@ -103,6 +126,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
             ArticleContentLayout.IsVisible = false;
             CommentsCard.IsVisible = false;
+            ReactionsCard.IsVisible = false;
         }
         catch (TimeoutException ex)
         {
@@ -110,6 +134,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             StatusLabel.Text = ex.Message;
             ArticleContentLayout.IsVisible = false;
             CommentsCard.IsVisible = false;
+            ReactionsCard.IsVisible = false;
         }
         catch (OperationCanceledException)
         {
@@ -121,6 +146,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             StatusLabel.Text = $"Impossible d'afficher l'article : {TrimMessage(ex.Message)}";
             ArticleContentLayout.IsVisible = false;
             CommentsCard.IsVisible = false;
+            ReactionsCard.IsVisible = false;
         }
         finally
         {
@@ -134,6 +160,136 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     {
         LoadingIndicator.IsVisible = isLoading;
         LoadingIndicator.IsRunning = isLoading;
+    }
+
+    private async Task<int?> TryResolveCurrentUserIdAsync(CancellationToken ct)
+    {
+        if (!_session.IsAuthenticated)
+            return null;
+
+        try
+        {
+            var me = await _usersApiClient.GetMeAsync(ct);
+            return me?.IdUser;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task LoadReactionsAsync(int idResource, CancellationToken ct)
+    {
+        SetReactionActionState(true);
+
+        try
+        {
+            _reactions = await _reactionsApiClient.GetByResourceIdAsync(idResource, ct);
+            _currentUserReaction = _currentUserId.HasValue
+                ? _reactions.FirstOrDefault(reaction => reaction.IdUser == _currentUserId.Value)
+                : null;
+
+            ApplyReactionCounters();
+
+            if (string.IsNullOrWhiteSpace(ReactionsStatusLabel.Text) || !ReactionsStatusLabel.Text.StartsWith("Erreur", StringComparison.OrdinalIgnoreCase))
+                ReactionsStatusLabel.Text = string.Empty;
+        }
+        catch (ApiException ex)
+        {
+            _reactions = Array.Empty<ReactionResponse>();
+            _currentUserReaction = null;
+            ApplyReactionCounters();
+            ReactionsSummaryLabel.Text = "Impossible de charger les reactions.";
+            ReactionsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            _reactions = Array.Empty<ReactionResponse>();
+            _currentUserReaction = null;
+            ApplyReactionCounters();
+            ReactionsSummaryLabel.Text = "Chargement interrompu.";
+            ReactionsStatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            ReactionsStatusLabel.Text = "Chargement des reactions annule.";
+        }
+        catch (Exception ex)
+        {
+            _reactions = Array.Empty<ReactionResponse>();
+            _currentUserReaction = null;
+            ApplyReactionCounters();
+            ReactionsSummaryLabel.Text = "Erreur inattendue.";
+            ReactionsStatusLabel.Text = $"Impossible d'afficher les reactions : {TrimMessage(ex.Message)}";
+        }
+        finally
+        {
+            SetReactionActionState(false);
+        }
+    }
+
+    private void ApplyReactionCounters()
+    {
+        var likeCount = CountReactions(ReactionNames.Like);
+        var dislikeCount = CountReactions(ReactionNames.Dislike);
+        var loveCount = CountReactions(ReactionNames.Love);
+        var totalCount = _reactions.Count;
+
+        LikeButton.Text = $"Like ({likeCount})";
+        DislikeButton.Text = $"Dislike ({dislikeCount})";
+        LoveButton.Text = $"Love ({loveCount})";
+
+        ReactionsSummaryLabel.Text = totalCount == 0
+            ? "Aucune reaction pour le moment."
+            : $"{totalCount} reaction(s) au total.";
+
+        var currentName = _currentUserReaction?.Name?.Trim().ToLowerInvariant();
+        ApplyReactionButtonState(LikeButton, currentName == ReactionNames.Like);
+        ApplyReactionButtonState(DislikeButton, currentName == ReactionNames.Dislike);
+        ApplyReactionButtonState(LoveButton, currentName == ReactionNames.Love);
+        UpdateReactionControlsState();
+    }
+
+    private void ApplyReactionButtonState(Button button, bool isSelected)
+    {
+        button.BackgroundColor = isSelected ? Color.FromArgb("#342B9A") : Color.FromArgb("#F7F7F7");
+        button.TextColor = isSelected ? Colors.White : Color.FromArgb("#2C2C2C");
+        button.BorderColor = isSelected ? Color.FromArgb("#342B9A") : Color.FromArgb("#D7D7D7");
+    }
+
+    private void UpdateReactionControlsState()
+    {
+        var isAuthenticated = _session.IsAuthenticated;
+        ReactionLoginHintBorder.IsVisible = !isAuthenticated;
+
+        if (!isAuthenticated)
+        {
+            ReactionsStatusLabel.Text = "Connectez-vous pour choisir une reaction.";
+        }
+        else if (_currentUserReaction is not null)
+        {
+            ReactionsStatusLabel.Text = $"Votre reaction actuelle : {_currentUserReaction.Name}.";
+        }
+        else if (!string.IsNullOrWhiteSpace(ReactionsStatusLabel.Text) && ReactionsStatusLabel.Text.StartsWith("Erreur", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+        else
+        {
+            ReactionsStatusLabel.Text = "Choisissez une reaction pour cet article.";
+        }
+    }
+
+    private void SetReactionActionState(bool isBusy)
+    {
+        LikeButton.IsEnabled = !isBusy;
+        DislikeButton.IsEnabled = !isBusy;
+        LoveButton.IsEnabled = !isBusy;
+    }
+
+    private int CountReactions(string reactionName)
+    {
+        return _reactions.Count(reaction => string.Equals(reaction.Name, reactionName, StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task LoadCommentsAsync(int idResource, bool preserveExpansion, CancellationToken ct)
@@ -278,9 +434,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             descendantCount,
             _session.IsAuthenticated && !comment.DeletedAt.HasValue,
             new Thickness(Math.Min(depth * 24, 120), 0, 0, 0),
-            comment.DeletedAt.HasValue ? Color.FromArgb("#7B768E") : Color.FromArgb("#2F2B4C"),
-            comment.DeletedAt.HasValue ? Color.FromArgb("#F6F3F0") : Colors.White,
-            comment.DeletedAt.HasValue ? Color.FromArgb("#DDD5CD") : Color.FromArgb("#E5E0DA")));
+            comment.DeletedAt.HasValue ? Color.FromArgb("#6B6B6B") : Color.FromArgb("#2C2C2C"),
+            comment.DeletedAt.HasValue ? Color.FromArgb("#F7F7F7") : Colors.White,
+            comment.DeletedAt.HasValue ? Color.FromArgb("#D7D7D7") : Color.FromArgb("#D7D7D7")));
 
         if (!hasChildren || !isExpanded || !childrenByParent.TryGetValue(comment.IdComment, out var children))
             return;
@@ -305,7 +461,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         var label = $"Utilisateur #{comment.IdUser}";
 
         if (_article is not null && comment.IdUser == _article.IdUser)
-            return $"{label} · auteur";
+            return $"{label} | auteur";
 
         return label;
     }
@@ -323,7 +479,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         if (comment.DeletedAt.HasValue)
             parts.Add("supprime");
 
-        return string.Join("  ·  ", parts);
+        return string.Join("  |  ", parts);
     }
 
     private void UpdateCommentComposerState()
@@ -385,6 +541,78 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         _replyToCommentId = null;
         CommentsStatusLabel.Text = "Mode reponse annule.";
         UpdateCommentComposerState();
+    }
+
+    private async void OnReactionClicked(object? sender, EventArgs e)
+    {
+        if (_article is null || _reactionActionCts is not null)
+            return;
+
+        if (!_session.IsAuthenticated)
+        {
+            UpdateReactionControlsState();
+            return;
+        }
+
+        if (sender is not Button button || button.CommandParameter is not string reactionName || !ReactionNames.All.Contains(reactionName))
+            return;
+
+        if (!_currentUserId.HasValue)
+        {
+            _currentUserId = await TryResolveCurrentUserIdAsync(CancellationToken.None);
+            if (!_currentUserId.HasValue)
+            {
+                ReactionsStatusLabel.Text = "Impossible d'identifier votre session.";
+                return;
+            }
+        }
+
+        _reactionActionCts = new CancellationTokenSource();
+        SetReactionActionState(true);
+
+        try
+        {
+            var normalized = reactionName.Trim().ToLowerInvariant();
+            if (_currentUserReaction is not null && string.Equals(_currentUserReaction.Name, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                await _reactionsApiClient.DeleteAsync(_currentUserReaction.IdReaction, _reactionActionCts.Token);
+                ReactionsStatusLabel.Text = $"Reaction {normalized} retiree.";
+            }
+            else if (_currentUserReaction is not null)
+            {
+                await _reactionsApiClient.UpdateAsync(_currentUserReaction.IdReaction, new UpdateReactionRequest(normalized), _reactionActionCts.Token);
+                ReactionsStatusLabel.Text = $"Reaction mise a jour : {normalized}.";
+            }
+            else
+            {
+                await _reactionsApiClient.CreateAsync(_article.IdResource, new CreateReactionRequest(normalized), _reactionActionCts.Token);
+                ReactionsStatusLabel.Text = $"Reaction ajoutee : {normalized}.";
+            }
+
+            await LoadReactionsAsync(_article.IdResource, _reactionActionCts.Token);
+        }
+        catch (ApiException ex)
+        {
+            ReactionsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            ReactionsStatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            ReactionsStatusLabel.Text = "Action sur les reactions annulee.";
+        }
+        catch (Exception ex)
+        {
+            ReactionsStatusLabel.Text = $"Impossible de mettre a jour la reaction : {TrimMessage(ex.Message)}";
+        }
+        finally
+        {
+            _reactionActionCts.Dispose();
+            _reactionActionCts = null;
+            SetReactionActionState(false);
+        }
     }
 
     private void OnToggleRepliesClicked(object? sender, EventArgs e)
