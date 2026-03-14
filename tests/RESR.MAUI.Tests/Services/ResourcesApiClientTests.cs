@@ -22,7 +22,22 @@ public sealed class ResourcesApiClientTests
             {
                 Content = JsonContent.Create(new PaginatedArticlesResponse(
                     [
-                        new ArticleResponse(12, 4, "Article test", "Description", "article", "PUBLIC", new DateTime(2026, 3, 13, 8, 0, 0, DateTimeKind.Utc), null, 2, 1, "Contenu", true)
+                        new ArticleResponse(
+                            12,
+                            4,
+                            "Article test",
+                            "Description",
+                            "article",
+                            "PUBLIC",
+                            new DateTime(2026, 3, 13, 8, 0, 0, DateTimeKind.Utc),
+                            null,
+                            null,
+                            2,
+                            1,
+                            "Contenu",
+                            true,
+                            null,
+                            [])
                     ],
                     1,
                     5,
@@ -106,7 +121,8 @@ public sealed class ResourcesApiClientTests
                             new DateTime(2026, 3, 20, 18, 0, 0, DateTimeKind.Utc),
                             "Paris",
                             new Department { IdDepartment = 1, Name = "Paris", Code = 75 },
-                            true)
+                            true,
+                            [])
                     ],
                     1,
                     3,
