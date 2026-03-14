@@ -37,8 +37,8 @@ public sealed class UpdateEventRequestValidator : AbstractValidator<UpdateEventR
             .When(x => x.IdDepartment.HasValue);
 
         RuleFor(x => x)
-            .Must(x => x.StartDate is null || x.EndDate is null || x.EndDate >= x.StartDate)
-            .WithMessage("EndDate cannot be earlier than StartDate.");
+            .Must(x => x.StartDate is null || x.EndDate is null || x.EndDate > x.StartDate)
+            .WithMessage("EndDate must be later than StartDate.");
     }
 
     private static bool BeValidVisibility(string? visibility) =>

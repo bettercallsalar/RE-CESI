@@ -30,6 +30,7 @@ public sealed class MySqlEventRepositoryTests
             endDate: new DateTime(2026, 3, 11),
             address: "Paris",
             idDepartment: 75,
+            defaultImageId: 101,
             isApproved: true
         ));
         var cmd = ReaderCommand(table);
@@ -88,6 +89,7 @@ public sealed class MySqlEventRepositoryTests
             endDate: new DateTime(2026, 3, 11),
             address: "Paris",
             idDepartment: 75,
+            defaultImageId: null,
             isApproved: false
         ));
 
@@ -101,6 +103,7 @@ public sealed class MySqlEventRepositoryTests
         Assert.Equal(ResourceVisibility.PUBLIC, @event.Visibility);
         Assert.False(@event.IsApproved);
         Assert.Equal(75, @event.Department!.IdDepartment);
+        Assert.Null(@event.DefaultImageId);
     }
 
     [Fact]
@@ -158,6 +161,7 @@ public sealed class MySqlEventRepositoryTests
             endDate: new DateTime(2026, 3, 11),
             address: "Paris",
             idDepartment: 75,
+            defaultImageId: 102,
             isApproved: true
         ));
         var cmd = new FakeDbCommand
@@ -171,6 +175,17 @@ public sealed class MySqlEventRepositoryTests
 
         Assert.NotNull(@event);
         Assert.True(@event!.IsApproved);
+    }
+
+    [Fact]
+    public async Task SetDefaultImageAsync_UpdatesDefaultImage()
+    {
+        var cmd = NonQueryCommand(1);
+        var repo = CreateRepo(cmd);
+
+        await repo.SetDefaultImageAsync(11, 99, CancellationToken.None);
+
+        Assert.Contains("@default_image_id", cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName));
     }
 
     private static MySqlEventRepository CreateRepo(params FakeDbCommand[] commands)
@@ -216,6 +231,7 @@ public sealed class MySqlEventRepositoryTests
         table.Columns.Add("end_date", typeof(DateTime));
         table.Columns.Add("adress", typeof(string));
         table.Columns.Add("id_department", typeof(int));
+        table.Columns.Add("default_image_id", typeof(int));
         table.Columns.Add("department_name", typeof(string));
         table.Columns.Add("department_code", typeof(int));
 
@@ -241,6 +257,7 @@ public sealed class MySqlEventRepositoryTests
         DateTime? endDate,
         string? address,
         int? idDepartment,
+        int? defaultImageId,
         bool isApproved) => new object?[]
     {
         idResource,
@@ -259,6 +276,7 @@ public sealed class MySqlEventRepositoryTests
         endDate,
         address,
         idDepartment,
+        defaultImageId,
         idDepartment is null ? null : $"Department {idDepartment}",
         idDepartment is null ? null : idDepartment * 10
     };

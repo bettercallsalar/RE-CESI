@@ -17,8 +17,12 @@ public sealed class CreateEventFormRequestValidator : AbstractValidator<CreateEv
         RuleFor(x => x.Address).MaximumLength(255).When(x => x.Address is not null);
         RuleFor(x => x.IdDepartment).GreaterThan(0).When(x => x.IdDepartment.HasValue);
         RuleFor(x => x.Images).Must(images => images is null || images.Count <= 6).WithMessage("Vous ne pouvez pas envoyer plus de 6 images.");
+        RuleFor(x => x.DefaultImageIndex)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.DefaultImageIndex.HasValue)
+            .WithMessage("L'image par defaut selectionnee est invalide.");
         RuleFor(x => x)
-            .Must(x => x.EndDate is null || x.EndDate >= x.StartDate)
-            .WithMessage("EndDate cannot be earlier than StartDate.");
+            .Must(x => x.EndDate is null || x.EndDate > x.StartDate)
+            .WithMessage("EndDate must be later than StartDate.");
     }
 }

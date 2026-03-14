@@ -7,7 +7,9 @@ import { createErrorMessage, showFormMessage } from "@/shared/lib/feedback/showF
 
 const initialFilters: ArticleListFilters = {
   keyword: "",
-  idCategory: ""
+  idCategory: "",
+  createdFrom: "",
+  createdTo: ""
 };
 
 export function useArticlesPage() {
@@ -68,7 +70,9 @@ export function useArticlesPage() {
         page: nextPage,
         pageSize: 9,
         keyword: nextFilters.keyword.trim() || undefined,
-        idCategory: typeof nextFilters.idCategory === "number" ? nextFilters.idCategory : undefined
+        idCategory: typeof nextFilters.idCategory === "number" ? nextFilters.idCategory : undefined,
+        createdFrom: nextFilters.createdFrom || undefined,
+        createdTo: nextFilters.createdTo || undefined
       });
 
       setArticles(response.items);

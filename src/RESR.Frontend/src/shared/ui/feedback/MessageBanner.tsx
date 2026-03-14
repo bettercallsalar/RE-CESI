@@ -1,11 +1,6 @@
-import {
-  CheckCircleIcon,
-  InfoIcon,
-  WarningIcon,
-  WarningTwoIcon,
-} from "@chakra-ui/icons";
 import { Box, CloseButton, HStack, Icon, Stack, Text } from "@chakra-ui/react";
-import type { ComponentType } from "react";
+import type { IconType } from "react-icons";
+import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
 import type { MessageTone } from "@/shared/ui/feedback/message.types";
 
 interface MessageBannerProps {
@@ -24,7 +19,7 @@ const toneStyles: Record<
     iconColor: string;
     titleColor: string;
     textColor: string;
-    icon: ComponentType;
+    icon: IconType;
   }
 > = {
   success: {
@@ -34,7 +29,7 @@ const toneStyles: Record<
     iconColor: "#FFFFFF",
     titleColor: "#2C2C2C",
     textColor: "#2C2C2C",
-    icon: CheckCircleIcon,
+    icon: FiCheckCircle,
   },
   error: {
     bg: "#342B9A",
@@ -43,7 +38,7 @@ const toneStyles: Record<
     iconColor: "#342B9A",
     titleColor: "#FFFFFF",
     textColor: "#FFFFFF",
-    icon: WarningIcon,
+    icon: FiAlertCircle,
   },
   warning: {
     bg: "#FFFFFF",
@@ -52,7 +47,7 @@ const toneStyles: Record<
     iconColor: "#FFFFFF",
     titleColor: "#2C2C2C",
     textColor: "#2C2C2C",
-    icon: WarningTwoIcon,
+    icon: FiAlertTriangle,
   },
   info: {
     bg: "#FFFFFF",
@@ -61,7 +56,7 @@ const toneStyles: Record<
     iconColor: "#FFFFFF",
     titleColor: "#2C2C2C",
     textColor: "#2C2C2C",
-    icon: InfoIcon,
+    icon: FiInfo,
   },
 };
 
@@ -95,7 +90,7 @@ export function MessageBanner({
         justifyContent="center"
         mt="2px"
         w="36px">
-        <Icon as={style.icon} />
+        <Icon as={style.icon} boxSize={5} />
       </Box>
 
       <Stack flex="1" spacing={0.5}>

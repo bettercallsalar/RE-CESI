@@ -24,6 +24,7 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { ArticlesGrid } from "@/features/articles/components/ArticlesGrid";
 import { useMyArticlesPage } from "@/features/articles/hooks/useMyArticlesPage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { DatePickerField } from "@/shared/ui/forms/DatePickerField";
 import type { Article } from "@/shared/types/article";
 
 export function MyArticlesPage() {
@@ -135,7 +136,21 @@ export function MyArticlesPage() {
             </Select>
           </FormControl>
 
-          <Stack align={{ base: "stretch", xl: "end" }} justify="end">
+          <DatePickerField
+            label="Publie depuis"
+            max={filters.createdTo || undefined}
+            onChange={(value) => updateFilter("createdFrom", value)}
+            value={filters.createdFrom}
+          />
+
+          <DatePickerField
+            label="Publie jusqu'au"
+            min={filters.createdFrom || undefined}
+            onChange={(value) => updateFilter("createdTo", value)}
+            value={filters.createdTo}
+          />
+
+          <Stack align={{ base: "stretch", xl: "end" }} gridColumn={{ base: "auto", xl: "span 5" }} justify="end">
             <Button onClick={() => {
               void submitFilters();
             }}>
