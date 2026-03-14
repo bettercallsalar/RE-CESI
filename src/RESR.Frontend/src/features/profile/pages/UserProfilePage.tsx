@@ -6,51 +6,11 @@ import { EventsGrid } from "@/features/events/components/EventsGrid";
 import { useUserProfilePage } from "@/features/profile/hooks/useUserProfilePage";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { ContentGridSkeleton } from "@/shared/ui/content/ContentGridSkeleton";
+import { PaginationControls } from "@/shared/ui/pagination/PaginationControls";
 
 interface UserProfilePageProps {
   idUser: number;
-}
-
-function ResourceGridSkeleton() {
-  return (
-    <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={{ base: 5, md: 6 }}>
-      {Array.from({ length: 3 }).map((_, index) => (
-        <Skeleton borderRadius="16px" height="360px" key={index} />
-      ))}
-    </SimpleGrid>
-  );
-}
-
-function PaginationControls({
-  page,
-  totalPages,
-  isLoading,
-  onPrevious,
-  onNext
-}: {
-  page: number;
-  totalPages: number;
-  isLoading: boolean;
-  onPrevious: () => void;
-  onNext: () => void;
-}) {
-  if (totalPages <= 1) {
-    return null;
-  }
-
-  return (
-    <HStack justify="space-between" pt={6} spacing={4}>
-      <Button isDisabled={isLoading || page <= 1} onClick={onPrevious} variant="outline">
-        Page precedente
-      </Button>
-      <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-        Page {page} sur {totalPages}
-      </Text>
-      <Button isDisabled={isLoading || page >= totalPages} onClick={onNext} variant="outline">
-        Page suivante
-      </Button>
-    </HStack>
-  );
 }
 
 function buildProfileTitle(firstName: string, username: string) {
@@ -303,7 +263,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
               <TabPanels>
                 <TabPanel px={0} pt={6}>
                   {isArticlesLoading ? (
-                    <ResourceGridSkeleton />
+                    <ContentGridSkeleton />
                   ) : (
                     <ArticlesGrid
                       articles={articles}
@@ -328,7 +288,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
 
                 <TabPanel px={0} pt={6}>
                   {isEventsLoading ? (
-                    <ResourceGridSkeleton />
+                    <ContentGridSkeleton />
                   ) : (
                     <EventsGrid
                       categories={categories}
