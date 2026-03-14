@@ -1,4 +1,11 @@
-import { FormControl, FormLabel, Icon, IconButton, Input, InputGroup, InputRightElement } from "@chakra-ui/react";
+import {
+  FormControl,
+  FormLabel,
+  IconButton,
+  Input,
+  InputGroup,
+  InputLeftElement,
+} from "@chakra-ui/react";
 import { useRef } from "react";
 import { FiCalendar } from "react-icons/fi";
 
@@ -19,7 +26,7 @@ export function DatePickerField({
   isRequired = false,
   min,
   max,
-  type = "date"
+  type = "date",
 }: DatePickerFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -30,27 +37,46 @@ export function DatePickerField({
 
   return (
     <FormControl isRequired={isRequired}>
-      <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
+      <FormLabel
+        color="ink.800"
+        fontSize={{ base: "15px", md: "16px" }}
+        fontWeight="700">
         {label}
       </FormLabel>
       <InputGroup>
+        <InputLeftElement h="100%" pointerEvents="auto" width="72px">
+          <IconButton
+            aria-label={`Choisir ${label.toLowerCase()}`}
+            bg="canvas.100"
+            border="1px solid"
+            borderColor="canvas.200"
+            borderRadius="12px"
+            boxSize="44px"
+            color="brand.500"
+            icon={<FiCalendar size="22px" strokeWidth={1.75} />}
+            minW="44px"
+            onClick={openPicker}
+            size="md"
+            variant="ghost"
+            _active={{ bg: "canvas.200" }}
+            _hover={{ bg: "canvas.200" }}
+          />
+        </InputLeftElement>
         <Input
           max={max}
           min={min}
           onChange={(event) => onChange(event.target.value)}
+          pl="72px"
           ref={inputRef}
+          sx={{
+            "&::-webkit-calendar-picker-indicator": {
+              display: "none",
+              opacity: 0,
+            },
+          }}
           type={type}
           value={value}
         />
-        <InputRightElement>
-          <IconButton
-            aria-label={`Choisir ${label.toLowerCase()}`}
-            icon={<Icon as={FiCalendar} boxSize={4.5} />}
-            onClick={openPicker}
-            size="sm"
-            variant="ghost"
-          />
-        </InputRightElement>
       </InputGroup>
     </FormControl>
   );

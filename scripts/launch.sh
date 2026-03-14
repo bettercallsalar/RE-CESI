@@ -146,4 +146,13 @@ wait_for_service_completion migrate "${MIGRATE_TIMEOUT_SECONDS:-180}"
 
 # Start long-running application services after a successful migration pass.
 docker_compose up -d --build --force-recreate api frontend
+wait_for_service_health api "${API_STARTUP_TIMEOUT_SECONDS:-180}"
+wait_for_service_health frontend "${FRONTEND_STARTUP_TIMEOUT_SECONDS:-180}"
 docker_compose ps
+
+frontend_port="${FRONTEND_PORT:-5173}"
+api_port="${API_PORT:-8080}"
+
+echo
+echo "Frontend available at: http://localhost:${frontend_port}"
+echo "API available at: http://localhost:${api_port}"
