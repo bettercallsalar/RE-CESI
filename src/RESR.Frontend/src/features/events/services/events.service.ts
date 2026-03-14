@@ -133,6 +133,14 @@ function toEventFormData(payload: CreateEventPayload | UpdateEventPayload) {
     formData.append("idDepartment", payload.idDepartment === null ? "" : String(payload.idDepartment));
   }
 
+  if ("defaultImageIndex" in payload && typeof payload.defaultImageIndex === "number") {
+    formData.append("defaultImageIndex", String(payload.defaultImageIndex));
+  }
+
+  if ("defaultImageId" in payload && typeof payload.defaultImageId === "number") {
+    formData.append("defaultImageId", String(payload.defaultImageId));
+  }
+
   if ("replaceImages" in payload) {
     formData.append("replaceImages", String(payload.replaceImages));
   }

@@ -24,6 +24,7 @@ const initialValues: EventFormValues = {
   endDate: "",
   address: "",
   idDepartment: "",
+  defaultImageSelection: "",
   images: []
 };
 
@@ -71,10 +72,21 @@ export function useCreateEventForm() {
   }, []);
 
   function updateField<K extends keyof EventFormValues>(field: K, value: EventFormValues[K]) {
-    setValues((current) => ({
-      ...current,
-      [field]: value
-    }));
+    setValues((current) => {
+      if (field === "images") {
+        const nextImages = value as EventFormValues["images"];
+        return {
+          ...current,
+          images: nextImages,
+          defaultImageSelection: nextImages.length > 0 ? "new:0" : ""
+        };
+      }
+
+      return {
+        ...current,
+        [field]: value
+      };
+    });
     showFormMessage(setMessage, null);
   }
 
@@ -124,8 +136,8 @@ export function useCreateEventForm() {
       return;
     }
 
-    if (values.endDate && new Date(values.endDate) < new Date(values.startDate)) {
-      showFormMessage(setMessage, createWarningMessage("La date de fin ne peut pas etre anterieure a la date de debut."));
+    if (values.endDate && new Date(values.endDate) <= new Date(values.startDate)) {
+      showFormMessage(setMessage, createWarningMessage("La date de fin doit etre strictement apres la date de debut."));
       return;
     }
 
@@ -160,6 +172,7 @@ export function useCreateEventForm() {
         endDate: values.endDate || null,
         address: trimmedAddress || null,
         idDepartment: typeof values.idDepartment === "number" ? values.idDepartment : null,
+        defaultImageIndex: values.defaultImageSelection.startsWith("new:") ? Number(values.defaultImageSelection.slice(4)) : undefined,
         images: values.images
       });
 

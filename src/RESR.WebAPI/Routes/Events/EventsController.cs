@@ -154,7 +154,8 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.EndDate,
                     req.Address,
                     req.IdDepartment,
-                    await ToUploadsAsync(req.Images, ct)
+                    await ToUploadsAsync(req.Images, ct),
+                    req.DefaultImageIndex
                     ),
                 ct);
 
@@ -197,7 +198,9 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.Address,
                     req.IdDepartment,
                     await ToUploadsAsync(req.Images, ct),
-                    req.ReplaceImages),
+                    req.ReplaceImages,
+                    req.DefaultImageId,
+                    req.DefaultImageIndex),
                 ct);
 
             return Ok(await ToResponseAsync(@event, ct));
@@ -309,7 +312,8 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             @event.Department,
             @event.IsApproved,
             @event.Files.Select(ToFileResponse).ToList(),
-            @event.DeletedAt
+            @event.DeletedAt,
+            @event.DefaultImageId
         );
     }
 

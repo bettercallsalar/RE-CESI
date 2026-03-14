@@ -118,7 +118,8 @@ public sealed record EventResponse(
     Department? Department,
     bool IsApproved,
     IReadOnlyList<ResourceFileResponse> Files,
-    DateTime? DeletedAt = null
+    DateTime? DeletedAt = null,
+    int? DefaultImageId = null
 );
 
 public sealed record PaginatedEventsResponse(

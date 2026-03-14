@@ -27,6 +27,7 @@ function toFormValues(event: Event): EventFormValues {
     endDate: formatEventDateTimeInput(event.endDate),
     address: event.address ?? "",
     idDepartment: event.department?.idDepartment ?? "",
+    defaultImageSelection: event.defaultImageId ? `existing:${event.defaultImageId}` : event.files[0] ? `existing:${event.files[0].idFile}` : "",
     images: []
   };
 }
@@ -98,7 +99,22 @@ export function useEditEventForm(idResource: number) {
   }, [idResource, token]);
 
   function updateField<K extends keyof EventFormValues>(field: K, value: EventFormValues[K]) {
-    setValues((current) => (current ? { ...current, [field]: value } : current));
+    setValues((current) => {
+      if (!current) {
+        return current;
+      }
+
+      if (field === "images") {
+        const nextImages = value as EventFormValues["images"];
+        return {
+          ...current,
+          images: nextImages,
+          defaultImageSelection: nextImages.length > 0 ? "new:0" : event?.defaultImageId ? `existing:${event.defaultImageId}` : event?.files[0] ? `existing:${event.files[0].idFile}` : ""
+        };
+      }
+
+      return { ...current, [field]: value };
+    });
     showFormMessage(setMessage, null);
   }
 
@@ -158,8 +174,8 @@ export function useEditEventForm(idResource: number) {
       return;
     }
 
-    if (values.endDate && new Date(values.endDate) < new Date(values.startDate)) {
-      showFormMessage(setMessage, createWarningMessage("La date de fin ne peut pas etre anterieure a la date de debut."));
+    if (values.endDate && new Date(values.endDate) <= new Date(values.startDate)) {
+      showFormMessage(setMessage, createWarningMessage("La date de fin doit etre strictement apres la date de debut."));
       return;
     }
 
@@ -195,6 +211,12 @@ export function useEditEventForm(idResource: number) {
         address: trimmedAddress || null,
         idDepartment: typeof values.idDepartment === "number" ? values.idDepartment : null,
         replaceImages: values.images.length > 0,
+        defaultImageId: values.images.length === 0 && values.defaultImageSelection.startsWith("existing:")
+          ? Number(values.defaultImageSelection.slice(9))
+          : undefined,
+        defaultImageIndex: values.images.length > 0 && values.defaultImageSelection.startsWith("new:")
+          ? Number(values.defaultImageSelection.slice(4))
+          : undefined,
         images: values.images
       };
 

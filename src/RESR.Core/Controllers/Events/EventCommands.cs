@@ -14,7 +14,8 @@ public sealed record CreateEventCommand(
     DateTime? EndDate,
     string? Address,
     int? IdDepartment,
-    IReadOnlyList<ResourceFileUpload>? Files = null
+    IReadOnlyList<ResourceFileUpload>? Files = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record UpdateEventCommand(
@@ -30,7 +31,9 @@ public sealed record UpdateEventCommand(
     string? Address = null,
     int? IdDepartment = null,
     IReadOnlyList<ResourceFileUpload>? Files = null,
-    bool ReplaceFiles = false
+    bool ReplaceFiles = false,
+    int? DefaultImageId = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record SetEventApprovalCommand(

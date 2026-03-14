@@ -46,7 +46,11 @@ export function formatEventDateTimeInput(value?: string | null) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-export function getPrimaryEventImage(event: { files: Event["files"] }) {
+export function getPrimaryEventImage(event: { defaultImageId: number | null; files: Event["files"] }) {
+  if (event.defaultImageId) {
+    return event.files.find((file) => file.idFile === event.defaultImageId) ?? event.files[0] ?? null;
+  }
+
   return event.files[0] ?? null;
 }
 

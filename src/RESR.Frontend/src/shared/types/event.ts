@@ -19,6 +19,7 @@ export interface Event {
   address: string | null;
   department: Department | null;
   isApproved: boolean;
+  defaultImageId: number | null;
   files: ResourceFile[];
   deletedAt: string | null;
 }

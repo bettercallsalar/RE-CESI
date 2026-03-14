@@ -31,8 +31,12 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
       return;
     }
 
-    setCurrentImageIndex(0);
-  }, [event]);
+    const preferredIndex = preferredImage
+      ? event.files.findIndex((file) => file.idFile === preferredImage.idFile)
+      : 0;
+
+    setCurrentImageIndex(preferredIndex >= 0 ? preferredIndex : 0);
+  }, [event, preferredImage]);
 
   function goToPreviousImage() {
     if (albumImages.length <= 1) {

@@ -9,6 +9,7 @@ public interface IEventRepository
     Task<Event?> GetByResourceIdAsync(int idResource, CancellationToken ct);
     Task<int> CreateAsync(CreateEventCommand cmd, CancellationToken ct);
     Task<Event?> PatchAsync(UpdateEventCommand cmd, CancellationToken ct);
+    Task SetDefaultImageAsync(int idResource, int? defaultImageId, CancellationToken ct);
     Task<Event?> SetApprovalAsync(SetEventApprovalCommand cmd, CancellationToken ct);
     Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct);
 }

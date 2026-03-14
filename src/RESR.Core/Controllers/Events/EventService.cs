@@ -76,8 +76,8 @@ public sealed class EventService : IEventService
             throw new ValidationException("IdCategory must be greater than 0.");
         if (cmd.IdDepartment is <= 0)
             throw new ValidationException("IdDepartment must be greater than 0.");
-        if (cmd.EndDate is not null && cmd.EndDate < cmd.StartDate)
-            throw new ValidationException("EndDate cannot be earlier than StartDate.");
+        if (cmd.EndDate is not null && cmd.EndDate <= cmd.StartDate)
+            throw new ValidationException("EndDate must be later than StartDate.");
 
         var normalized = cmd with
         {
@@ -88,13 +88,15 @@ public sealed class EventService : IEventService
         };
 
         ValidateFiles(normalized.Files);
+        ValidateDefaultImageIndex(normalized.Files, normalized.DefaultImageIndex);
 
         var idResource = await _repo.CreateAsync(normalized, ct);
 
         if (normalized.Files is { Count: > 0 })
         {
             var storedFiles = await _fileStorage.SaveAsync(idResource, normalized.IdUser, normalized.Files, ct);
-            await _fileRepository.ReplaceForResourceAsync(idResource, storedFiles, ct);
+            var persistedFiles = await _fileRepository.ReplaceForResourceAsync(idResource, storedFiles, ct);
+            await _repo.SetDefaultImageAsync(idResource, ResolveDefaultImageId(persistedFiles, normalized.DefaultImageIndex), ct);
         }
 
         return idResource;
@@ -120,8 +122,10 @@ public sealed class EventService : IEventService
 
         var effectiveStartDate = cmd.StartDate ?? existing.StartDate;
         var effectiveEndDate = cmd.EndDate ?? existing.EndDate;
-        if (effectiveEndDate is not null && effectiveEndDate < effectiveStartDate)
-            throw new ValidationException("EndDate cannot be earlier than StartDate.");
+        if (effectiveEndDate is not null && effectiveEndDate <= effectiveStartDate)
+            throw new ValidationException("EndDate must be later than StartDate.");
+
+        ValidateDefaultImageIndex(cmd.Files, cmd.DefaultImageIndex);
 
         var normalized = cmd with
         {
@@ -136,18 +140,32 @@ public sealed class EventService : IEventService
         var updatedEvent = await _repo.PatchAsync(normalized, ct)
             ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
 
+        var existingFilesByResource = await _fileRepository.GetByResourceIdsAsync(new[] { cmd.IdResource }, ct);
+        var existingFiles = existingFilesByResource.TryGetValue(cmd.IdResource, out var currentFiles)
+            ? currentFiles
+            : Array.Empty<ResourceFile>();
+
         if (normalized.ReplaceFiles)
         {
-            var existingFiles = await _fileRepository.GetByResourceIdsAsync(new[] { cmd.IdResource }, ct);
-
-            if (existingFiles.TryGetValue(cmd.IdResource, out var filesToDelete) && filesToDelete.Count > 0)
-                await _fileStorage.DeleteAsync(filesToDelete, ct);
+            if (existingFiles.Count > 0)
+                await _fileStorage.DeleteAsync(existingFiles, ct);
 
             var storedFiles = normalized.Files is { Count: > 0 }
                 ? await _fileStorage.SaveAsync(cmd.IdResource, cmd.IdUser, normalized.Files, ct)
                 : Array.Empty<ResourceFile>();
 
-            await _fileRepository.ReplaceForResourceAsync(cmd.IdResource, storedFiles, ct);
+            var persistedFiles = await _fileRepository.ReplaceForResourceAsync(cmd.IdResource, storedFiles, ct);
+            await _repo.SetDefaultImageAsync(cmd.IdResource, ResolveDefaultImageId(persistedFiles, normalized.DefaultImageIndex), ct);
+            return await _repo.GetByResourceIdAsync(cmd.IdResource, ct)
+                ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
+        }
+
+        if (normalized.DefaultImageId.HasValue)
+        {
+            if (existingFiles.All(file => file.IdFile != normalized.DefaultImageId.Value))
+                throw new ValidationException("L'image par defaut selectionnee est invalide.");
+
+            await _repo.SetDefaultImageAsync(cmd.IdResource, normalized.DefaultImageId.Value, ct);
             return await _repo.GetByResourceIdAsync(cmd.IdResource, ct)
                 ?? throw new NotFoundException($"Event resource {cmd.IdResource} not found.");
         }
@@ -232,5 +250,27 @@ public sealed class EventService : IEventService
 
         foreach (var @event in events)
             @event.Files = filesByResource.TryGetValue(@event.IdResource, out var files) ? files : Array.Empty<ResourceFile>();
+    }
+
+    private static void ValidateDefaultImageIndex(IReadOnlyList<Core.Controllers.Resources.ResourceFileUpload>? files, int? defaultImageIndex)
+    {
+        if (!defaultImageIndex.HasValue)
+            return;
+
+        if (files is null || files.Count == 0)
+            throw new ValidationException("Aucune image n'a ete envoyee pour definir une image par defaut.");
+        if (defaultImageIndex.Value < 0 || defaultImageIndex.Value >= files.Count)
+            throw new ValidationException("L'image par defaut selectionnee est invalide.");
+    }
+
+    private static int? ResolveDefaultImageId(IReadOnlyList<ResourceFile> files, int? defaultImageIndex)
+    {
+        if (files.Count == 0)
+            return null;
+
+        if (!defaultImageIndex.HasValue)
+            return files[0].IdFile;
+
+        return files[defaultImageIndex.Value].IdFile;
     }
 }

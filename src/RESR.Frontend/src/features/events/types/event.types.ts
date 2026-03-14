@@ -26,6 +26,7 @@ export interface CreateEventPayload {
   endDate: string | null;
   address: string | null;
   idDepartment: number | null;
+  defaultImageIndex?: number;
   images: File[];
 }
 
@@ -40,6 +41,8 @@ export interface UpdateEventPayload {
   address?: string | null;
   idDepartment?: number | null;
   replaceImages: boolean;
+  defaultImageId?: number;
+  defaultImageIndex?: number;
   images: File[];
 }
 
@@ -53,6 +56,7 @@ export interface EventFormValues {
   endDate: string;
   address: string;
   idDepartment: number | "";
+  defaultImageSelection: string;
   images: File[];
 }
 

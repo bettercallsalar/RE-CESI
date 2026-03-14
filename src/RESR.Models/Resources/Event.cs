@@ -15,4 +15,5 @@ public sealed class Event : Resource
     public DateTime? EndDate { get; set; }
     public string? Address { get; set; }
     public Department? Department { get; set; }
+    public int? DefaultImageId { get; set; }
 }

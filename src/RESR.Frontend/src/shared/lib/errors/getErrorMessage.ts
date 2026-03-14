@@ -20,6 +20,9 @@ const directTranslations: Record<string, string> = {
   "IdCategory must be greater than 0.": "La categorie doit etre superieure a 0.",
   "Visibility must be PUBLIC or PRIVATE.": "La visibilite doit etre PUBLIC ou PRIVATE.",
   "EndDate cannot be earlier than StartDate.": "La date de fin ne peut pas etre anterieure a la date de debut.",
+  "EndDate must be later than StartDate.": "La date de fin doit etre strictement apres la date de debut.",
+  "L'image par defaut selectionnee est invalide.": "L'image par defaut selectionnee est invalide.",
+  "Aucune image n'a ete envoyee pour definir une image par defaut.": "Aucune image n'a ete envoyee pour definir une image par defaut.",
   "The request failed.": "La requete a echoue."
 };
 

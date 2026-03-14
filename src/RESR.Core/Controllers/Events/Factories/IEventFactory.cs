@@ -21,6 +21,7 @@ public interface IEventFactory
         DateTime? endDate,
         string? address,
         Department? department,
-        bool isApproved
+        bool isApproved,
+        int? defaultImageId
     );
 }

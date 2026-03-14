@@ -13,6 +13,7 @@ import {
   Text
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { DateTimeField } from "@/shared/ui/forms/DateTimeField";
 import { ResourceDescriptionField } from "@/shared/ui/forms/resource/ResourceDescriptionField";
 import { ResourceImagesField } from "@/shared/ui/forms/resource/ResourceImagesField";
 import { ResourceTitleField } from "@/shared/ui/forms/resource/ResourceTitleField";
@@ -114,19 +115,20 @@ export function EventForm({
           </FormControl>
 
           <Stack direction={{ base: "column", md: "row" }} spacing={4}>
-            <FormControl isRequired>
-              <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
-                Debut
-              </FormLabel>
-              <Input type="datetime-local" value={values.startDate} onChange={(event) => updateField("startDate", event.target.value)} />
-            </FormControl>
+            <DateTimeField
+              isRequired
+              label="Debut"
+              max={values.endDate || undefined}
+              onChange={(value) => updateField("startDate", value)}
+              value={values.startDate}
+            />
 
-            <FormControl>
-              <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
-                Fin
-              </FormLabel>
-              <Input type="datetime-local" value={values.endDate} onChange={(event) => updateField("endDate", event.target.value)} />
-            </FormControl>
+            <DateTimeField
+              label="Fin"
+              min={values.startDate || undefined}
+              onChange={(value) => updateField("endDate", value)}
+              value={values.endDate}
+            />
           </Stack>
 
           <FormControl>
@@ -191,11 +193,10 @@ export function EventForm({
           </FormControl>
 
           <ResourceImagesField
-            defaultImageSelection=""
-            enableDefaultSelection={false}
+            defaultImageSelection={values.defaultImageSelection}
             existingFiles={isEditMode && previewUrls.length === 0 ? existingFiles : []}
             existingLabel="Images actuelles"
-            onDefaultImageSelectionChange={() => undefined}
+            onDefaultImageSelectionChange={(value) => updateField("defaultImageSelection", value)}
             onFilesChange={(files) => updateField("images", files)}
             previewLabel={isEditMode ? "Nouvelles images envoyees" : "Apercu des images"}
             previewUrls={previewUrls}
