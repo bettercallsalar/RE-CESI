@@ -25,11 +25,15 @@
   <ItemGroup>
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiException.cs" Link="Services\ApiException.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiSession.cs" Link="Services\ApiSession.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\CommentsApiClient.cs" Link="Services\CommentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\DepartmentsApiClient.cs" Link="Services\DepartmentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IApiSession.cs" Link="Services\IApiSession.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\ICommentsApiClient.cs" Link="Services\ICommentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IDepartmentsApiClient.cs" Link="Services\IDepartmentsApiClient.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\IReactionsApiClient.cs" Link="Services\IReactionsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IResourcesApiClient.cs" Link="Services\IResourcesApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IUsersApiClient.cs" Link="Services\IUsersApiClient.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\ReactionsApiClient.cs" Link="Services\ReactionsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ResourcesApiClient.cs" Link="Services\ResourcesApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\UsersApiClient.cs" Link="Services\UsersApiClient.cs" />
   </ItemGroup>
