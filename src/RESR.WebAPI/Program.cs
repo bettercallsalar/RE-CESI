@@ -82,6 +82,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+var uploadsRootDirectory = LocalResourceFileStorage.GetUploadsRootDirectory();
+Directory.CreateDirectory(uploadsRootDirectory);
 
 if (app.Environment.IsDevelopment())
 {
@@ -114,6 +116,11 @@ app.Use(async (context, next) =>
 
 app.UseCors("Frontend");
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRootDirectory),
+    RequestPath = LocalResourceFileStorage.PublicRequestPath
+});
 app.UseAuthentication();
 app.UseAuthorization();
 

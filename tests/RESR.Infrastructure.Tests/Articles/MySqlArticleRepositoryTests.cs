@@ -25,7 +25,8 @@ public sealed class MySqlArticleRepositoryTests
             idUser: 2,
             idCategory: 3,
             content: "Body",
-            isApproved: true
+            isApproved: true,
+            defaultImageId: 4
         ));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
@@ -78,7 +79,8 @@ public sealed class MySqlArticleRepositoryTests
             idUser: 2,
             idCategory: 3,
             content: "Body",
-            isApproved: false
+            isApproved: false,
+            defaultImageId: 6
         ));
 
         var repo = CreateRepo(ReaderCommand(table));
@@ -89,6 +91,7 @@ public sealed class MySqlArticleRepositoryTests
         Assert.Equal(10, article!.IdResource);
         Assert.Equal(7, article.IdArticle);
         Assert.Equal(ResourceVisibility.PRIVATE, article.Visibility);
+        Assert.Equal(6, article.DefaultImageId);
     }
 
     [Fact]
@@ -138,7 +141,8 @@ public sealed class MySqlArticleRepositoryTests
             idUser: 2,
             idCategory: 3,
             content: "Body",
-            isApproved: true
+            isApproved: true,
+            defaultImageId: 8
         ));
         var cmd = new FakeDbCommand
         {
@@ -192,6 +196,7 @@ public sealed class MySqlArticleRepositoryTests
         table.Columns.Add("id_category", typeof(int));
         table.Columns.Add("content", typeof(string));
         table.Columns.Add("is_approved", typeof(bool));
+        table.Columns.Add("default_image_id", typeof(int));
 
         foreach (var row in rows)
             table.Rows.Add(row.Select(value => value ?? DBNull.Value).ToArray());
@@ -211,7 +216,8 @@ public sealed class MySqlArticleRepositoryTests
         int idUser,
         int idCategory,
         string content,
-        bool isApproved) => new object?[]
+        bool isApproved,
+        int? defaultImageId) => new object?[]
     {
         idResource,
         idArticle,
@@ -224,6 +230,7 @@ public sealed class MySqlArticleRepositoryTests
         idUser,
         idCategory,
         content,
-        isApproved
+        isApproved,
+        defaultImageId
     };
 }

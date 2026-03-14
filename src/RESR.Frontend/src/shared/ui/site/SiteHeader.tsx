@@ -81,13 +81,13 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const navigationItems =
     variant === "authenticated"
       ? [
-          { label: "Statistiques", glyph: "chart" as const, href: "/" },
-          { label: "Ressources", glyph: "grid" as const, href: "/articles" },
+          { label: "Mes articles", glyph: "chart" as const, href: "/mes-articles" },
+          { label: "Articles", glyph: "grid" as const, href: "/articles" },
           { label: "Mon compte", glyph: "user" as const, href: "/mon-compte" }
         ]
       : [
           { label: "Statistiques", glyph: "chart" as const, href: "/" },
-          { label: "Ressources", glyph: "grid" as const, href: "/articles" },
+          { label: "Articles", glyph: "grid" as const, href: "/articles" },
           { label: "Mon compte", glyph: "user" as const, href: "/login" }
         ];
 

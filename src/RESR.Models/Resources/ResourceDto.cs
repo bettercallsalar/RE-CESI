@@ -45,6 +45,7 @@ public sealed record ArticleResponse(
     int IdCategory,
     string Content,
     bool IsApproved,
+    int? DefaultImageId,
     IReadOnlyList<ResourceFileResponse> Files
 );
 

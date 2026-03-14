@@ -12,7 +12,8 @@ public sealed class ArticleService : IArticleService
         public Task<IReadOnlyDictionary<int, IReadOnlyList<ResourceFile>>> GetByResourceIdsAsync(IReadOnlyCollection<int> resourceIds, CancellationToken ct) =>
             Task.FromResult<IReadOnlyDictionary<int, IReadOnlyList<ResourceFile>>>(new Dictionary<int, IReadOnlyList<ResourceFile>>());
 
-        public Task ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct) => Task.CompletedTask;
+        public Task<IReadOnlyList<ResourceFile>> ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<ResourceFile>>(files);
 
         public Task DeleteForResourceAsync(int idResource, CancellationToken ct) => Task.CompletedTask;
     }
@@ -84,13 +85,15 @@ public sealed class ArticleService : IArticleService
         };
 
         ValidateFiles(normalized.Files);
+        ValidateDefaultImageIndex(normalized.Files, normalized.DefaultImageIndex);
 
         var idResource = await _repo.CreateAsync(normalized, ct);
 
         if (normalized.Files is { Count: > 0 })
         {
             var storedFiles = await _fileStorage.SaveAsync(idResource, normalized.IdUser, normalized.Files, ct);
-            await _fileRepository.ReplaceForResourceAsync(idResource, storedFiles, ct);
+            var persistedFiles = await _fileRepository.ReplaceForResourceAsync(idResource, storedFiles, ct);
+            await _repo.SetDefaultImageAsync(idResource, ResolveDefaultImageId(persistedFiles, normalized.DefaultImageIndex), ct);
         }
 
         return idResource;
@@ -115,6 +118,8 @@ public sealed class ArticleService : IArticleService
         if (cmd.Content is not null && normalizedContent is null)
             throw new ValidationException("Content cannot be empty.");
 
+        ValidateDefaultImageIndex(cmd.Files, cmd.DefaultImageIndex);
+
         var normalized = cmd with
         {
             Title = NormalizeOptional(cmd.Title),
@@ -127,18 +132,32 @@ public sealed class ArticleService : IArticleService
         var updatedArticle = await _repo.PatchAsync(normalized, ct)
             ?? throw new NotFoundException($"Article resource {cmd.IdResource} not found.");
 
+        var existingFilesByResource = await _fileRepository.GetByResourceIdsAsync(new[] { cmd.IdResource }, ct);
+        var existingFiles = existingFilesByResource.TryGetValue(cmd.IdResource, out var currentFiles)
+            ? currentFiles
+            : Array.Empty<ResourceFile>();
+
         if (normalized.ReplaceFiles)
         {
-            var existingFiles = await _fileRepository.GetByResourceIdsAsync(new[] { cmd.IdResource }, ct);
-
-            if (existingFiles.TryGetValue(cmd.IdResource, out var filesToDelete) && filesToDelete.Count > 0)
-                await _fileStorage.DeleteAsync(filesToDelete, ct);
+            if (existingFiles.Count > 0)
+                await _fileStorage.DeleteAsync(existingFiles, ct);
 
             var storedFiles = normalized.Files is { Count: > 0 }
                 ? await _fileStorage.SaveAsync(cmd.IdResource, cmd.IdUser, normalized.Files, ct)
                 : Array.Empty<ResourceFile>();
 
-            await _fileRepository.ReplaceForResourceAsync(cmd.IdResource, storedFiles, ct);
+            var persistedFiles = await _fileRepository.ReplaceForResourceAsync(cmd.IdResource, storedFiles, ct);
+            await _repo.SetDefaultImageAsync(cmd.IdResource, ResolveDefaultImageId(persistedFiles, normalized.DefaultImageIndex), ct);
+            return await _repo.GetByResourceIdAsync(cmd.IdResource, ct)
+                ?? throw new NotFoundException($"Article resource {cmd.IdResource} not found.");
+        }
+
+        if (normalized.DefaultImageId.HasValue)
+        {
+            if (existingFiles.All(file => file.IdFile != normalized.DefaultImageId.Value))
+                throw new ValidationException("L'image par defaut selectionnee est invalide.");
+
+            await _repo.SetDefaultImageAsync(cmd.IdResource, normalized.DefaultImageId.Value, ct);
             return await _repo.GetByResourceIdAsync(cmd.IdResource, ct)
                 ?? throw new NotFoundException($"Article resource {cmd.IdResource} not found.");
         }
@@ -225,5 +244,25 @@ public sealed class ArticleService : IArticleService
 
         foreach (var article in articles)
             article.Files = filesByResource.TryGetValue(article.IdResource, out var files) ? files : Array.Empty<ResourceFile>();
+    }
+
+    private static void ValidateDefaultImageIndex(IReadOnlyList<Core.Controllers.Resources.ResourceFileUpload>? files, int? defaultImageIndex)
+    {
+        if (!defaultImageIndex.HasValue)
+            return;
+
+        if (files is null || files.Count == 0)
+            throw new ValidationException("Aucune image n'a ete envoyee pour definir une image par defaut.");
+        if (defaultImageIndex.Value < 0 || defaultImageIndex.Value >= files.Count)
+            throw new ValidationException("L'image par defaut selectionnee est invalide.");
+    }
+
+    private static int? ResolveDefaultImageId(IReadOnlyList<ResourceFile> files, int? defaultImageIndex)
+    {
+        if (files.Count == 0)
+            return null;
+        if (defaultImageIndex.HasValue && defaultImageIndex.Value >= 0 && defaultImageIndex.Value < files.Count)
+            return files[defaultImageIndex.Value].IdFile;
+        return files[0].IdFile;
     }
 }

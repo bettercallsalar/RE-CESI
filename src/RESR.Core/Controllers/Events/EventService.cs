@@ -12,7 +12,8 @@ public sealed class EventService : IEventService
         public Task<IReadOnlyDictionary<int, IReadOnlyList<ResourceFile>>> GetByResourceIdsAsync(IReadOnlyCollection<int> resourceIds, CancellationToken ct) =>
             Task.FromResult<IReadOnlyDictionary<int, IReadOnlyList<ResourceFile>>>(new Dictionary<int, IReadOnlyList<ResourceFile>>());
 
-        public Task ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct) => Task.CompletedTask;
+        public Task<IReadOnlyList<ResourceFile>> ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<ResourceFile>>(files);
 
         public Task DeleteForResourceAsync(int idResource, CancellationToken ct) => Task.CompletedTask;
     }

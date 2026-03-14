@@ -7,9 +7,20 @@ interface ArticlesGridProps {
   categories: Category[];
   emptyLabel: string;
   compact?: boolean;
+  resolveHref?: (article: Article) => string;
+  ctaLabel?: string;
+  showStatusBadges?: boolean;
 }
 
-export function ArticlesGrid({ articles, categories, emptyLabel, compact = false }: ArticlesGridProps) {
+export function ArticlesGrid({
+  articles,
+  categories,
+  emptyLabel,
+  compact = false,
+  resolveHref,
+  ctaLabel,
+  showStatusBadges = false
+}: ArticlesGridProps) {
   function getCategoryName(idCategory: number) {
     return categories.find((category) => category.idCategory === idCategory)?.name;
   }
@@ -25,9 +36,17 @@ export function ArticlesGrid({ articles, categories, emptyLabel, compact = false
   }
 
   return (
-    <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={{ base: 5, md: 6 }}>
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={{ base: 5, md: 6 }}>
       {articles.map((article) => (
-        <ArticleCard article={article} categoryName={getCategoryName(article.idCategory)} compact={compact} key={article.idResource} />
+        <ArticleCard
+          article={article}
+          categoryName={getCategoryName(article.idCategory)}
+          compact={compact}
+          ctaLabel={ctaLabel}
+          href={resolveHref?.(article)}
+          key={article.idResource}
+          showStatusBadges={showStatusBadges}
+        />
       ))}
     </SimpleGrid>
   );

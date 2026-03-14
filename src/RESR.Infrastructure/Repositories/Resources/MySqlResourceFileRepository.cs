@@ -78,7 +78,7 @@ public sealed class MySqlResourceFileRepository : IResourceFileRepository
         return files.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<ResourceFile>)pair.Value);
     }
 
-    public async Task ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct)
+    public async Task<IReadOnlyList<ResourceFile>> ReplaceForResourceAsync(int idResource, IReadOnlyList<ResourceFile> files, CancellationToken ct)
     {
         await using var conn = _connectionFactory();
         await conn.OpenAsync(ct);
@@ -89,14 +89,17 @@ public sealed class MySqlResourceFileRepository : IResourceFileRepository
         await deleteCmd.ExecuteNonQueryAsync(ct);
 
         if (files.Count == 0)
-            return;
+            return Array.Empty<ResourceFile>();
+
+        var persistedFiles = new List<ResourceFile>(files.Count);
 
         foreach (var file in files)
         {
             await using var insertCmd = conn.CreateCommand();
             insertCmd.CommandText = """
             INSERT INTO file (file_name, original_name, mime_type, size, path, created_at, created_by, updated_at, updated_by, id_ressource)
-            VALUES (@file_name, @original_name, @mime_type, @size, @path, @created_at, @created_by, @updated_at, @updated_by, @id_ressource)
+            VALUES (@file_name, @original_name, @mime_type, @size, @path, @created_at, @created_by, @updated_at, @updated_by, @id_ressource);
+            SELECT LAST_INSERT_ID();
             """;
             AddParameter(insertCmd, "@file_name", file.FileName);
             AddParameter(insertCmd, "@original_name", file.OriginalName);
@@ -108,8 +111,24 @@ public sealed class MySqlResourceFileRepository : IResourceFileRepository
             AddParameter(insertCmd, "@updated_at", (object?)file.UpdatedAt ?? DBNull.Value);
             AddParameter(insertCmd, "@updated_by", (object?)file.UpdatedBy ?? DBNull.Value);
             AddParameter(insertCmd, "@id_ressource", idResource);
-            await insertCmd.ExecuteNonQueryAsync(ct);
+            var idFile = Convert.ToInt32(await insertCmd.ExecuteScalarAsync(ct));
+            persistedFiles.Add(new ResourceFile
+            {
+                IdFile = idFile,
+                FileName = file.FileName,
+                OriginalName = file.OriginalName,
+                MimeType = file.MimeType,
+                Size = file.Size,
+                Path = file.Path,
+                CreatedAt = file.CreatedAt,
+                CreatedBy = file.CreatedBy,
+                UpdatedAt = file.UpdatedAt,
+                UpdatedBy = file.UpdatedBy,
+                IdResource = idResource
+            });
         }
+
+        return persistedFiles;
     }
 
     public async Task DeleteForResourceAsync(int idResource, CancellationToken ct)

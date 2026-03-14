@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { hasMeaningfulArticleContent } from "@/features/articles/lib/articleContent";
 import { articlesService } from "@/features/articles/services/articles.service";
-import type { ArticleFormValues } from "@/features/articles/types/article.types";
-import type { Category } from "@/shared/types/article";
+import type { ArticleFormValues, UpdateArticlePayload } from "@/features/articles/types/article.types";
+import type { Article, Category } from "@/shared/types/article";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
@@ -14,20 +14,24 @@ import {
   showFormMessage
 } from "@/shared/lib/feedback/showFormMessage";
 
-const initialValues: ArticleFormValues = {
-  title: "",
-  description: "",
-  visibility: "PUBLIC",
-  idCategory: "",
-  content: "",
-  defaultImageSelection: "",
-  images: []
-};
+function toFormValues(article: Article): ArticleFormValues {
+  return {
+    title: article.title,
+    description: article.description ?? "",
+    visibility: article.visibility,
+    idCategory: article.idCategory,
+    content: article.content,
+    defaultImageSelection: article.defaultImageId ? `existing:${article.defaultImageId}` : article.files[0] ? `existing:${article.files[0].idFile}` : "",
+    images: []
+  };
+}
 
-export function useCreateArticleForm() {
-  const { token } = useAuth();
-  const [values, setValues] = useState<ArticleFormValues>(initialValues);
+export function useEditArticleForm(idResource: number) {
+  const { token, user } = useAuth();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [values, setValues] = useState<ArticleFormValues | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<FeedbackMessage | null>(null);
@@ -35,59 +39,81 @@ export function useCreateArticleForm() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadCategories() {
-      try {
-        const response = await articlesService.getCategories();
+    async function load() {
+      setIsLoading(true);
+      setIsLoadingCategories(true);
 
-        if (!cancelled) {
-          setCategories(response);
+      try {
+        if (!token) {
+          throw new Error("Vous devez être connecté pour modifier un article.");
         }
+
+        const [articleResponse, categoriesResponse] = await Promise.all([
+          articlesService.getOwnArticleById(token, idResource),
+          articlesService.getCategories()
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setArticle(articleResponse);
+        setValues(toFormValues(articleResponse));
+        setCategories(categoriesResponse);
+        showFormMessage(setMessage, null);
       } catch (loadError) {
         if (!cancelled) {
           showFormMessage(setMessage, createErrorMessage(loadError, "Chargement impossible"));
         }
       } finally {
         if (!cancelled) {
+          setIsLoading(false);
           setIsLoadingCategories(false);
         }
       }
     }
 
-    void loadCategories();
+    void load();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [idResource, token]);
 
   function updateField<K extends keyof ArticleFormValues>(field: K, value: ArticleFormValues[K]) {
     setValues((current) => {
+      if (!current) {
+        return current;
+      }
+
       if (field === "images") {
         const nextImages = value as ArticleFormValues["images"];
         return {
           ...current,
           images: nextImages,
-          defaultImageSelection: nextImages.length > 0 ? "new:0" : ""
+          defaultImageSelection: nextImages.length > 0 ? "new:0" : article?.defaultImageId ? `existing:${article.defaultImageId}` : article?.files[0] ? `existing:${article.files[0].idFile}` : ""
         };
       }
 
-      return {
-        ...current,
-        [field]: value
-      };
+      return { ...current, [field]: value };
     });
     showFormMessage(setMessage, null);
   }
 
   async function submit() {
+    if (!token || !user || !article || !values) {
+      showFormMessage(setMessage, createErrorMessage(new Error("Vous devez être connecté pour modifier un article.")));
+      return;
+    }
+
+    if (user.idUser !== article.idUser) {
+      showFormMessage(setMessage, createWarningMessage("Seul l'auteur de l'article peut le modifier."));
+      return;
+    }
+
     const trimmedTitle = values.title.trim();
     const trimmedDescription = values.description.trim();
     const trimmedContent = values.content.trim();
-
-    if (!token) {
-      showFormMessage(setMessage, createErrorMessage(new Error("Vous devez être connecté pour publier un article.")));
-      return;
-    }
 
     if (trimmedTitle.length < 3) {
       showFormMessage(setMessage, createWarningMessage("Le titre doit contenir au moins 3 caractères."));
@@ -135,22 +161,27 @@ export function useCreateArticleForm() {
     showFormMessage(setMessage, null);
 
     try {
-      await articlesService.createArticle(token, {
+      const payload: UpdateArticlePayload = {
         title: trimmedTitle,
         description: trimmedDescription || null,
         visibility: values.visibility,
         idCategory: values.idCategory,
         content: trimmedContent,
-        defaultImageIndex: values.defaultImageSelection.startsWith("new:") ? Number(values.defaultImageSelection.slice(4)) : undefined,
+        replaceImages: values.images.length > 0,
+        defaultImageId: values.images.length === 0 && values.defaultImageSelection.startsWith("existing:")
+          ? Number(values.defaultImageSelection.slice(9))
+          : undefined,
+        defaultImageIndex: values.images.length > 0 && values.defaultImageSelection.startsWith("new:")
+          ? Number(values.defaultImageSelection.slice(4))
+          : undefined,
         images: values.images
-      });
+      };
 
-      flashMessageStorage.set(
-        createSuccessMessage("Votre article a bien été envoyé. Il sera visible publiquement après validation.")
-      );
-      navigateTo("/articles");
+      await articlesService.updateArticle(token, idResource, payload);
+      flashMessageStorage.set(createSuccessMessage("Votre article a bien été mis à jour."));
+      navigateTo(`/articles/${idResource}`);
     } catch (submitError) {
-      showFormMessage(setMessage, createErrorMessage(submitError, "Publication impossible"));
+      showFormMessage(setMessage, createErrorMessage(submitError, "Mise à jour impossible"));
     } finally {
       setIsSubmitting(false);
     }
@@ -159,6 +190,9 @@ export function useCreateArticleForm() {
   return {
     values,
     categories,
+    existingFiles: article?.files ?? [],
+    canEdit: !!article && !!user && article.idUser === user.idUser,
+    isLoading,
     isLoadingCategories,
     isSubmitting,
     message,

@@ -6,21 +6,42 @@ export interface ArticleListFilters {
   idCategory: number | "";
 }
 
+export interface MyArticlesFilters {
+  keyword: string;
+  idCategory: number | "";
+  visibility: ArticleVisibility | "";
+  approval: "approved" | "pending" | "";
+}
+
 export interface CreateArticlePayload {
   title: string;
   description: string | null;
   visibility: ArticleVisibility;
   idCategory: number;
   content: string;
+  defaultImageIndex?: number;
   images: File[];
 }
 
-export interface CreateArticleFormValues {
+export interface UpdateArticlePayload {
+  title?: string;
+  description?: string | null;
+  visibility?: ArticleVisibility;
+  idCategory?: number;
+  content?: string;
+  replaceImages: boolean;
+  defaultImageId?: number;
+  defaultImageIndex?: number;
+  images: File[];
+}
+
+export interface ArticleFormValues {
   title: string;
   description: string;
   visibility: ArticleVisibility;
   idCategory: number | "";
   content: string;
+  defaultImageSelection: string;
   images: File[];
 }
 

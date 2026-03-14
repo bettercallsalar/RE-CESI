@@ -6,20 +6,24 @@ namespace RESR.WebAPI.Files;
 
 public sealed class LocalResourceFileStorage : IResourceFileStorage
 {
+    public const string PublicRequestPath = "/uploads";
+
     private readonly string _rootDirectory;
-    private readonly string _webRootDirectory;
 
     public LocalResourceFileStorage(IWebHostEnvironment environment)
     {
-        var webRoot = environment.WebRootPath;
+        _rootDirectory = Path.Combine(GetUploadsRootDirectory(), "resources");
+    }
 
-        if (string.IsNullOrWhiteSpace(webRoot))
-        {
-            webRoot = Path.Combine(environment.ContentRootPath, "wwwroot");
-        }
+    public static string GetUploadsRootDirectory()
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-        _webRootDirectory = webRoot;
-        _rootDirectory = Path.Combine(webRoot, "uploads", "resources");
+        if (!string.IsNullOrWhiteSpace(localAppData))
+            return Path.Combine(localAppData, "RESR", "uploads");
+
+        var userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return Path.Combine(userHome, ".resr", "uploads");
     }
 
     public async Task<IReadOnlyList<ResourceFile>> SaveAsync(int idResource, int idUser, IReadOnlyList<ResourceFileUpload> uploads, CancellationToken ct)
@@ -44,7 +48,7 @@ public sealed class LocalResourceFileStorage : IResourceFileStorage
                 OriginalName = upload.OriginalName,
                 MimeType = upload.MimeType,
                 Size = upload.Size,
-                Path = $"/uploads/resources/{idResource}/{fileName}",
+                Path = $"{PublicRequestPath}/resources/{idResource}/{fileName}",
                 CreatedAt = createdAt,
                 CreatedBy = idUser.ToString(),
                 UpdatedAt = null,
@@ -60,8 +64,10 @@ public sealed class LocalResourceFileStorage : IResourceFileStorage
     {
         foreach (var file in files)
         {
-            var relativePath = file.Path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
-            var fullPath = Path.Combine(_webRootDirectory, relativePath);
+            var relativePath = file.Path.Replace(PublicRequestPath, string.Empty, StringComparison.OrdinalIgnoreCase)
+                .TrimStart('/')
+                .Replace('/', Path.DirectorySeparatorChar);
+            var fullPath = Path.Combine(GetUploadsRootDirectory(), relativePath);
 
             if (File.Exists(fullPath))
             {

@@ -93,7 +93,29 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     public async Task<ActionResult<ArticleResponse>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
         var article = await _service.GetByResourceIdAsync(idResource, ct);
-        return article is null ? NotFound() : Ok(ToResponse(article));
+
+        if (article is null || article.Visibility != ResourceVisibility.PUBLIC || !article.IsApproved)
+            return NotFound();
+
+        return Ok(ToResponse(article));
+    }
+
+    [HttpGet("me/{idResource:int}")]
+    public async Task<ActionResult<ArticleResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
+    {
+        var authResult = RequireAuthenticatedUser(out var idUser);
+        if (authResult is not null)
+            return authResult;
+
+        var article = await _service.GetByResourceIdAsync(idResource, ct);
+
+        if (article is null)
+            return NotFound();
+
+        if (article.IdUser != idUser)
+            return Forbid();
+
+        return Ok(ToResponse(article));
     }
 
     [AuthorizePermission(PermissionNames.CreateResource)]
@@ -115,7 +137,8 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
                     idUser,
                     req.IdCategory,
                     req.Content,
-                    await ToUploadsAsync(req.Images, ct)),
+                    await ToUploadsAsync(req.Images, ct),
+                    req.DefaultImageIndex),
                 ct);
 
             return CreatedAtAction(nameof(GetByResourceId), new { idResource }, new { idResource });
@@ -153,7 +176,9 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
                     IdCategory: req.IdCategory,
                     Content: req.Content,
                     Files: await ToUploadsAsync(req.Images, ct),
-                    ReplaceFiles: req.ReplaceImages),
+                    ReplaceFiles: req.ReplaceImages,
+                    DefaultImageId: req.DefaultImageId,
+                    DefaultImageIndex: req.DefaultImageIndex),
                 ct);
 
             return Ok(ToResponse(article));
@@ -231,6 +256,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
             article.IdCategory,
             article.Content,
             article.IsApproved,
+            article.DefaultImageId,
             article.Files.Select(ToFileResponse).ToList()
         );
     }

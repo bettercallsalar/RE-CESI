@@ -28,6 +28,7 @@ export interface Article {
   idCategory: number;
   content: string;
   isApproved: boolean;
+  defaultImageId: number | null;
   files: ResourceFile[];
 }
 

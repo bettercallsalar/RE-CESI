@@ -10,7 +10,8 @@ public sealed record CreateArticleCommand(
     int IdUser,
     int IdCategory,
     string Content,
-    IReadOnlyList<ResourceFileUpload>? Files = null
+    IReadOnlyList<ResourceFileUpload>? Files = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record UpdateArticleCommand(
@@ -22,7 +23,9 @@ public sealed record UpdateArticleCommand(
     int? IdCategory = null,
     string? Content = null,
     IReadOnlyList<ResourceFileUpload>? Files = null,
-    bool ReplaceFiles = false
+    bool ReplaceFiles = false,
+    int? DefaultImageId = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record SetArticleApprovalCommand(

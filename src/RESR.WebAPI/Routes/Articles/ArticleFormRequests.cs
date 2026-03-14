@@ -9,6 +9,7 @@ public sealed class CreateArticleFormRequest
     public string Visibility { get; init; } = "PUBLIC";
     public int IdCategory { get; init; }
     public string Content { get; init; } = string.Empty;
+    public int? DefaultImageIndex { get; init; }
     public List<IFormFile>? Images { get; init; }
 }
 
@@ -20,5 +21,7 @@ public sealed class UpdateArticleFormRequest
     public int? IdCategory { get; init; }
     public string? Content { get; init; }
     public bool ReplaceImages { get; init; }
+    public int? DefaultImageId { get; init; }
+    public int? DefaultImageIndex { get; init; }
     public List<IFormFile>? Images { get; init; }
 }

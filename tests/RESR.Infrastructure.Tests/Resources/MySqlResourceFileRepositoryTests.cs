@@ -42,10 +42,10 @@ public sealed class MySqlResourceFileRepositoryTests
     public async Task ReplaceForResourceAsync_DeletesThenInserts()
     {
         var deleteCmd = new FakeDbCommand { ExecuteNonQueryHandler = _ => 1 };
-        var insertCmd = new FakeDbCommand { ExecuteNonQueryHandler = _ => 1 };
+        var insertCmd = new FakeDbCommand { ExecuteScalarHandler = _ => 33 };
         var repo = CreateRepo(deleteCmd, insertCmd);
 
-        await repo.ReplaceForResourceAsync(10, new[]
+        var result = await repo.ReplaceForResourceAsync(10, new[]
         {
             new ResourceFile
             {
@@ -66,6 +66,8 @@ public sealed class MySqlResourceFileRepositoryTests
         Assert.Contains("DELETE FROM file", deleteCmd.CommandText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("INSERT INTO file", insertCmd.CommandText, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("@id_ressource", insertCmd.Parameters.Cast<DbParameter>().Select(parameter => parameter.ParameterName));
+        Assert.Single(result);
+        Assert.Equal(33, result[0].IdFile);
     }
 
     private static MySqlResourceFileRepository CreateRepo(params FakeDbCommand[] commands)

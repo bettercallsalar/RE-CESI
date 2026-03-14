@@ -14,5 +14,13 @@ public sealed class UpdateArticleFormRequestValidator : AbstractValidator<Update
             .When(x => x.Visibility is not null);
         RuleFor(x => x.IdCategory).GreaterThan(0).When(x => x.IdCategory.HasValue);
         RuleFor(x => x.Images).Must(images => images is null || images.Count <= 6).WithMessage("Vous ne pouvez pas envoyer plus de 6 images.");
+        RuleFor(x => x.DefaultImageId)
+            .GreaterThan(0)
+            .When(x => x.DefaultImageId.HasValue)
+            .WithMessage("L'image par defaut selectionnee est invalide.");
+        RuleFor(x => x.DefaultImageIndex)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.DefaultImageIndex.HasValue)
+            .WithMessage("L'image par defaut selectionnee est invalide.");
     }
 }

@@ -15,5 +15,9 @@ public sealed class CreateArticleFormRequestValidator : AbstractValidator<Create
         RuleFor(x => x.IdCategory).GreaterThan(0);
         RuleFor(x => x.Content).NotEmpty();
         RuleFor(x => x.Images).Must(images => images is null || images.Count <= 6).WithMessage("Vous ne pouvez pas envoyer plus de 6 images.");
+        RuleFor(x => x.DefaultImageIndex)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.DefaultImageIndex.HasValue)
+            .WithMessage("L'image par defaut selectionnee est invalide.");
     }
 }
