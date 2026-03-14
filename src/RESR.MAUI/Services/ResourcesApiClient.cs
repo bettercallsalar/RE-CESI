@@ -26,6 +26,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
     }
 
+    public async Task<ArticleResponse?> GetArticleByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<ArticleResponse?>($"api/articles/{idResource}", fallback: null, ct);
+    }
+
     public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct)
     {
         return await GetEventsAsync(page, pageSize, keyword: null, ct);
