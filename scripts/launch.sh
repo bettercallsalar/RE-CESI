@@ -94,6 +94,6 @@ docker_compose exec -T db mysql -uroot "-p${root_password}" -e \
    GRANT ALL PRIVILEGES ON \`${db_name}\`.* TO '${db_user}'@'%'; \
    FLUSH PRIVILEGES;"
 
-# Ensure API/migrate containers restart so DI changes are picked up (hot reload doesn't rebuild the service provider).
-docker_compose up -d --build --force-recreate migrate api
+# Ensure API/frontend/migrate containers restart so config and DI changes are picked up.
+docker_compose up -d --build --force-recreate migrate api frontend
 docker_compose ps

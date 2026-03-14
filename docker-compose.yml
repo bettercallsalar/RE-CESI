@@ -85,6 +85,31 @@ services:
         "dotnet restore /work/src/RESR.WebAPI/RESR.WebAPI.csproj && dotnet watch --project /work/src/RESR.WebAPI/RESR.WebAPI.csproj run --no-restore --urls http://+:8080",
       ]
 
+  frontend:
+    build:
+      context: ./src/RESR.Frontend
+      dockerfile: Dockerfile
+    container_name: resr-frontend
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./src/RESR.Frontend:/app
+      - resr_frontend_node_modules:/app/node_modules
+    working_dir: /app
+    command:
+      [
+        "bash",
+        "-lc",
+        "npm install && npm run dev -- --host 0.0.0.0 --port 5173",
+      ]
+
 volumes:
   resr_mysql_data:
   nuget_cache:
+  resr_frontend_node_modules:
