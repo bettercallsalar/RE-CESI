@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Events;
+using RESR.Core.Controllers.Resources;
 using RESR.Core.Errors;
 using RESR.Core.Security.Token;
 using RESR.Models.Resources;
@@ -80,7 +81,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
 
     [AuthorizePermission(PermissionNames.CreateResource)]
     [HttpPost]
-    public async Task<ActionResult> Create([FromBody] CreateEventRequest req, CancellationToken ct)
+    public async Task<ActionResult> Create([FromForm] CreateEventFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
         var authResult = RequireAuthenticatedUser(out var idUser);
@@ -100,7 +101,8 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.StartDate,
                     req.EndDate,
                     req.Address,
-                    req.IdDepartment
+                    req.IdDepartment,
+                    await ToUploadsAsync(req.Images, ct)
                     ),
                 ct);
 
@@ -116,7 +118,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpPatch("{idResource:int}")]
     public async Task<ActionResult<EventResponse>> Update(
         [FromRoute] int idResource,
-        [FromBody] UpdateEventRequest req,
+        [FromForm] UpdateEventFormRequest req,
         CancellationToken ct)
     {
         var authResult = RequireAuthenticatedUser(out var idUser);
@@ -141,7 +143,9 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
                     req.StartDate,
                     req.EndDate,
                     req.Address,
-                    req.IdDepartment),
+                    req.IdDepartment,
+                    await ToUploadsAsync(req.Images, ct),
+                    req.ReplaceImages),
                 ct);
 
             return Ok(ToResponse(@event));
@@ -222,7 +226,34 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
             @event.EndDate,
             @event.Address,
             @event.Department,
-            @event.IsApproved
+            @event.IsApproved,
+            @event.Files.Select(ToFileResponse).ToList()
         );
+    }
+
+    private static ResourceFileResponse ToFileResponse(ResourceFile file) =>
+        new(file.IdFile, file.FileName, file.OriginalName, file.MimeType, file.Size, file.Path, file.CreatedAt);
+
+    private static async Task<IReadOnlyList<ResourceFileUpload>> ToUploadsAsync(IReadOnlyList<IFormFile>? files, CancellationToken ct)
+    {
+        if (files is null || files.Count == 0)
+            return Array.Empty<ResourceFileUpload>();
+
+        var uploads = new List<ResourceFileUpload>(files.Count);
+
+        foreach (var file in files.Where(file => file.Length > 0))
+        {
+            await using var stream = file.OpenReadStream();
+            using var memory = new MemoryStream();
+            await stream.CopyToAsync(memory, ct);
+
+            uploads.Add(new ResourceFileUpload(
+                file.FileName,
+                file.ContentType,
+                Convert.ToInt32(file.Length),
+                memory.ToArray()));
+        }
+
+        return uploads;
     }
 }

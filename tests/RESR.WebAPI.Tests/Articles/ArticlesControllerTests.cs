@@ -30,7 +30,8 @@ public sealed class ArticlesControllerTests
                     IdUser = 1,
                     IdCategory = 2,
                     Content = "Body",
-                    IsApproved = false
+                    IsApproved = false,
+                    DefaultImageId = 9
                 }
             }, 1));
         var controller = new ArticlesController(service.Object, tokenService.Object);
@@ -58,6 +59,113 @@ public sealed class ArticlesControllerTests
     }
 
     [Fact]
+    public async Task GetByResourceId_ReturnsNotFound_WhenArticleIsPrivate()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 1,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                IdUser = 1,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = true
+            });
+
+        var controller = new ArticlesController(service.Object, tokenService.Object);
+        var result = await controller.GetByResourceId(1, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetByResourceId_ReturnsNotFound_WhenArticleIsDeleted()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 1,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PUBLIC,
+                CreatedAt = DateTime.UtcNow,
+                DeletedAt = DateTime.UtcNow,
+                IdUser = 1,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = true
+            });
+
+        var controller = new ArticlesController(service.Object, tokenService.Object);
+        var result = await controller.GetByResourceId(1, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetOwnByResourceId_ReturnsOk_WhenOwnerMatches()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetByResourceIdAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Article
+            {
+                IdResource = 6,
+                IdArticle = 2,
+                Title = "T",
+                Visibility = ResourceVisibility.PRIVATE,
+                CreatedAt = DateTime.UtcNow,
+                IdUser = 7,
+                IdCategory = 2,
+                Content = "Body",
+                IsApproved = false
+            });
+        tokenService.Setup(s => s.ValidateToken("jwt-token"))
+            .Returns(true);
+        tokenService.Setup(s => s.GetArgumentFromToken("jwt-token", "sub"))
+            .Returns("7");
+        var controller = new ArticlesController(service.Object, tokenService.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
+
+        var result = await controller.GetOwnByResourceId(6, CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetMyArticles_IncludesDeletedArticles()
+    {
+        var service = new Mock<IArticleService>();
+        var tokenService = new Mock<ITokenService>();
+        service.Setup(s => s.GetPaginatedAsync(1, 20, It.IsAny<ArticleListingFilters>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((new List<Article>(), 0));
+        var controller = new ArticlesController(service.Object, tokenService.Object);
+
+        var result = await controller.GetMyArticles(7, ct: CancellationToken.None);
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        service.Verify(s => s.GetPaginatedAsync(
+            1,
+            20,
+            It.Is<ArticleListingFilters>(filters => filters.IdUser == 7 && filters.IncludeDeleted),
+            It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task Create_ReturnsCreatedAtAction_WhenValid()
     {
         var service = new Mock<IArticleService>();
@@ -78,7 +186,7 @@ public sealed class ArticlesControllerTests
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
         var result = await controller.Create(
-            new CreateArticleRequest("Title", null, "public", 2, "Body"),
+            new CreateArticleFormRequest { Title = "Title", Description = null, Visibility = "public", IdCategory = 2, Content = "Body" },
             CancellationToken.None);
 
         var created = Assert.IsType<CreatedAtActionResult>(result);
@@ -103,7 +211,7 @@ public sealed class ArticlesControllerTests
         };
 
         var result = await controller.Create(
-            new CreateArticleRequest("Title", null, "public", 2, "Body"),
+            new CreateArticleFormRequest { Title = "Title", Description = null, Visibility = "public", IdCategory = 2, Content = "Body" },
             CancellationToken.None);
 
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -132,7 +240,7 @@ public sealed class ArticlesControllerTests
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
         var result = await controller.Create(
-            new CreateArticleRequest("Title", null, "public", 2, ""),
+            new CreateArticleFormRequest { Title = "Title", Description = null, Visibility = "public", IdCategory = 2, Content = "" },
             CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
@@ -160,7 +268,7 @@ public sealed class ArticlesControllerTests
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
         await controller.Create(
-            new CreateArticleRequest("Title", null, "PrIvAtE", 2, "Body"),
+            new CreateArticleFormRequest { Title = "Title", Description = null, Visibility = "PrIvAtE", IdCategory = 2, Content = "Body" },
             CancellationToken.None);
 
         service.Verify(s => s.CreateAsync(
@@ -215,7 +323,7 @@ public sealed class ArticlesControllerTests
         };
         controller.HttpContext.Request.Headers.Authorization = "Bearer jwt-token";
 
-        var result = await controller.Update(6, new UpdateArticleRequest(Title: "Updated"), CancellationToken.None);
+        var result = await controller.Update(6, new UpdateArticleFormRequest { Title = "Updated" }, CancellationToken.None);
 
         Assert.IsType<ForbidResult>(result.Result);
         service.Verify(s => s.UpdateAsync(
@@ -243,7 +351,8 @@ public sealed class ArticlesControllerTests
                 IdUser = 1,
                 IdCategory = 2,
                 Content = "Body",
-                IsApproved = true
+                IsApproved = true,
+                DefaultImageId = 12
             });
 
         var controller = new ArticlesController(service.Object, tokenService.Object);
@@ -252,5 +361,6 @@ public sealed class ArticlesControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var response = Assert.IsType<ArticleResponse>(ok.Value);
         Assert.True(response.IsApproved);
+        Assert.Equal(12, response.DefaultImageId);
     }
 }

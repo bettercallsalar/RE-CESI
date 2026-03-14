@@ -22,6 +22,16 @@ public sealed record SetResourceApprovalRequest(
     bool IsApproved
 );
 
+public sealed record ResourceFileResponse(
+    int IdFile,
+    string FileName,
+    string OriginalName,
+    string MimeType,
+    int Size,
+    string Path,
+    DateTime CreatedAt
+);
+
 public sealed record ArticleResponse(
     int IdResource,
     int IdArticle,
@@ -31,10 +41,13 @@ public sealed record ArticleResponse(
     string Visibility,
     DateTime CreatedAt,
     DateTime? ModifiedAt,
+    DateTime? DeletedAt,
     int IdUser,
     int IdCategory,
     string Content,
-    bool IsApproved
+    bool IsApproved,
+    int? DefaultImageId,
+    IReadOnlyList<ResourceFileResponse> Files
 );
 
 public sealed record PaginatedArticlesResponse(
@@ -52,7 +65,8 @@ public sealed record ArticleListingFilters(
     int? IdCategory,
     bool? IsApproved,
     DateTime? CreatedFrom,
-    DateTime? CreatedTo
+    DateTime? CreatedTo,
+    bool IncludeDeleted = false
 );
 
 public sealed record CreateEventRequest(
@@ -95,7 +109,8 @@ public sealed record EventResponse(
     DateTime? EndDate,
     string? Address,
     Department? Department,
-    bool IsApproved
+    bool IsApproved,
+    IReadOnlyList<ResourceFileResponse> Files
 );
 
 public sealed record PaginatedEventsResponse(

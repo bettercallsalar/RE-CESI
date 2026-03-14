@@ -9,6 +9,7 @@ public interface IArticleRepository
     Task<Article?> GetByResourceIdAsync(int idResource, CancellationToken ct);
     Task<int> CreateAsync(CreateArticleCommand cmd, CancellationToken ct);
     Task<Article?> PatchAsync(UpdateArticleCommand cmd, CancellationToken ct);
+    Task SetDefaultImageAsync(int idResource, int? defaultImageId, CancellationToken ct);
     Task<Article?> SetApprovalAsync(SetArticleApprovalCommand cmd, CancellationToken ct);
     Task<bool> SoftDeleteAsync(int idResource, CancellationToken ct);
 }

@@ -41,10 +41,11 @@ public sealed class MySqlArticleRepository : IArticleRepository
             r.id_user,
             r.id_category,
             a.id_article,
-            a.content
+            a.content,
+            a.default_image_id
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -72,7 +73,7 @@ public sealed class MySqlArticleRepository : IArticleRepository
         SELECT COUNT(*)
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -101,11 +102,11 @@ public sealed class MySqlArticleRepository : IArticleRepository
             r.id_user,
             r.id_category,
             a.id_article,
-            a.content
+            a.content,
+            a.default_image_id
         FROM article a
         INNER JOIN resource r ON r.id_ressource = a.id_ressource
         WHERE r.id_ressource = @id_ressource
-          AND r.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -128,8 +129,8 @@ public sealed class MySqlArticleRepository : IArticleRepository
         """;
 
         const string insertArticleSql = """
-        INSERT INTO article (content, id_ressource)
-        VALUES (@content, @id_ressource)
+        INSERT INTO article (content, default_image_id, id_ressource)
+        VALUES (@content, NULL, @id_ressource)
         """;
 
         await using var conn = _connectionFactory();
@@ -196,6 +197,24 @@ public sealed class MySqlArticleRepository : IArticleRepository
         return await GetByResourceIdAsync(cmd.IdResource, ct);
     }
 
+    public async Task SetDefaultImageAsync(int idResource, int? defaultImageId, CancellationToken ct)
+    {
+        const string sql = """
+        UPDATE article
+        SET default_image_id = @default_image_id
+        WHERE id_ressource = @id_ressource
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@id_ressource", idResource);
+        AddParameter(cmd, "@default_image_id", (object?)defaultImageId ?? DBNull.Value);
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
     public async Task<Article?> SetApprovalAsync(SetArticleApprovalCommand cmd, CancellationToken ct)
     {
         const string updateArticleSql = """
@@ -257,7 +276,8 @@ public sealed class MySqlArticleRepository : IArticleRepository
             idUser: Convert.ToInt32(reader["id_user"]),
             idCategory: Convert.ToInt32(reader["id_category"]),
             content: Convert.ToString(reader["content"]) ?? string.Empty,
-            isApproved: Convert.ToBoolean(reader["is_approved"])
+            isApproved: Convert.ToBoolean(reader["is_approved"]),
+            defaultImageId: reader["default_image_id"] == DBNull.Value ? null : Convert.ToInt32(reader["default_image_id"])
         );
     }
 
@@ -272,6 +292,11 @@ public sealed class MySqlArticleRepository : IArticleRepository
 
     private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, ArticleListingFilters filters)
     {
+        if (!filters.IncludeDeleted)
+        {
+            sql.AppendLine("  AND r.deleted_at IS NULL");
+        }
+
         if (filters.Keyword is not null)
         {
             sql.AppendLine("""

@@ -16,6 +16,7 @@ public interface IArticleFactory
         int idUser,
         int idCategory,
         string content,
-        bool isApproved
+        bool isApproved,
+        int? defaultImageId
     );
 }
