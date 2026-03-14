@@ -11,7 +11,6 @@ import { ContentGridSkeleton } from "@/shared/ui/content/ContentGridSkeleton";
 import { PaginationControls } from "@/shared/ui/pagination/PaginationControls";
 
 const PAGE_SIZE = 9;
-
 function getTotalPages(totalCount: number) {
   return totalCount === 0 ? 0 : Math.ceil(totalCount / PAGE_SIZE);
 }

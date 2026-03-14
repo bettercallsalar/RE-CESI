@@ -88,6 +88,9 @@
                                     Stroke="#E3DDD6"
                                     StrokeShape="RoundRectangle 24"
                                     Padding="20">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticleTapped" />
+                                </Border.GestureRecognizers>
                                 <VerticalStackLayout Spacing="10">
                                     <Border BackgroundColor="#2E2AA5"
                                             HorizontalOptions="Start"
