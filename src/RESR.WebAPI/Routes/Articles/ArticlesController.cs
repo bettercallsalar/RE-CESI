@@ -108,7 +108,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     [HttpGet("me/{idResource:int}")]
     public async Task<ActionResult<ArticleResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -128,7 +128,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     public async Task<ActionResult> Create([FromForm] CreateArticleFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -161,7 +161,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         [FromForm] UpdateArticleFormRequest req,
         CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -206,7 +206,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 

@@ -13,40 +13,42 @@ namespace RESR.WebAPI.Tests.Security;
 public sealed class RoleAuthorizationFilterTests
 {
     [Fact]
-    public void OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderMissing()
+    public async Task OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderMissing()
     {
         var tokenService = new Mock<ITokenService>();
         var filter = new RoleAuthorizationFilter(tokenService.Object, new[] { RoleIds.SuperAdmin });
         var context = CreateContext();
 
         context.HttpContext.Request.Headers.Authorization = string.Empty;
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<UnauthorizedObjectResult>(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_AllowsRequest_WhenRoleClaimExists()
+    public async Task OnAuthorization_AllowsRequest_WhenRoleClaimExists()
     {
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(service => service.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(service => service.GetArgumentFromToken("jwt-token", "sub")).Returns("1");
         var filter = new RoleAuthorizationFilter(tokenService.Object, new[] { RoleIds.SuperAdmin });
         var context = CreateContext(new Claim("id_role", RoleIds.SuperAdmin.ToString()));
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_ReturnsForbid_WhenRoleClaimMissing()
+    public async Task OnAuthorization_ReturnsForbid_WhenRoleClaimMissing()
     {
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(service => service.ValidateToken("jwt-token")).Returns(true);
+        tokenService.Setup(service => service.GetArgumentFromToken("jwt-token", "sub")).Returns("1");
         var filter = new RoleAuthorizationFilter(tokenService.Object, new[] { RoleIds.SuperAdmin });
         var context = CreateContext(new Claim("id_role", "2"));
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<ForbidResult>(context.Result);
     }

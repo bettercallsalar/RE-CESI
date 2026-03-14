@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { AdminAccessDeniedPage } from "@/features/admin/pages/AdminAccessDeniedPage";
+import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage";
+import { ManageUsersPage } from "@/features/admin/pages/ManageUsersPage";
 import { RolePermissionsPage } from "@/features/admin/pages/RolePermissionsPage";
 import { RolesManagementPage } from "@/features/admin/pages/RolesManagementPage";
 import { SuperAdminAccessDeniedPage } from "@/features/admin/pages/SuperAdminAccessDeniedPage";
@@ -16,10 +19,11 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { HomePage } from "@/pages/HomePage";
+import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { AppLoader } from "@/shared/ui/AppLoader";
 
 function App() {
-  const { isSuperAdmin, status } = useAuth();
+  const { canAccessAdminDashboard, hasPermission, isSuperAdmin, status } = useAuth();
   const [pathname, setPathname] = useState(() => window.location.pathname);
   const adminRoleDetailMatch = pathname.match(/^\/admin\/roles\/(\d+)$/);
   const articleDetailMatch = pathname.match(/^\/articles\/(\d+)$/);
@@ -62,6 +66,14 @@ function App() {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
+    if (pathname === "/admin" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/admin/users" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
     if (pathname === "/admin/roles" && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
@@ -79,6 +91,38 @@ function App() {
       setPathname("/login");
     }
   }, [adminRoleDetailMatch, articleEditMatch, eventEditMatch, pathname, status]);
+
+  if (pathname === "/admin") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement du tableau de bord administration" />;
+    }
+
+    if (status === "authenticated" && canAccessAdminDashboard) {
+      return <AdminDashboardPage />;
+    }
+
+    if (status === "authenticated") {
+      return <AdminAccessDeniedPage message="Votre compte ne dispose pas des permissions necessaires pour ouvrir le tableau de bord administration." />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/admin/users") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de la gestion des utilisateurs" />;
+    }
+
+    if (status === "authenticated" && hasPermission(PermissionNames.manageUsers)) {
+      return <ManageUsersPage />;
+    }
+
+    if (status === "authenticated") {
+      return <AdminAccessDeniedPage message="La gestion des utilisateurs requiert la permission ManageUsers dans votre token." />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
 
   if (pathname === "/admin/roles") {
     if (status === "loading") {

@@ -33,7 +33,7 @@ interface NavLinkItem {
 
 function HeaderLink({ label, icon, href }: NavLinkItem) {
   return (
-    <Link _hover={{ color: "ink.800", textDecoration: "none" }} color="brand.500" href={href}>
+    <Link _hover={{ color: "ink.800", textDecoration: "none" }} color="brand.500" display="inline-flex" href={href} verticalAlign="middle">
       <HStack align="center" minH="44px" px={1} spacing={2.5}>
         <Icon as={icon} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" flexShrink={0} strokeWidth={1.75} />
         <Text fontSize={{ base: "15px", xl: "16px" }} fontWeight="600">
@@ -48,10 +48,10 @@ function getUserLabel(firstName?: string, username?: string) {
   return firstName?.trim() || username?.trim() || "Mon compte";
 }
 
-function UserMenu({ isSuperAdmin, label }: { isSuperAdmin: boolean; label: string }) {
-  const items: NavLinkItem[] = isSuperAdmin
+function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard: boolean; label: string }) {
+  const items: NavLinkItem[] = canAccessAdminDashboard
     ? [
-        { label: "Administration", icon: FiShield, href: "/admin/roles" },
+        { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
@@ -66,23 +66,26 @@ function UserMenu({ isSuperAdmin, label }: { isSuperAdmin: boolean; label: strin
     <Menu>
       <MenuButton
         as={Button}
-        alignItems="center"
         _active={{ bg: "transparent" }}
         _hover={{ bg: "transparent", color: "ink.800" }}
+        alignItems="center"
         color="brand.500"
+        display="inline-flex"
         fontSize={{ base: "15px", xl: "16px" }}
         fontWeight="600"
         h="44px"
+        justifyContent="center"
         lineHeight="1"
         minH="44px"
         minW="auto"
         px={1}
-        rightIcon={<Icon as={FiChevronDown} boxSize={{ base: 5, xl: 5.5 }} color="brand.500" strokeWidth={2} />}
         variant="unstyled"
+        verticalAlign="middle"
       >
-        <HStack align="center" color="brand.500" spacing={2.5}>
+        <HStack align="center" color="brand.500" h="44px" spacing={2.5}>
           <Icon as={FiUser} boxSize={{ base: 5.5, xl: 6 }} color="brand.500" strokeWidth={1.75} />
           <Text color="brand.500">{label}</Text>
+          <Icon as={FiChevronDown} boxSize={{ base: 4.5, xl: 5 }} color="brand.500" strokeWidth={2} />
         </HStack>
       </MenuButton>
       <MenuList bg="white" borderColor="canvas.200" boxShadow="xl" minW="220px" p={2}>
@@ -113,11 +116,11 @@ function UserMenu({ isSuperAdmin, label }: { isSuperAdmin: boolean; label: strin
 }
 
 function MobileNavigation({
-  isSuperAdmin,
+  canAccessAdminDashboard,
   variant,
   userLabel
 }: {
-  isSuperAdmin: boolean;
+  canAccessAdminDashboard: boolean;
   variant: "public" | "authenticated";
   userLabel: string;
 }) {
@@ -128,9 +131,9 @@ function MobileNavigation({
     { label: "Events", icon: FiCalendar, href: "/events" },
     { label: "Mon compte", icon: FiUser, href: "/login" }
   ];
-  const userItems: NavLinkItem[] = isSuperAdmin
+  const userItems: NavLinkItem[] = canAccessAdminDashboard
     ? [
-        { label: "Administration", icon: FiShield, href: "/admin/roles" },
+        { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
@@ -188,7 +191,7 @@ function MobileNavigation({
 
 export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const { isOpen, onToggle } = useDisclosure();
-  const { isSuperAdmin, user } = useAuth();
+  const { canAccessAdminDashboard, user } = useAuth();
   const userLabel = getUserLabel(user?.firstName, user?.username);
   const publicItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
@@ -215,11 +218,11 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
 
         <Box minW={{ base: "48px", lg: "420px" }}>
           <Show above="lg">
-            <HStack justify="flex-end" spacing={4}>
+            <HStack align="center" justify="flex-end" spacing={4}>
               {(variant === "authenticated" ? authenticatedItems : publicItems).map((item) => (
                 <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
-              {variant === "authenticated" ? <UserMenu isSuperAdmin={isSuperAdmin} label={userLabel} /> : null}
+              {variant === "authenticated" ? <UserMenu canAccessAdminDashboard={canAccessAdminDashboard} label={userLabel} /> : null}
             </HStack>
           </Show>
           <Show below="lg">
@@ -240,7 +243,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
 
       <Show below="lg">
         <Collapse animateOpacity in={isOpen}>
-          <MobileNavigation isSuperAdmin={isSuperAdmin} userLabel={userLabel} variant={variant} />
+          <MobileNavigation canAccessAdminDashboard={canAccessAdminDashboard} userLabel={userLabel} variant={variant} />
         </Collapse>
       </Show>
     </Box>

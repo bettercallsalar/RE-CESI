@@ -21,6 +21,10 @@ export function RolesManagementPage() {
       }
     >
       <Stack spacing={{ base: 7, md: 8 }}>
+        <Button alignSelf="start" as="a" href="/admin" variant="outline">
+          Retour au tableau de bord
+        </Button>
+
         <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
           {roles.length > 0 ? `${roles.length} role${roles.length > 1 ? "s" : ""} configure${roles.length > 1 ? "s" : ""} dans le backend.` : "Aucun role n'a ete recupere."}
         </Text>

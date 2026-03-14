@@ -14,8 +14,8 @@ export function SuperAdminAccessDeniedPage() {
         <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
           Seul un compte avec le role SuperAdmin peut consulter la liste des roles et modifier leurs permissions.
         </Text>
-        <Button alignSelf="start" as="a" href="/" variant="outline">
-          Retour a l'accueil
+        <Button alignSelf="start" as="a" href="/admin" variant="outline">
+          Retour au tableau de bord
         </Button>
       </Stack>
     </SiteLayout>

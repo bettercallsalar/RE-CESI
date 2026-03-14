@@ -14,56 +14,56 @@ namespace RESR.WebAPI.Tests.Security;
 public sealed class PermissionOrQuerySelfAuthorizationFilterTests
 {
     [Fact]
-    public void OnAuthorization_AllowsSelf_WhenQueryMatchesTokenSubject()
+    public async Task OnAuthorization_AllowsSelf_WhenQueryMatchesTokenSubject()
     {
         var filter = CreateFilter(validateToken: true, requiredPermissions: new[] { PermissionNames.ViewOtherUserReactions });
         var context = CreateContext(BuildToken("2"), "2");
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_AllowsCurrentUser_WhenQueryIsMissing()
+    public async Task OnAuthorization_AllowsCurrentUser_WhenQueryIsMissing()
     {
         var filter = CreateFilter(validateToken: true, requiredPermissions: new[] { PermissionNames.ViewOtherUserReactions });
         var context = CreateContext(BuildToken("2"), null);
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_ReturnsForbid_WhenQueryTargetsOtherUserWithoutPermission()
+    public async Task OnAuthorization_ReturnsForbid_WhenQueryTargetsOtherUserWithoutPermission()
     {
         var filter = CreateFilter(validateToken: true, requiredPermissions: new[] { PermissionNames.ViewOtherUserReactions });
         var context = CreateContext(BuildToken("2"), "4");
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<ForbidResult>(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_AllowsOtherUser_WhenPermissionIsPresent()
+    public async Task OnAuthorization_AllowsOtherUser_WhenPermissionIsPresent()
     {
         var filter = CreateFilter(validateToken: true, requiredPermissions: new[] { PermissionNames.ViewOtherUserReactions });
         var context = CreateContext(BuildToken("2", PermissionNames.ViewOtherUserReactions), "4");
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderIsMissing()
+    public async Task OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderIsMissing()
     {
         var filter = CreateFilter(validateToken: true);
         var context = CreateContext(null, "2");
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<UnauthorizedObjectResult>(context.Result);
     }

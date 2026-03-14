@@ -12,7 +12,7 @@ namespace RESR.WebAPI.Tests.Security;
 public sealed class PermissionOrSelfAuthorizationFilterTests
 {
     [Fact]
-    public void OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderMissing()
+    public async Task OnAuthorization_ReturnsUnauthorized_WhenAuthorizationHeaderMissing()
     {
         var tokenService = new Mock<ITokenService>();
         var filter = new PermissionOrSelfAuthorizationFilter(tokenService.Object, "idUser", Array.Empty<string>());
@@ -20,13 +20,13 @@ public sealed class PermissionOrSelfAuthorizationFilterTests
 
         context.HttpContext.Request.Headers.Authorization = string.Empty;
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<UnauthorizedObjectResult>(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_AllowsRequest_WhenRouteUserMatchesTokenSubject()
+    public async Task OnAuthorization_AllowsRequest_WhenRouteUserMatchesTokenSubject()
     {
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
@@ -34,13 +34,13 @@ public sealed class PermissionOrSelfAuthorizationFilterTests
         var filter = new PermissionOrSelfAuthorizationFilter(tokenService.Object, "idUser", Array.Empty<string>());
         var context = CreateContext(routeUserId: 7);
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_AllowsRequest_WhenPermissionClaimExists()
+    public async Task OnAuthorization_AllowsRequest_WhenPermissionClaimExists()
     {
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
@@ -48,13 +48,13 @@ public sealed class PermissionOrSelfAuthorizationFilterTests
         var filter = new PermissionOrSelfAuthorizationFilter(tokenService.Object, "idUser", new[] { "ManageUsers" });
         var context = CreateContext(routeUserId: 9, permissions: new[] { "ManageUsers" });
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.Null(context.Result);
     }
 
     [Fact]
-    public void OnAuthorization_ReturnsForbid_WhenUserIsNotSelf_AndPermissionMissing()
+    public async Task OnAuthorization_ReturnsForbid_WhenUserIsNotSelf_AndPermissionMissing()
     {
         var tokenService = new Mock<ITokenService>();
         tokenService.Setup(s => s.ValidateToken("jwt-token")).Returns(true);
@@ -62,7 +62,7 @@ public sealed class PermissionOrSelfAuthorizationFilterTests
         var filter = new PermissionOrSelfAuthorizationFilter(tokenService.Object, "idUser", new[] { "ManageUsers" });
         var context = CreateContext(routeUserId: 9);
 
-        filter.OnAuthorization(context);
+        await filter.OnAuthorizationAsync(context);
 
         Assert.IsType<ForbidResult>(context.Result);
     }

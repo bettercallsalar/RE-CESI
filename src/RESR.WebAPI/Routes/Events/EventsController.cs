@@ -110,7 +110,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpGet("me/{idResource:int}")]
     public async Task<ActionResult<EventResponse>> GetOwnByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -136,7 +136,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     public async Task<ActionResult> Create([FromForm] CreateEventFormRequest req, CancellationToken ct)
     {
         var visibility = Enum.Parse<ResourceVisibility>(req.Visibility, ignoreCase: true);
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -174,7 +174,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         [FromForm] UpdateEventFormRequest req,
         CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 
@@ -223,7 +223,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {
-        var authResult = RequireAuthenticatedUser(out var idUser);
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
         if (authResult is not null)
             return authResult;
 

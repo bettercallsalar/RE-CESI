@@ -23,6 +23,7 @@ public sealed class MySqlUserRepositoryTests
             "alice@example.com",
             "hash",
             true,
+            false,
             null,
             1,
             2
@@ -42,6 +43,7 @@ public sealed class MySqlUserRepositoryTests
         Assert.Equal("alice@example.com", user.Email);
         Assert.Equal("hash", user.HashedPassword);
         Assert.True(user.IsVerified);
+        Assert.False(user.IsBanned);
         Assert.Null(user.DeletedAt);
         Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal("Department 1", user.Department.Name);
@@ -62,7 +64,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task GetByEmailAsync_ReturnsUser_WhenExists()
     {
-        var table = CreateUserTable(Row(1, "bob", "Bob", null, null, "bob@example.com", "hash", false, null, 1, 2));
+        var table = CreateUserTable(Row(1, "bob", "Bob", null, null, "bob@example.com", "hash", false, false, null, 1, 2));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -76,7 +78,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task GetByUsernameAsync_ReturnsUser_WhenExists()
     {
-        var table = CreateUserTable(Row(2, "carol", "Carol", null, null, "carol@example.com", "hash", false, null, 1, 2));
+        var table = CreateUserTable(Row(2, "carol", "Carol", null, null, "carol@example.com", "hash", false, false, null, 1, 2));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -89,7 +91,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task GetByEmailAndPasswordHashAsync_ReturnsUser_WhenExists()
     {
-        var table = CreateUserTable(Row(3, "dave", "Dave", null, null, "dave@example.com", "hash", true, null, 1, 2));
+        var table = CreateUserTable(Row(3, "dave", "Dave", null, null, "dave@example.com", "hash", true, false, null, 1, 2));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -102,7 +104,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task GetUsersPaginatedAsync_AppliesFilters_AndReturnsRows()
     {
-        var table = CreateUserTable(Row(5, "eve", "Eve", null, null, "eve@example.com", "hash", true, null, 2, 3));
+        var table = CreateUserTable(Row(5, "eve", "Eve", null, null, "eve@example.com", "hash", true, false, null, 2, 3));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
         var filters = new UserListingFilters(
@@ -130,7 +132,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task GetUsersPaginatedAsync_AllowsIncludeDeleted_AndSkipsEmptyFilters()
     {
-        var table = CreateUserTable(Row(6, "frank", "Frank", null, null, "frank@example.com", "hash", false, DateTime.UtcNow, 1, 1));
+        var table = CreateUserTable(Row(6, "frank", "Frank", null, null, "frank@example.com", "hash", false, true, DateTime.UtcNow, 1, 1));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
         var filters = new UserListingFilters(
@@ -180,20 +182,23 @@ public sealed class MySqlUserRepositoryTests
             Department = new Department { IdDepartment = 1, Name = "IT", Code = 10 },
             IdRole = 2,
             IsVerified = false,
+            IsBanned = false,
             DeletedAt = null
         };
 
         var id = await repo.CreateAsync(user, CancellationToken.None);
 
         Assert.Equal(42, id);
-        Assert.Contains("@username", cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName));
+        var parameterNames = cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName).ToList();
+        Assert.Contains("@username", parameterNames);
+        Assert.Contains("@is_banned", parameterNames);
     }
 
     [Fact]
     public async Task PatchAsync_UpdatesAndReturnsUser()
     {
         var updateCmd = NonQueryCommand(1);
-        var selectCmd = ReaderCommand(CreateUserTable(Row(8, "hank", "Hank", null, null, "hank@example.com", "hash", false, null, 1, 2)));
+        var selectCmd = ReaderCommand(CreateUserTable(Row(8, "hank", "Hank", null, null, "hank@example.com", "hash", false, false, null, 1, 2)));
         var repo = CreateRepo(updateCmd, selectCmd);
 
         var result = await repo.PatchAsync(new UpdateUserCommand(IdUser: 8, Username: "hank"), CancellationToken.None);
@@ -207,7 +212,7 @@ public sealed class MySqlUserRepositoryTests
     public async Task PatchAsync_SendsClearBioParameter_WhenRequested()
     {
         var updateCmd = NonQueryCommand(1);
-        var selectCmd = ReaderCommand(CreateUserTable(Row(8, "hank", "Hank", null, null, "hank@example.com", "hash", false, null, 1, 2)));
+        var selectCmd = ReaderCommand(CreateUserTable(Row(8, "hank", "Hank", null, null, "hank@example.com", "hash", false, false, null, 1, 2)));
         var repo = CreateRepo(updateCmd, selectCmd);
 
         await repo.PatchAsync(new UpdateUserCommand(IdUser: 8, Bio: null, ClearBio: true), CancellationToken.None);
@@ -253,7 +258,7 @@ public sealed class MySqlUserRepositoryTests
     public async Task SetVerificationAsync_UpdatesAndReturnsUser()
     {
         var updateCmd = NonQueryCommand(1);
-        var selectCmd = ReaderCommand(CreateUserTable(Row(9, "ivy", "Ivy", null, null, "ivy@example.com", "hash", true, null, 1, 2)));
+        var selectCmd = ReaderCommand(CreateUserTable(Row(9, "ivy", "Ivy", null, null, "ivy@example.com", "hash", true, false, null, 1, 2)));
         var repo = CreateRepo(updateCmd, selectCmd);
 
         var user = await repo.SetVerificationAsync(9, true, CancellationToken.None);
@@ -271,9 +276,30 @@ public sealed class MySqlUserRepositoryTests
     }
 
     [Fact]
+    public async Task SetBannedAsync_UpdatesAndReturnsUser()
+    {
+        var updateCmd = NonQueryCommand(1);
+        var selectCmd = ReaderCommand(CreateUserTable(Row(11, "jane", "Jane", null, null, "jane@example.com", "hash", true, true, null, 1, 2)));
+        var repo = CreateRepo(updateCmd, selectCmd);
+
+        var user = await repo.SetBannedAsync(11, true, CancellationToken.None);
+
+        Assert.True(user.IsBanned);
+    }
+
+    [Fact]
+    public async Task SetBannedAsync_Throws_WhenNoRowsUpdated()
+    {
+        var updateCmd = NonQueryCommand(0);
+        var repo = CreateRepo(updateCmd);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => repo.SetBannedAsync(11, true, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Map_Throws_WhenFirstNameIsNull()
     {
-        var table = CreateUserTable(Row(1, "u", null, null, null, "u@example.com", "hash", false, null, 1, 1));
+        var table = CreateUserTable(Row(1, "u", null, null, null, "u@example.com", "hash", false, false, null, 1, 1));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -283,7 +309,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task Map_Throws_WhenDepartmentIsNull()
     {
-        var table = CreateUserTable(Row(1, "u", "User", null, null, "u@example.com", "hash", false, null, null, 1));
+        var table = CreateUserTable(Row(1, "u", "User", null, null, "u@example.com", "hash", false, false, null, null, 1));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -293,7 +319,7 @@ public sealed class MySqlUserRepositoryTests
     [Fact]
     public async Task Map_Throws_WhenRoleIsNull()
     {
-        var table = CreateUserTable(Row(1, "u", "User", null, null, "u@example.com", "hash", false, null, 1, null));
+        var table = CreateUserTable(Row(1, "u", "User", null, null, "u@example.com", "hash", false, false, null, 1, null));
         var cmd = ReaderCommand(table);
         var repo = CreateRepo(cmd);
 
@@ -341,6 +367,7 @@ public sealed class MySqlUserRepositoryTests
         table.Columns.Add("email", typeof(string));
         table.Columns.Add("hashed_password", typeof(string));
         table.Columns.Add("is_verified", typeof(bool));
+        table.Columns.Add("is_banned", typeof(bool));
         table.Columns.Add("deleted_at", typeof(DateTime));
         table.Columns.Add("id_department", typeof(int));
         table.Columns.Add("id_role", typeof(int));
@@ -362,6 +389,7 @@ public sealed class MySqlUserRepositoryTests
         string email,
         string hashedPassword,
         bool isVerified,
+        bool isBanned,
         DateTime? deletedAt,
         int? idDepartment,
         int? idRole
@@ -375,6 +403,7 @@ public sealed class MySqlUserRepositoryTests
         email,
         hashedPassword,
         isVerified,
+        isBanned,
         deletedAt,
         idDepartment,
         idRole,

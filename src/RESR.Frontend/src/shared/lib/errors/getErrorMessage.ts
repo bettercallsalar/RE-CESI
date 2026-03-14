@@ -8,6 +8,7 @@ const directTranslations: Record<string, string> = {
   "Username already exists.": "Ce nom d'utilisateur existe deja.",
   "First name is required": "Le prenom est obligatoire.",
   "User account is deleted": "Le compte utilisateur est supprime.",
+  "User account is banned": "Le compte utilisateur est banni.",
   "Invalid email or password": "Adresse e-mail ou mot de passe invalide.",
   "User email is not verified": "L'adresse e-mail du compte n'est pas verifiee.",
   "Missing or invalid Authorization header.": "En-tete d'autorisation manquant ou invalide.",
