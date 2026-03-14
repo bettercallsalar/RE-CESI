@@ -58,7 +58,9 @@ class HttpClient {
     const headers = new Headers(options.headers);
     headers.set("Accept", "application/json");
 
-    if (options.body !== undefined) {
+    const isFormData = options.body instanceof FormData;
+
+    if (options.body !== undefined && !isFormData) {
       headers.set("Content-Type", "application/json");
     }
 
@@ -69,7 +71,12 @@ class HttpClient {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
       headers,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined
+      body:
+        options.body === undefined
+          ? undefined
+          : isFormData
+            ? (options.body as FormData)
+            : JSON.stringify(options.body)
     });
 
     const contentType = response.headers.get("content-type") ?? "";

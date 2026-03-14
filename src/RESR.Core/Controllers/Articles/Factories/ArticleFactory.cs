@@ -16,7 +16,8 @@ public sealed class ArticleFactory : IArticleFactory
         int idUser,
         int idCategory,
         string content,
-        bool isApproved)
+        bool isApproved,
+        int? defaultImageId)
     {
         return new Article
         {
@@ -31,7 +32,8 @@ public sealed class ArticleFactory : IArticleFactory
             DeletedAt = deletedAt,
             IdUser = idUser,
             IdCategory = idCategory,
-            Content = content
+            Content = content,
+            DefaultImageId = defaultImageId
         };
     }
 }

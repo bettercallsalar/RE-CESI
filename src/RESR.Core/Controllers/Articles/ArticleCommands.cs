@@ -1,3 +1,4 @@
+using RESR.Core.Controllers.Resources;
 using RESR.Models.Resources;
 
 namespace RESR.Core.Controllers.Articles;
@@ -8,7 +9,9 @@ public sealed record CreateArticleCommand(
     ResourceVisibility Visibility,
     int IdUser,
     int IdCategory,
-    string Content
+    string Content,
+    IReadOnlyList<ResourceFileUpload>? Files = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record UpdateArticleCommand(
@@ -18,7 +21,11 @@ public sealed record UpdateArticleCommand(
     string? Description = null,
     ResourceVisibility? Visibility = null,
     int? IdCategory = null,
-    string? Content = null
+    string? Content = null,
+    IReadOnlyList<ResourceFileUpload>? Files = null,
+    bool ReplaceFiles = false,
+    int? DefaultImageId = null,
+    int? DefaultImageIndex = null
 );
 
 public sealed record SetArticleApprovalCommand(

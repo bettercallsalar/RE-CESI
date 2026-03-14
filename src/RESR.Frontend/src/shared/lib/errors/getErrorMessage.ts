@@ -12,7 +12,14 @@ const directTranslations: Record<string, string> = {
   "User email is not verified": "L'adresse e-mail du compte n'est pas verifiee.",
   "Missing or invalid Authorization header.": "En-tete d'autorisation manquant ou invalide.",
   "Invalid token or unauthorized access.": "Jeton invalide ou acces non autorise.",
-  "Invalid token or missing subject claim.": "Jeton invalide ou identifiant utilisateur manquant."
+  "Invalid token or missing subject claim.": "Jeton invalide ou identifiant utilisateur manquant.",
+  "Title is required.": "Le titre est obligatoire.",
+  "Content is required.": "Le contenu est obligatoire.",
+  "Content cannot be empty.": "Le contenu ne peut pas etre vide.",
+  "IdUser must be greater than 0.": "L'identifiant utilisateur doit etre superieur a 0.",
+  "IdCategory must be greater than 0.": "La categorie doit etre superieure a 0.",
+  "Visibility must be PUBLIC or PRIVATE.": "La visibilite doit etre PUBLIC ou PRIVATE.",
+  "The request failed.": "La requete a echoue."
 };
 
 function translateKnownMessage(message: string) {
@@ -33,6 +40,11 @@ function translateKnownMessage(message: string) {
   if (/^User (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^User (\d+) not found\.?$/);
     return `Utilisateur ${match?.[1]} introuvable.`;
+  }
+
+  if (/^Article resource (\d+) not found\.?$/.test(message)) {
+    const match = message.match(/^Article resource (\d+) not found\.?$/);
+    return `Article ${match?.[1]} introuvable.`;
   }
 
   return message;

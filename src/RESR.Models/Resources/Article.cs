@@ -9,4 +9,5 @@ public sealed class Article : Resource
 
     public int IdArticle { get; set; }
     public required string Content { get; set; }
+    public int? DefaultImageId { get; set; }
 }
