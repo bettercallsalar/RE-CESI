@@ -117,7 +117,8 @@ public sealed record EventResponse(
     string? Address,
     Department? Department,
     bool IsApproved,
-    IReadOnlyList<ResourceFileResponse> Files
+    IReadOnlyList<ResourceFileResponse> Files,
+    DateTime? DeletedAt = null
 );
 
 public sealed record PaginatedEventsResponse(
@@ -136,5 +137,6 @@ public sealed record EventListingFilters(
     int? IdDepartment,
     bool? IsApproved,
     DateTime? StartFrom,
-    DateTime? StartTo
+    DateTime? StartTo,
+    bool IncludeDeleted = false
 );

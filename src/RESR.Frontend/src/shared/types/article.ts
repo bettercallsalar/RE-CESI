@@ -1,4 +1,5 @@
-export type ArticleVisibility = "PUBLIC" | "PRIVATE";
+export type ResourceVisibility = "PUBLIC" | "PRIVATE";
+export type ArticleVisibility = ResourceVisibility;
 
 export interface Category {
   idCategory: number;

@@ -52,7 +52,7 @@ public sealed class MySqlEventRepository : IEventRepository
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
         LEFT JOIN department d ON d.id_department = e.id_department
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -80,7 +80,7 @@ public sealed class MySqlEventRepository : IEventRepository
         SELECT COUNT(*)
         FROM event e
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
-        WHERE r.deleted_at IS NULL
+        WHERE 1 = 1
         """);
 
         await using var conn = _connectionFactory();
@@ -120,7 +120,6 @@ public sealed class MySqlEventRepository : IEventRepository
         INNER JOIN resource r ON r.id_ressource = e.id_ressource
         LEFT JOIN department d ON d.id_department = e.id_department
         WHERE r.id_ressource = @id_ressource
-          AND r.deleted_at IS NULL
         """;
 
         await using var conn = _connectionFactory();
@@ -324,6 +323,11 @@ public sealed class MySqlEventRepository : IEventRepository
 
     private static void AppendListingFilters(StringBuilder sql, DbCommand cmd, EventListingFilters filters)
     {
+        if (!filters.IncludeDeleted)
+        {
+            sql.AppendLine("  AND r.deleted_at IS NULL");
+        }
+
         if (filters.Keyword is not null)
         {
             sql.AppendLine("""

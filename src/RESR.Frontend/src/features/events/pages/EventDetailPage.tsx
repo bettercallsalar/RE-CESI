@@ -1,47 +1,38 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getPrimaryArticleImage, sanitizeArticleHtml } from "@/features/articles/lib/articleContent";
-import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
+import { formatEventDateRange, formatEventPublishedDate, getPrimaryEventImage } from "@/features/events/lib/eventDates";
+import { useEventDetail } from "@/features/events/hooks/useEventDetail";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
-interface ArticleDetailPageProps {
+interface EventDetailPageProps {
   idResource: number;
-}
-
-function formatArticleDate(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "long"
-  }).format(new Date(value));
 }
 
 function getAuthorLabel(idUser: number, firstName?: string, username?: string) {
   return username?.trim() || firstName?.trim() || `utilisateur #${idUser}`;
 }
-export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
+
+export function EventDetailPage({ idResource }: EventDetailPageProps) {
   const { status } = useAuth();
-  const { article, categoryName, isLoading, message, canEdit } = useArticleDetail(idResource);
+  const { event, categoryName, isLoading, message, canEdit } = useEventDetail(idResource);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const albumImages = article?.files ?? [];
-  const preferredImage = article ? getPrimaryArticleImage(article) : null;
+  const albumImages = event?.files ?? [];
+  const preferredImage = event ? getPrimaryEventImage(event) : null;
   const currentImage = albumImages[currentImageIndex] ?? preferredImage ?? null;
 
   useEffect(() => {
-    if (!article) {
+    if (!event) {
       setCurrentImageIndex(0);
       return;
     }
 
-    const preferredIndex = preferredImage
-      ? article.files.findIndex((file) => file.idFile === preferredImage.idFile)
-      : 0;
-
-    setCurrentImageIndex(preferredIndex >= 0 ? preferredIndex : 0);
-  }, [article, preferredImage]);
+    setCurrentImageIndex(0);
+  }, [event]);
 
   function goToPreviousImage() {
     if (albumImages.length <= 1) {
@@ -72,59 +63,116 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
         {!isLoading && message ? <MessageBanner message={message.message} title={message.title} tone={message.tone} /> : null}
 
-        {!isLoading && article ? (
+        {!isLoading && event ? (
           <>
             <Stack spacing={4}>
               <HStack flexWrap="wrap" spacing={3}>
                 <Badge bg="canvas.200" color="ink.800" fontSize="12px" px={2.5} py={1} rounded="full">
-                  {formatArticleDate(article.createdAt)}
+                  Cree le {formatEventPublishedDate(event.createdAt)}
                 </Badge>
                 {categoryName ? (
                   <Badge bg="white" border="1px solid" borderColor="brand.500" color="brand.500" fontSize="12px" px={2.5} py={1} rounded="full">
                     {categoryName}
                   </Badge>
                 ) : null}
+                {event.department ? (
+                  <Badge bg="white" border="1px solid" borderColor="canvas.300" color="ink.800" fontSize="12px" px={2.5} py={1} rounded="full">
+                    {event.department.code} - {event.department.name}
+                  </Badge>
+                ) : null}
+                {event.deletedAt ? (
+                  <Badge bg="red.500" color="white" fontSize="12px" px={2.5} py={1} rounded="full">
+                    Supprime le {formatEventPublishedDate(event.deletedAt)}
+                  </Badge>
+                ) : null}
               </HStack>
 
               <Heading color="ink.800" fontSize={{ base: "30px", md: "40px" }} lineHeight="1.1">
-                {article.title}
+                {event.title}
               </Heading>
 
-              {article.description ? (
+              {event.subtitle ? (
+                <Text color="brand.500" fontSize={{ base: "18px", md: "20px" }} fontWeight="700">
+                  {event.subtitle}
+                </Text>
+              ) : null}
+
+              {event.description ? (
                 <Text color="ink.500" fontSize={{ base: "17px", md: "19px" }} lineHeight="1.7" maxW="980px">
-                  {article.description}
+                  {event.description}
                 </Text>
               ) : null}
 
               <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
                 <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
+                  Evenement propose par {getAuthorLabel(event.idUser, event.author?.firstName, event.author?.username)}
                 </Text>
 
                 <HStack spacing={3}>
-                  <Button onClick={() => navigateTo("/articles")} variant="outline">
-                    Retour aux articles
+                  <Button onClick={() => navigateTo("/events")} variant="outline">
+                    Retour aux evenements
                   </Button>
                   {canEdit ? (
-                    <Button onClick={() => navigateTo(`/articles/${article.idResource}/modifier`)}>
-                      Modifier l'article
+                    <Button onClick={() => navigateTo(`/events/${event.idResource}/modifier`)}>
+                      Modifier l'evenement
                     </Button>
                   ) : null}
                 </HStack>
               </HStack>
             </Stack>
 
+            <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={5}>
+              <Card bg="white" border="1px solid" borderColor="canvas.200" rounded="18px" shadow="sm">
+                <CardBody>
+                  <Stack spacing={2}>
+                    <Text color="ink.500" fontSize="14px" fontWeight="700">
+                      Quand
+                    </Text>
+                    <Text color="ink.800" fontSize={{ base: "16px", md: "17px" }} lineHeight="1.6">
+                      {formatEventDateRange(event.startDate, event.endDate)}
+                    </Text>
+                  </Stack>
+                </CardBody>
+              </Card>
+
+              <Card bg="white" border="1px solid" borderColor="canvas.200" rounded="18px" shadow="sm">
+                <CardBody>
+                  <Stack spacing={2}>
+                    <Text color="ink.500" fontSize="14px" fontWeight="700">
+                      Ou
+                    </Text>
+                    <Text color="ink.800" fontSize={{ base: "16px", md: "17px" }} lineHeight="1.6">
+                      {event.address || "Adresse non renseignee"}
+                    </Text>
+                  </Stack>
+                </CardBody>
+              </Card>
+
+              <Card bg="white" border="1px solid" borderColor="canvas.200" rounded="18px" shadow="sm">
+                <CardBody>
+                  <Stack spacing={2}>
+                    <Text color="ink.500" fontSize="14px" fontWeight="700">
+                      Visibilite
+                    </Text>
+                    <Text color="ink.800" fontSize={{ base: "16px", md: "17px" }} lineHeight="1.6">
+                      {event.visibility === "PUBLIC" ? "Public" : "Prive"} {event.isApproved ? "• valide" : "• en attente de validation"}
+                    </Text>
+                  </Stack>
+                </CardBody>
+              </Card>
+            </SimpleGrid>
+
             {currentImage ? (
-              <Stack bg="white" border="1px solid" borderColor="canvas.200" py={{ base: 4, md: 6 }} px={{ base: 4, md: 6 }} rounded="18px" spacing={4}>
+              <Stack bg="white" border="1px solid" borderColor="canvas.200" px={{ base: 4, md: 6 }} py={{ base: 4, md: 6 }} rounded="18px" spacing={4}>
                 <HStack justify="space-between" spacing={4} wrap="wrap">
                   <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                    {albumImages.length > 0 ? `Image ${currentImageIndex + 1} sur ${albumImages.length}` : "Illustration de l'article"}
+                    {albumImages.length > 0 ? `Image ${currentImageIndex + 1} sur ${albumImages.length}` : "Illustration de l'evenement"}
                   </Text>
 
                   {albumImages.length > 1 ? (
                     <HStack spacing={3}>
                       <Button onClick={goToPreviousImage} variant="outline">
-                        Image précédente
+                        Image precedente
                       </Button>
                       <Button onClick={goToNextImage}>
                         Image suivante
@@ -135,7 +183,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
                 <Box textAlign="center">
                   <Image
-                    alt={currentImage.originalName || article.title}
+                    alt={currentImage.originalName || event.title}
                     display="inline-block"
                     h="auto"
                     maxW="100%"
@@ -178,18 +226,6 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 ) : null}
               </Stack>
             ) : null}
-
-            <Card bg="white" border="1px solid" borderColor="canvas.200" rounded="18px" shadow="sm">
-              <CardBody p={{ base: 6, md: 8 }}>
-                <Box
-                  className="article-content"
-                  color="ink.800"
-                  dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }}
-                  fontSize={{ base: "16px", md: "17px" }}
-                  lineHeight="1.85"
-                />
-              </CardBody>
-            </Card>
           </>
         ) : null}
       </Stack>

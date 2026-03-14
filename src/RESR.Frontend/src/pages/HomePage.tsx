@@ -4,10 +4,11 @@ import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { ArticlesGrid } from "@/features/articles/components/ArticlesGrid";
 import { useLatestArticles } from "@/features/articles/hooks/useLatestArticles";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { EventsGrid } from "@/features/events/components/EventsGrid";
+import { useLatestEvents } from "@/features/events/hooks/useLatestEvents";
 import { flashMessageStorage } from "@/shared/lib/storage/flashMessageStorage";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
-import { ShowcasePanel } from "@/shared/ui/site/ShowcasePanel";
 
 export function HomePage() {
   const { status, user, signOut } = useAuth();
@@ -19,6 +20,12 @@ export function HomePage() {
     isLoading: isLoadingArticles,
     message: articlesMessage
   } = useLatestArticles(3);
+  const {
+    events,
+    categories: eventCategories,
+    isLoading: isLoadingEvents,
+    message: eventsMessage
+  } = useLatestEvents(3);
 
   useEffect(() => {
     setFlashMessage(flashMessageStorage.take());
@@ -84,7 +91,53 @@ export function HomePage() {
           )}
         </Stack>
 
-        <ShowcasePanel minHeight={{ base: "260px", md: "380px", lg: "460px" }} title="Titre Événement" />
+        <Stack spacing={6}>
+          <Stack
+            align={{ base: "stretch", lg: "center" }}
+            direction={{ base: "column", lg: "row" }}
+            justify="space-between"
+            spacing={4}
+          >
+            <Box>
+              <Text color="ink.800" fontSize={{ base: "24px", md: "30px" }} fontWeight="700">
+                Les 3 derniers events
+              </Text>
+              <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }} mt={2}>
+                Une selection des evenements publics valides les plus recents.
+              </Text>
+            </Box>
+
+            <Stack direction={{ base: "column", sm: "row" }} spacing={3}>
+              <Button as="a" href="/events" variant="outline">
+                Voir tous les events
+              </Button>
+              {isAuthenticated ? (
+                <Button as="a" href="/events/nouveau">
+                  Creer un event
+                </Button>
+              ) : null}
+            </Stack>
+          </Stack>
+
+          {eventsMessage ? (
+            <MessageBanner message={eventsMessage.message} title={eventsMessage.title} tone={eventsMessage.tone} />
+          ) : null}
+
+          {isLoadingEvents ? (
+            <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={{ base: 5, md: 6 }}>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton borderRadius="16px" height="240px" key={index} />
+              ))}
+            </SimpleGrid>
+          ) : (
+            <EventsGrid
+              categories={eventCategories}
+              compact
+              emptyLabel="Aucun evenement public n'est disponible pour le moment."
+              events={events}
+            />
+          )}
+        </Stack>
 
         <Stack
           align={{ base: "start", md: "center" }}

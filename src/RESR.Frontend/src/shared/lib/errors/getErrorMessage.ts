@@ -19,6 +19,7 @@ const directTranslations: Record<string, string> = {
   "IdUser must be greater than 0.": "L'identifiant utilisateur doit etre superieur a 0.",
   "IdCategory must be greater than 0.": "La categorie doit etre superieure a 0.",
   "Visibility must be PUBLIC or PRIVATE.": "La visibilite doit etre PUBLIC ou PRIVATE.",
+  "EndDate cannot be earlier than StartDate.": "La date de fin ne peut pas etre anterieure a la date de debut.",
   "The request failed.": "La requete a echoue."
 };
 
@@ -45,6 +46,11 @@ function translateKnownMessage(message: string) {
   if (/^Article resource (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^Article resource (\d+) not found\.?$/);
     return `Article ${match?.[1]} introuvable.`;
+  }
+
+  if (/^Event resource (\d+) not found\.?$/.test(message)) {
+    const match = message.match(/^Event resource (\d+) not found\.?$/);
+    return `Evenement ${match?.[1]} introuvable.`;
   }
 
   return message;
