@@ -38,10 +38,10 @@ public sealed class FollowsServiceTests
     public async Task ExistsAsync_DelegatesToRepository()
     {
         var repo = new Mock<IFollowsRepository>();
-        repo.Setup(r => r.ExistsAsync(3, 9, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        repo.Setup(r => r.ExistsAsync(4, 7, It.IsAny<CancellationToken>())).ReturnsAsync(true);
         var service = new FollowsService(repo.Object);
 
-        var result = await service.ExistsAsync(3, 9, CancellationToken.None);
+        var result = await service.ExistsAsync(4, 7, CancellationToken.None);
 
         Assert.True(result);
     }

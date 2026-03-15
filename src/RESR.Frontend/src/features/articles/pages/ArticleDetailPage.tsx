@@ -1,14 +1,17 @@
-import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import { Badge, Box, Button, Card, CardBody, Heading, HStack, Image, Link, Skeleton, Stack, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getPrimaryArticleImage, sanitizeArticleHtml } from "@/features/articles/lib/articleContent";
 import { useArticleDetail } from "@/features/articles/hooks/useArticleDetail";
+import { ReadLaterToggleButton } from "@/features/marks/components/ReadLaterToggleButton";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { getResourceFileUrl } from "@/shared/lib/assets/getResourceFileUrl";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { CommentsSection } from "@/shared/ui/comments/CommentsSection";
 import { ConfirmationDialog } from "@/shared/ui/feedback/ConfirmationDialog";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { ResourceReactions } from "@/shared/ui/reactions/ResourceReactions";
 
 interface ArticleDetailPageProps {
   idResource: number;
@@ -112,10 +115,16 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                 </Text>
               ) : null}
 
-              <HStack align="center" flexWrap="wrap" justify="space-between" spacing={4}>
-                <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-                  Publication proposée par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}
-                </Text>
+              <HStack align={{ base: "stretch", lg: "center" }} flexWrap="wrap" justify="space-between" spacing={4}>
+                <Stack flex="1" minW={{ base: "100%", lg: "0" }} spacing={2}>
+                  <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
+                    Publication proposee par {getAuthorLabel(article.idUser, article.author?.firstName, article.author?.username)}{" "}
+                    <Link color="brand.500" fontWeight="700" href={getUserProfileHref(article.idUser)}>
+                      Voir son profil
+                    </Link>
+                  </Text>
+                  {!article.deletedAt ? <ResourceReactions idResource={article.idResource} /> : null}
+                </Stack>
 
                 <HStack flexWrap="wrap" justify="flex-end" spacing={3}>
                   {canApprove && !article.isApproved ? (
@@ -126,6 +135,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                   <Button onClick={() => navigateTo("/articles")} variant="outline">
                     Retour aux articles
                   </Button>
+                  {!article.deletedAt ? <ReadLaterToggleButton idResource={article.idResource} /> : null}
                   {canEdit ? (
                     <Button onClick={() => navigateTo(`/articles/${article.idResource}/modifier`)}>
                       Modifier l'article
@@ -145,7 +155,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                     <Button
                       _hover={{ bg: "#9B2C2C" }}
                       bg="#C53030"
-                      color="white"
+                      color="surface.onCritical"
                       isDisabled={isUpdatingApproval}
                       onClick={unapproveDialog.onOpen}
                     >
@@ -237,7 +247,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
 
             <ConfirmationDialog
               confirmLabel="Desapprouver"
-              description="Voulez-vous vraiment desapprouver cet article ? Il ne sera plus visible dans les ressources publiques."
+              description="Voulez-vous vraiment desapprouver cet article ? Il ne sera plus visible parmi les articles publics."
               isLoading={isUpdatingApproval}
               isOpen={unapproveDialog.isOpen}
               onClose={unapproveDialog.onClose}

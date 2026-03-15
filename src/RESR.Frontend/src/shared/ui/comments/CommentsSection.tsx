@@ -95,7 +95,7 @@ function CommentItem({
                   </Text>
 
                   {resourceOwnerId === comment.idUser ? (
-                    <Badge bg="brand.500" color="white" fontSize="11px" px={2} py={0.5} rounded="full">
+                    <Badge bg="brand.500" color="surface.onAccent" fontSize="11px" px={2} py={0.5} rounded="full">
                       Auteur
                     </Badge>
                   ) : null}

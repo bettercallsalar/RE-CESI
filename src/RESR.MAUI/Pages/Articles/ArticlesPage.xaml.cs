@@ -73,18 +73,24 @@ public partial class ArticlesPage : ContentPage
 
     private async void OnArticleTapped(object? sender, TappedEventArgs e)
     {
-        if (!TryGetBoundItem<ArticleListItem>(sender, out var item))
-            return;
-
-        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
+        await OpenArticleAsync(sender);
     }
 
     private async void OnArticleOpenClicked(object? sender, EventArgs e)
     {
-        if (!TryGetBoundItem<ArticleListItem>(sender, out var item))
+        await OpenArticleAsync(sender);
+    }
+
+    private async Task OpenArticleAsync(object? sender)
+    {
+        var article = sender is BindableObject bindable
+            ? bindable.BindingContext as ArticleListItem
+            : null;
+
+        if (article is null)
             return;
 
-        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
+        await NavigateToArticleDetailAsync(article.IdResource);
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)
@@ -228,28 +234,20 @@ public partial class ArticlesPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
-    private async Task NavigateToArticleDetailAsync(int idResource, bool useOwnAccess)
+    private async Task NavigateToArticleDetailAsync(int idResource)
     {
         if (Shell.Current is null)
             return;
 
         try
         {
-            var route = $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}";
-            await Shell.Current.GoToAsync(route);
+            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
         }
         catch (Exception ex)
         {
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
-
-    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
-    {
-        item = ((sender as BindableObject)?.BindingContext as TItem)!;
-        return item is not null;
-    }
-
     private sealed record ArticleListItem(
         int IdResource,
         string Title,

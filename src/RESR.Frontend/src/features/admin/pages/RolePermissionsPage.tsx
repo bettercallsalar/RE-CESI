@@ -147,7 +147,7 @@ export function RolePermissionsPage({ idRole }: RolePermissionsPageProps) {
                               _disabled={{ bg: "#C6F6D5", color: "#276749", cursor: "not-allowed", opacity: 1 }}
                               _hover={{ bg: "#0C6A0C" }}
                               bg="#0F7B0F"
-                              color="white"
+                              color="surface.onStrong"
                               fontSize={{ base: "14px", md: "15px" }}
                               h="40px"
                               isDisabled={isActive || isSubmitting}
@@ -162,7 +162,7 @@ export function RolePermissionsPage({ idRole }: RolePermissionsPageProps) {
                               _disabled={{ bg: "#FED7D7", color: "#9B2C2C", cursor: "not-allowed", opacity: 1 }}
                               _hover={{ bg: "#9B2C2C" }}
                               bg="#C53030"
-                              color="white"
+                              color="surface.onCritical"
                               fontSize={{ base: "14px", md: "15px" }}
                               h="40px"
                               isDisabled={!isActive || isSubmitting}

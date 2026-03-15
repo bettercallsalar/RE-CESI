@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RESR.Core.Controllers.Follows;
 using RESR.Core.Errors;
+using RESR.Core.Security.Token;
 using RESR.Models.Follows;
 using RESR.WebAPI.Security;
 
@@ -9,11 +9,12 @@ namespace RESR.WebAPI.Routes.Follows;
 
 [ApiController]
 [Route("api/follows")]
-public sealed class FollowsController : ControllerBase
+public sealed class FollowsController : AuthenticatedResourceControllerBase
 {
     private readonly IFollowsService _service;
 
-    public FollowsController(IFollowsService service) => _service = service;
+    public FollowsController(IFollowsService service, ITokenService tokenService)
+        : base(tokenService) => _service = service;
 
     [HttpGet("{idUser:int}/followers")]
     public async Task<ActionResult<PaginatedFollowUsersResponse>> GetAllFollowers(
@@ -51,26 +52,43 @@ public sealed class FollowsController : ControllerBase
         return Ok(new PaginatedFollowUsersResponse(items, page, pageSize, totalCount, totalPages));
     }
 
-    [HttpGet("{idFollower:int}/{idFollowing:int}")]
-    public async Task<ActionResult> Exists(
-        [FromRoute] int idFollower,
-        [FromRoute] int idFollowing,
+    [HttpGet("me/following")]
+    [AuthorizePermission]
+    public async Task<ActionResult<PaginatedFollowUsersResponse>> GetOwnFollowing(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
-        if (idFollower <= 0 || idFollowing <= 0)
-            return BadRequest(new { message = "IdFollower and IdFollowing must be greater than 0" });
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
+        if (authResult is not null)
+            return authResult;
 
-        var exists = await _service.ExistsAsync(idFollower, idFollowing, ct);
-        return exists ? NoContent() : NotFound();
+        return await GetAllFollowing(idUser, page, pageSize, ct);
     }
 
-    [HttpPost]
-    [AuthorizePermission(PermissionNames.FollowUser)]
-    public async Task<ActionResult> Create([FromBody] FollowRequest request, CancellationToken ct)
+    [HttpGet("me/following/{idFollowing:int}")]
+    [AuthorizePermission]
+    public async Task<ActionResult<FollowStateResponse>> GetOwnFollowingState([FromRoute] int idFollowing, CancellationToken ct)
     {
+        var (authResult, idUser) = await RequireAuthenticatedUserAsync(ct);
+        if (authResult is not null)
+            return authResult;
+
+        var isFollowing = await _service.ExistsAsync(idUser, idFollowing, ct);
+        return Ok(new FollowStateResponse(idUser, idFollowing, isFollowing));
+    }
+
+    [HttpPost("{idFollowing:int}")]
+    [AuthorizePermission]
+    public async Task<ActionResult> Create([FromRoute] int idFollowing, CancellationToken ct)
+    {
+        var (authResult, idFollower) = await RequireAuthenticatedUserAsync(ct);
+        if (authResult is not null)
+            return authResult;
+
         try
         {
-            await _service.CreateAsync(request.IdFollower, request.IdFollowing, ct);
+            await _service.CreateAsync(idFollower, idFollowing, ct);
             return NoContent();
         }
         catch (ConflictException ex)
@@ -83,10 +101,14 @@ public sealed class FollowsController : ControllerBase
         }
     }
 
-    [HttpDelete("{idFollower:int}/{idFollowing:int}")]
-    [AuthorizePermission(PermissionNames.FollowUser)]
-    public async Task<ActionResult> Delete([FromRoute] int idFollower, [FromRoute] int idFollowing, CancellationToken ct)
+    [HttpDelete("{idFollowing:int}")]
+    [AuthorizePermission]
+    public async Task<ActionResult> Delete([FromRoute] int idFollowing, CancellationToken ct)
     {
+        var (authResult, idFollower) = await RequireAuthenticatedUserAsync(ct);
+        if (authResult is not null)
+            return authResult;
+
         try
         {
             await _service.DeleteAsync(idFollower, idFollowing, ct);

@@ -11,6 +11,38 @@ namespace RESR.WebAPI.Tests.Roles;
 public sealed class RolesControllerTests
 {
     [Fact]
+    public async Task GetAssignableRoles_ReturnsOk_WithSummaries()
+    {
+        var service = new Mock<IRoleService>();
+        service.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Role>
+            {
+                new() { IdRole = 1, Name = "User", Description = "Standard" },
+                new() { IdRole = 2, Name = "Admin", Description = "Administration" }
+            });
+
+        var controller = new RolesController(service.Object);
+
+        var result = await controller.GetAssignableRoles(CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var list = Assert.IsType<List<RoleSummaryResponse>>(ok.Value);
+        Assert.Collection(list,
+            first =>
+            {
+                Assert.Equal(1, first.IdRole);
+                Assert.Equal("User", first.Name);
+                Assert.Equal("Standard", first.Description);
+            },
+            second =>
+            {
+                Assert.Equal(2, second.IdRole);
+                Assert.Equal("Admin", second.Name);
+                Assert.Equal("Administration", second.Description);
+            });
+    }
+
+    [Fact]
     public async Task GetAll_ReturnsOk_WithResponses()
     {
         var service = new Mock<IRoleService>();

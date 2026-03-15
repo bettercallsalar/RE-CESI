@@ -90,7 +90,7 @@ public sealed class MySqlFollowsRepository : IFollowsRepository
         AddParameter(cmd, "@idFollowing", idFollowing);
 
         var result = await cmd.ExecuteScalarAsync(ct);
-        return result is not null;
+        return result is not null && result != DBNull.Value;
     }
 
     public async Task<bool> CreateAsync(int idFollower, int idFollowing, CancellationToken ct)

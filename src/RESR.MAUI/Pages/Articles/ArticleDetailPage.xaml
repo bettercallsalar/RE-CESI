@@ -3,104 +3,384 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.ArticleDetailPage"
              Title="Article"
-             BackgroundColor="#F4F1EC">
+             BackgroundColor="{StaticResource White}">
 
     <ContentPage.Resources>
-        <Style x:Key="SectionCaptionStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#6A678A" />
-            <Setter Property="FontSize" Value="13" />
+        <Style x:Key="FormHeroTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="HorizontalOptions" Value="Center" />
         </Style>
 
-        <Style x:Key="SectionTitleStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#1E1C44" />
-            <Setter Property="FontSize" Value="30" />
+        <Style x:Key="FormHeroSubtitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+        </Style>
+
+        <Style x:Key="FormCardStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource Gray200}" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 26" />
+            <Setter Property="Padding" Value="22" />
+        </Style>
+
+        <Style x:Key="FormSectionTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="24" />
             <Setter Property="FontAttributes" Value="Bold" />
         </Style>
 
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="BackgroundColor" Value="White" />
-            <Setter Property="Stroke" Value="#E3DDD6" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 28" />
-            <Setter Property="Padding" Value="22" />
+        <Style x:Key="FormCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="FormStatusLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray900}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
         </Style>
 
         <Style x:Key="AuthorButtonStyle" TargetType="Button">
             <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="TextColor" Value="#2E2AA5" />
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+
+        <Style x:Key="CommentAuthorStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+
+        <Style x:Key="CommentMetaStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="CommentBodyStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray900}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+
+        <Style x:Key="CommentActionButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+
+        <Style x:Key="ReactionButtonStyle" TargetType="Button">
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="BackgroundColor" Value="{StaticResource Gray100}" />
+            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
+            <Setter Property="BorderColor" Value="{StaticResource Gray200}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="MarkButtonStyle" TargetType="Button">
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="BackgroundColor" Value="{StaticResource Gray100}" />
+            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
+            <Setter Property="BorderColor" Value="{StaticResource Gray200}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
     </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout HorizontalOptions="Center"
-                             MaximumWidthRequest="960"
-                             Spacing="22"
-                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='30,24,30,34', Default='36,28,36,40'}">
+                             MaximumWidthRequest="920"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='28,22,28,32', Default='34,24,34,36'}"
+                             Spacing="20">
 
             <VerticalStackLayout Spacing="6">
-                <Label Text="Lecture"
-                       Style="{StaticResource Headline}"
-                       FontSize="{OnIdiom Phone='28', Default='34'}"
-                       TextColor="#1E1C44" />
+                <Label Text="Lecture d'article"
+                       Style="{StaticResource FormHeroTitleStyle}" />
                 <Label x:Name="HeaderCaptionLabel"
-                       Text="Chargement de l'article..."
-                       Style="{StaticResource SectionCaptionStyle}" />
+                       Text="Chargement du contenu..."
+                       Style="{StaticResource FormHeroSubtitleStyle}" />
             </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardStyle}">
-                <VerticalStackLayout Spacing="16">
+            <Border Style="{StaticResource FormCardStyle}">
+                <VerticalStackLayout Spacing="18">
                     <ActivityIndicator x:Name="LoadingIndicator"
                                        IsVisible="False"
                                        IsRunning="False"
                                        HorizontalOptions="Center" />
 
                     <VerticalStackLayout x:Name="ArticleContentLayout"
-                                         IsVisible="False"
-                                         Spacing="14">
-                        <Border BackgroundColor="#2E2AA5"
+                                         Spacing="16"
+                                         IsVisible="False">
+                        <Border BackgroundColor="{StaticResource Primary}"
                                 HorizontalOptions="Start"
                                 Padding="10,4"
                                 StrokeThickness="0"
                                 StrokeShape="RoundRectangle 12">
-                            <Label Text="Article"
+                            <Label Text="Article public"
                                    FontSize="12"
                                    FontAttributes="Bold"
                                    TextColor="White" />
                         </Border>
 
                         <Label x:Name="TitleLabel"
-                               Style="{StaticResource SectionTitleStyle}" />
+                               Style="{StaticResource FormSectionTitleStyle}"
+                               FontSize="30" />
 
                         <HorizontalStackLayout Spacing="6">
                             <Label Text="Par"
-                                   Style="{StaticResource SectionCaptionStyle}" />
+                                   Style="{StaticResource FormCaptionStyle}" />
                             <Button x:Name="AuthorButton"
-                                    Clicked="OnAuthorClicked"
-                                    Style="{StaticResource AuthorButtonStyle}" />
+                                    Style="{StaticResource AuthorButtonStyle}"
+                                    Clicked="OnAuthorClicked" />
                         </HorizontalStackLayout>
 
                         <Label x:Name="MetaLabel"
-                               Style="{StaticResource SectionCaptionStyle}" />
+                               Style="{StaticResource FormCaptionStyle}" />
 
                         <Label x:Name="DescriptionLabel"
-                               IsVisible="False"
-                               FontSize="15"
-                               TextColor="#343052" />
+                               Style="{StaticResource FormStatusLabelStyle}"
+                               IsVisible="False" />
 
                         <BoxView HeightRequest="1"
-                                 Color="#E3DDD6" />
+                                 Color="{StaticResource Gray200}" />
 
                         <Label x:Name="ContentLabel"
+                               Style="{StaticResource FormStatusLabelStyle}"
                                FontSize="15"
-                               TextColor="#2C2C2C"
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
                     <Label x:Name="StatusLabel"
                            Text="Chargement de l'article..."
-                           Style="{StaticResource SectionCaptionStyle}" />
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border x:Name="MarksCard"
+                    Style="{StaticResource FormCardStyle}"
+                    IsVisible="False">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Enregistrer l'article"
+                               Style="{StaticResource FormSectionTitleStyle}" />
+                        <Label Text="Ajoute cet article a tes favoris ou a ta liste lire plus tard."
+                               Style="{StaticResource FormCaptionStyle}" />
+                    </VerticalStackLayout>
+
+                    <Border x:Name="MarkLoginHintBorder"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource Gray100}"
+                            Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="14,10">
+                        <Label Text="Connectez-vous pour enregistrer cet article."
+                               Style="{StaticResource FormStatusLabelStyle}" />
+                    </Border>
+
+                    <FlexLayout x:Name="MarkButtonsLayout"
+                                Direction="Row"
+                                Wrap="Wrap"
+                                JustifyContent="Start"
+                                AlignItems="Start">
+                        <Button x:Name="FavoriteButton"
+                                Text="&#x2B50; Favori"
+                                Clicked="OnFavoriteClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource MarkButtonStyle}" />
+                        <Button x:Name="ReadLaterButton"
+                                Text="&#x1F516; Lire plus tard"
+                                Clicked="OnReadLaterClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource MarkButtonStyle}" />
+                    </FlexLayout>
+
+                    <Label x:Name="MarkHintLabel"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                    <Label x:Name="MarkStatusLabel"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border x:Name="ReactionsCard"
+                    Style="{StaticResource FormCardStyle}"
+                    IsVisible="False">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Reactions"
+                               Style="{StaticResource FormSectionTitleStyle}" />
+                        <Label x:Name="ReactionsSummaryLabel"
+                               Text="Chargement des reactions..."
+                               Style="{StaticResource FormCaptionStyle}" />
+                    </VerticalStackLayout>
+
+                    <Label x:Name="ReactionsStatusLabel"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+
+                    <Border x:Name="ReactionLoginHintBorder"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource Gray100}"
+                            Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="14,10">
+                        <Label Text="Connectez-vous pour reagir a cet article."
+                               Style="{StaticResource FormStatusLabelStyle}" />
+                    </Border>
+
+                    <FlexLayout x:Name="ReactionButtonsLayout"
+                                Direction="Row"
+                                Wrap="Wrap"
+                                JustifyContent="Start"
+                                AlignItems="Start">
+                        <Button x:Name="LikeButton"
+                                Text="&#x1F44D; Like"
+                                CommandParameter="like"
+                                Clicked="OnReactionClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource ReactionButtonStyle}" />
+                        <Button x:Name="DislikeButton"
+                                Text="&#x1F44E; Dislike"
+                                CommandParameter="dislike"
+                                Clicked="OnReactionClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource ReactionButtonStyle}" />
+                        <Button x:Name="LoveButton"
+                                Text="&#x2764;&#xFE0F; Love"
+                                CommandParameter="love"
+                                Clicked="OnReactionClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource ReactionButtonStyle}" />
+                    </FlexLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border x:Name="CommentsCard"
+                    Style="{StaticResource FormCardStyle}"
+                    IsVisible="False">
+                <VerticalStackLayout Spacing="18">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Discussion"
+                                   Style="{StaticResource FormSectionTitleStyle}" />
+                            <Label x:Name="CommentsSummaryLabel"
+                                   Text="Chargement des commentaires..."
+                                   Style="{StaticResource FormCaptionStyle}" />
+                        </VerticalStackLayout>
+
+                        <Button x:Name="RefreshCommentsButton"
+                                Grid.Column="1"
+                                Text="Actualiser"
+                                Clicked="OnRefreshCommentsClicked" />
+                    </Grid>
+
+                    <ActivityIndicator x:Name="CommentsLoadingIndicator"
+                                       IsVisible="False"
+                                       IsRunning="False"
+                                       HorizontalOptions="Center" />
+
+                    <Border x:Name="ReplyTargetBorder"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource Gray100}"
+                            Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="14,10">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="10">
+                            <Label x:Name="ReplyTargetLabel"
+                                   Style="{StaticResource FormStatusLabelStyle}" />
+                            <Button x:Name="CancelReplyButton"
+                                    Grid.Column="1"
+                                    Text="Annuler"
+                                    Clicked="OnCancelReplyClicked" />
+                        </Grid>
+                    </Border>
+
+                    <VerticalStackLayout x:Name="CommentComposerLayout"
+                                         Spacing="10"
+                                         IsVisible="False">
+                        <Label x:Name="ComposerTitleLabel"
+                               Text="Ajouter un commentaire"
+                               Style="{StaticResource FormCaptionStyle}" />
+                        <Editor x:Name="CommentEditor"
+                                AutoSize="TextChanges"
+                                Placeholder="Partagez votre avis sur cet article"
+                                MinimumHeightRequest="120"
+                                MaxLength="2000"
+                                BackgroundColor="{StaticResource White}"
+                                TextColor="{StaticResource Gray950}" />
+                        <Button x:Name="PostCommentButton"
+                                Text="Publier"
+                                HorizontalOptions="Start"
+                                Clicked="OnPostCommentClicked" />
+                    </VerticalStackLayout>
+
+                    <Border x:Name="CommentLoginHintBorder"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource Gray100}"
+                            Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="14,10">
+                        <Label Text="Connectez-vous pour publier un commentaire ou repondre a une discussion."
+                               Style="{StaticResource FormStatusLabelStyle}" />
+                    </Border>
+
+                    <Label x:Name="CommentsStatusLabel"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+
+                    <Label x:Name="NoCommentsLabel"
+                           Text="Aucun commentaire pour le moment."
+                           IsVisible="False"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+
+                    <VerticalStackLayout x:Name="CommentsListLayout"
+                                         Spacing="12">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="{Binding CardBackgroundColor}"
+                                        Stroke="{Binding CardStrokeColor}"
+                                        StrokeShape="RoundRectangle 18"
+                                        Padding="16,14"
+                                        Margin="{Binding IndentMargin}">
+                                    <VerticalStackLayout Spacing="8">
+                                        <VerticalStackLayout Spacing="2">
+                                            <Label Text="{Binding AuthorLabel}"
+                                                   Style="{StaticResource CommentAuthorStyle}" />
+                                            <Label Text="{Binding MetaLabel}"
+                                                   Style="{StaticResource CommentMetaStyle}" />
+                                        </VerticalStackLayout>
+
+                                        <Label Text="{Binding DisplayContent}"
+                                               Style="{StaticResource CommentBodyStyle}"
+                                               TextColor="{Binding ContentTextColor}" />
+
+                                        <HorizontalStackLayout Spacing="14">
+                                            <Button Text="Repondre"
+                                                    Clicked="OnReplyClicked"
+                                                    IsVisible="{Binding CanReply}"
+                                                    Style="{StaticResource CommentActionButtonStyle}" />
+                                            <Button Text="{Binding ToggleRepliesLabel}"
+                                                    Clicked="OnToggleRepliesClicked"
+                                                    IsVisible="{Binding HasChildren}"
+                                                    Style="{StaticResource CommentActionButtonStyle}" />
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

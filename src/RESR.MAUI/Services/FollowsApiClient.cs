@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using RESR.Models.Follows;
@@ -20,11 +19,9 @@ public sealed class FollowsApiClient : IFollowsApiClient
     {
         try
         {
+            _ = idFollower;
             ApplyAuthorizationHeader();
-            using var response = await _httpClient.GetAsync($"api/follows/{idFollower}/{idFollowing}", ct);
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-                return false;
+            using var response = await _httpClient.GetAsync($"api/follows/me/following/{idFollowing}", ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -36,7 +33,8 @@ public sealed class FollowsApiClient : IFollowsApiClient
                 throw new ApiException(response.StatusCode, message);
             }
 
-            return true;
+            var state = await response.Content.ReadFromJsonAsync<FollowStateResponse>(cancellationToken: ct);
+            return state?.IsFollowing ?? false;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
@@ -48,8 +46,9 @@ public sealed class FollowsApiClient : IFollowsApiClient
     {
         try
         {
+            _ = idFollower;
             ApplyAuthorizationHeader();
-            using var response = await _httpClient.PostAsJsonAsync("api/follows", new FollowRequest(idFollower, idFollowing), ct);
+            using var response = await _httpClient.PostAsync($"api/follows/{idFollowing}", content: null, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -71,8 +70,9 @@ public sealed class FollowsApiClient : IFollowsApiClient
     {
         try
         {
+            _ = idFollower;
             ApplyAuthorizationHeader();
-            using var response = await _httpClient.DeleteAsync($"api/follows/{idFollower}/{idFollowing}", ct);
+            using var response = await _httpClient.DeleteAsync($"api/follows/{idFollowing}", ct);
 
             if (!response.IsSuccessStatusCode)
             {

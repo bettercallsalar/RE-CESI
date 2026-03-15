@@ -295,7 +295,63 @@ public sealed class ResourcesApiClientTests
 
         Assert.NotNull(article);
         Assert.Equal("Article detail", article!.Title);
-        Assert.Equal(12, article.IdResource);
+        Assert.Equal(12, article!.IdResource);
+    }
+
+    [Fact]
+    public async Task GetEventByIdAsync_ReturnsPayload_FromPublicEndpoint()
+    {
+        var session = new StubApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/events/14", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idResource": 14,
+                  "idEvent": 7,
+                  "title": "Event detail",
+                  "description": "Description evenement",
+                  "type": "event",
+                  "visibility": "PUBLIC",
+                  "createdAt": "2026-03-13T09:00:00Z",
+                  "modifiedAt": null,
+                  "idUser": 3,
+                  "author": { "idUser": 3, "username": "bob", "firstName": "Bob" },
+                  "idCategory": 1,
+                  "subtitle": "Sous titre",
+                  "startDate": "2026-03-20T10:00:00Z",
+                  "endDate": "2026-03-20T18:00:00Z",
+                  "address": "Paris",
+                  "department": {
+                    "idDepartment": 1,
+                    "name": "Paris",
+                    "code": 75
+                  },
+                  "isApproved": true,
+                  "files": [],
+                  "deletedAt": null,
+                  "defaultImageId": null
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        var @event = await sut.GetEventByIdAsync(14, CancellationToken.None);
+
+        Assert.NotNull(@event);
+        Assert.Equal("Event detail", @event!.Title);
     }
 
     [Fact]

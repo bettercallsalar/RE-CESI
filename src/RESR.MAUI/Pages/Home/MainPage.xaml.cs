@@ -1,5 +1,5 @@
-using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
@@ -90,10 +90,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
-        if (!TryGetBoundItem<HomeResourceCard>(sender, out var item))
-            return;
-
-        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -103,10 +103,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        if (!TryGetBoundItem<HomeResourceCard>(sender, out var item))
-            return;
-
-        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -211,7 +211,7 @@ public partial class MainPage : ContentPage
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         return new HomeResourceCard(
-            IdResource: article.IdResource,
+            article.IdResource,
             Badge: "Article public",
             HeroCaption: "ARTICLE",
             Title: article.Title,
@@ -226,7 +226,7 @@ public partial class MainPage : ContentPage
         var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
 
         return new HomeResourceCard(
-            IdResource: @event.IdResource,
+            @event.IdResource,
             Badge: "Evenement public",
             HeroCaption: "EVENT",
             Title: @event.Title,
@@ -298,20 +298,9 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private async Task NavigateToArticleDetailAsync(int idResource, bool useOwnAccess)
+    private async Task NavigateToArticleDetailAsync(int idResource)
     {
-        if (Shell.Current is null)
-            return;
-
-        try
-        {
-            var route = $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}";
-            await Shell.Current.GoToAsync(route);
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
-        }
+        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
     }
 
     private async Task NavigateToRootAsync()
@@ -329,10 +318,16 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item)
     {
-        item = ((sender as BindableObject)?.BindingContext as TItem)!;
-        return item is not null;
+        if (sender is BindableObject bindable && bindable.BindingContext is TItem typedItem)
+        {
+            item = typedItem;
+            return true;
+        }
+
+        item = default!;
+        return false;
     }
 
     private sealed record HomeResourceCard(

@@ -1,6 +1,6 @@
 using System.Net;
-using System.Net.Http.Json;
 using RESR.MAUI.Services;
+using RESR.Models.Follows;
 
 namespace RESR.MAUI.Tests.Services;
 
@@ -9,14 +9,28 @@ public sealed class FollowsApiClientTests
     [Fact]
     public async Task ExistsAsync_ReturnsTrue_WhenEndpointReturnsNoContent()
     {
-        var session = new StubApiSession();
+        var session = new StubApiSession
+        {
+            Token = "jwt-token-for-follow-state"
+        };
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal("/api/follows/3/9", request.RequestUri?.PathAndQuery);
-            Assert.Null(request.Headers.Authorization);
+            Assert.Equal("/api/follows/me/following/9", request.RequestUri?.PathAndQuery);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("jwt-token-for-follow-state", request.Headers.Authorization.Parameter);
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idFollower": 3,
+                  "idFollowing": 9,
+                  "isFollowing": true
+                }
+                """)
+            });
         });
 
         using var httpClient = new HttpClient(handler)
@@ -32,27 +46,23 @@ public sealed class FollowsApiClientTests
     }
 
     [Fact]
-    public async Task FollowAsync_SendsBearerHeader_AndBody()
+    public async Task FollowAsync_SendsBearerHeader()
     {
         var session = new StubApiSession
         {
             Token = "jwt-token-for-follow"
         };
 
-        var handler = new StubHttpMessageHandler(async request =>
+        var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Post, request.Method);
-            Assert.Equal("/api/follows", request.RequestUri?.PathAndQuery);
+            Assert.Equal("/api/follows/9", request.RequestUri?.PathAndQuery);
             Assert.NotNull(request.Headers.Authorization);
             Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             Assert.Equal("jwt-token-for-follow", request.Headers.Authorization.Parameter);
+            Assert.Null(request.Content);
 
-            var payload = await request.Content!.ReadFromJsonAsync<RESR.Models.Follows.FollowRequest>();
-            Assert.NotNull(payload);
-            Assert.Equal(3, payload!.IdFollower);
-            Assert.Equal(9, payload.IdFollowing);
-
-            return new HttpResponseMessage(HttpStatusCode.NoContent);
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
         });
 
         using var httpClient = new HttpClient(handler)
@@ -76,7 +86,7 @@ public sealed class FollowsApiClientTests
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Delete, request.Method);
-            Assert.Equal("/api/follows/3/9", request.RequestUri?.PathAndQuery);
+            Assert.Equal("/api/follows/9", request.RequestUri?.PathAndQuery);
             Assert.NotNull(request.Headers.Authorization);
             Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             Assert.Equal("jwt-token-for-unfollow", request.Headers.Authorization.Parameter);
@@ -120,4 +130,7 @@ public sealed class FollowsApiClientTests
             Token = null;
         }
     }
+
+    private static StringContent Json(string value) =>
+        new(value, System.Text.Encoding.UTF8, "application/json");
 }
