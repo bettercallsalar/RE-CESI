@@ -1,7 +1,45 @@
 :root {
   color-scheme: light;
-  background: #ffffff;
+  --color-brand-500: #342b9a;
+  --color-surface-base: #ffffff;
+  --color-surface-muted: #f7f7fb;
+  --color-surface-strong: #2c2c2c;
+  --color-on-accent: #ffffff;
+  --color-on-strong: #ffffff;
+  --color-on-critical: #ffffff;
+  --color-ink-500: #2c2c2c;
+  --color-ink-600: #262626;
+  --color-ink-700: #1d1d1d;
+  --color-ink-800: #151515;
+  --color-ink-900: #0b0b0b;
+  --color-canvas-50: #ffffff;
+  --color-canvas-100: #f7f7fb;
+  --color-canvas-200: #d7d7d7;
+  --color-canvas-300: #aab7c8;
+  --color-focus-ring: #342b9a;
+  background: var(--color-canvas-50);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+html[data-visual-mode="contrast"] {
+  color-scheme: dark;
+  --color-brand-500: #ffd400;
+  --color-surface-base: #102a43;
+  --color-surface-muted: #0c1f31;
+  --color-surface-strong: #06111d;
+  --color-on-accent: #06111d;
+  --color-on-strong: #f8fbff;
+  --color-on-critical: #fff7f7;
+  --color-ink-500: #d3e2f2;
+  --color-ink-600: #e2edf7;
+  --color-ink-700: #edf4fb;
+  --color-ink-800: #f8fbff;
+  --color-ink-900: #ffffff;
+  --color-canvas-50: #06111d;
+  --color-canvas-100: #0b2137;
+  --color-canvas-200: #5f7ea0;
+  --color-canvas-300: #9fb8d2;
+  --color-focus-ring: #ffd400;
 }
 
 * {
@@ -17,10 +55,17 @@ body,
 
 body {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--color-canvas-50);
+  color: var(--color-ink-800);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+html[data-visual-mode="contrast"] a[href] {
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.14em;
+  text-underline-offset: 0.18em;
 }

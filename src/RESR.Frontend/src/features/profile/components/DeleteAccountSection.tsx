@@ -76,15 +76,15 @@ export function DeleteAccountSection({ isDeleting, message, onDelete }: DeleteAc
                 Annuler
               </Button>
               <Button
-                bg="ink.800"
-                color="white"
+                bg="red.600"
+                color="surface.onCritical"
                 isDisabled={!isConfirmed}
                 isLoading={isDeleting}
                 loadingText="Suppression"
                 onClick={() => {
                   void handleDelete();
                 }}
-                _hover={{ bg: "ink.800", opacity: 0.92 }}
+                _hover={{ bg: "red.700", opacity: 0.96 }}
               >
                 Supprimer
               </Button>

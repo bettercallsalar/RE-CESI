@@ -100,7 +100,7 @@ export function ReadLaterToggleButton({ idResource }: ReadLaterToggleButtonProps
     <Stack spacing={1}>
       <Button
         bg={isMarked ? "brand.500" : "white"}
-        color={isMarked ? "white" : "brand.500"}
+        color={isMarked ? "surface.onAccent" : "brand.500"}
         isLoading={isLoading || isSubmitting}
         onClick={() => {
           void toggleReadLater();
@@ -108,7 +108,7 @@ export function ReadLaterToggleButton({ idResource }: ReadLaterToggleButtonProps
         variant={isMarked ? "solid" : "outline"}
       >
         <HStack spacing={2}>
-          <AppIcon color={isMarked ? "white" : "brand.500"} icon={isMarked ? BsBookmarkFill : FiBookmark} size="sm" />
+          <AppIcon color={isMarked ? "surface.onAccent" : "brand.500"} icon={isMarked ? BsBookmarkFill : FiBookmark} size="sm" />
           <Text as="span">{isMarked ? "Enregistre" : "Lire plus tard"}</Text>
         </HStack>
       </Button>

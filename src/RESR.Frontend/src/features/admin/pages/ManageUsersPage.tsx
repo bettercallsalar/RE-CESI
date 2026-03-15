@@ -230,7 +230,7 @@ export function ManageUsersPage() {
                       <Button
                         _hover={user.isBanned ? { bg: "#276749" } : { bg: "#9B2C2C" }}
                         bg={user.isBanned ? "#2F855A" : "#C53030"}
-                        color="white"
+                        color={user.isBanned ? "surface.onStrong" : "surface.onCritical"}
                         fontSize={{ base: "14px", md: "15px" }}
                         h="40px"
                         isDisabled={isSubmitting}
