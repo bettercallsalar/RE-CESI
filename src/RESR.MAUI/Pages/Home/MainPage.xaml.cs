@@ -75,6 +75,11 @@ public partial class MainPage : ContentPage
         await NavigateToAsync(nameof(CreateArticlePage));
     }
 
+    private async void OnCreateEventHeaderTapped(object? sender, TappedEventArgs e)
+    {
+        await NavigateToAsync(nameof(CreateEventPage));
+    }
+
     private async void OnRegisterHeaderTapped(object? sender, TappedEventArgs e)
     {
         await NavigateToAsync(nameof(RegisterPage));
@@ -111,7 +116,7 @@ public partial class MainPage : ContentPage
     private void OnMenuClicked(object? sender, EventArgs e)
     {
         StatusLabel.Text = _session.IsAuthenticated
-            ? "Utilise les liens pour parcourir les ressources, creer un article ou acceder a ton profil."
+            ? "Utilise les liens pour parcourir les ressources, creer un article, creer un evenement ou acceder a ton profil."
             : "Utilise les liens Articles et Evenements pour ouvrir les listes de recherche, ou connecte-toi.";
     }
 
@@ -198,6 +203,7 @@ public partial class MainPage : ContentPage
         HeaderAccountLabel.Text = isAuthenticated ? "Mon profil" : "Connexion";
         HeaderRegisterLabel.IsVisible = !isAuthenticated;
         HeaderCreateArticleLabel.IsVisible = isAuthenticated;
+        HeaderCreateEventLabel.IsVisible = isAuthenticated;
         HeaderLogoutLabel.IsVisible = isAuthenticated;
     }
 

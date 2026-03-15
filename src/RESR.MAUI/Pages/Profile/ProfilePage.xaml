@@ -2,41 +2,222 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Profile.ProfilePage"
-             Title="Mon profil">
+             Title="Mon profil"
+             BackgroundColor="#F4F1EC"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="SectionCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style x:Key="FieldLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+        <Style x:Key="InputBorderStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="#111111" />
+            <Setter Property="StrokeThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        </Style>
+        <Style x:Key="InputTextStyle" TargetType="InputView">
+            <Setter Property="TextColor" Value="#111111" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="PlaceholderColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="PickerTextStyle" TargetType="Picker">
+            <Setter Property="TextColor" Value="#111111" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TitleColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="DateTextStyle" TargetType="DatePicker">
+            <Setter Property="TextColor" Value="#111111" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="BackgroundColor" Value="#2E2AA5" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Padding" Value="18,12" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+    </ContentPage.Resources>
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
-            <Label Text="Mon profil"
-                   Style="{StaticResource Headline}"/>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="1100"
+                             Spacing="24"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='34,24,34,36', Default='48,28,48,44'}">
 
-            <Label Text="Nom d'utilisateur"/>
-            <Label x:Name="UsernameLabel" FontAttributes="Bold"/>
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='16', Tablet='20', Default='22'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 26">
+                <Grid RowDefinitions="Auto,Auto"
+                      ColumnDefinitions="Auto,*"
+                      RowSpacing="12"
+                      ColumnSpacing="18">
+                    <VerticalStackLayout Grid.RowSpan="2"
+                                         Spacing="6"
+                                         WidthRequest="{OnIdiom Phone='92', Default='118'}">
+                        <Grid ColumnDefinitions="10,10,10,10" ColumnSpacing="2" HorizontalOptions="Start">
+                            <BoxView Grid.Column="0" Color="#2444D7" HeightRequest="10" WidthRequest="10" />
+                            <BoxView Grid.Column="1" Color="#F7F4EF" HeightRequest="10" WidthRequest="10" />
+                            <BoxView Grid.Column="2" Color="#E24242" HeightRequest="10" WidthRequest="10" />
+                        </Grid>
+                        <Label Text="MINISTERE&#10;DES SOLIDARITES&#10;ET DE LA SANTE"
+                               FontSize="{OnIdiom Phone='9', Default='11'}"
+                               FontAttributes="Bold"
+                               LineHeight="1.0"
+                               TextColor="#111111" />
+                        <Label Text="France" FontSize="10" TextColor="#585570" />
+                    </VerticalStackLayout>
 
-            <Label Text="Email"/>
-            <Label x:Name="EmailLabel" FontAttributes="Bold"/>
+                    <Label Grid.Column="1"
+                           Text="Mon profil"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           FontAttributes="Bold"
+                           FontSize="{OnIdiom Phone='24', Default='30'}"
+                           TextColor="#2E2AA5" />
 
-            <Label Text="Prénom"/>
-            <Label x:Name="FirstNameLabel" FontAttributes="Bold"/>
+                    <Label Grid.Row="1"
+                           Grid.Column="1"
+                           Text="Mets a jour tes informations personnelles et ton departement depuis cet espace."
+                           Style="{StaticResource SectionCaptionStyle}"
+                           HorizontalTextAlignment="Center" />
+                </Grid>
+            </Border>
 
-            <Label Text="Date de naissance"/>
-            <Label x:Name="BirthDateLabel" FontAttributes="Bold"/>
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='18', Tablet='22', Default='26'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="18">
+                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,*'}"
+                          RowDefinitions="{OnIdiom Phone='Auto,Auto', Default='Auto'}"
+                          ColumnSpacing="18"
+                          RowSpacing="16">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Nom d'utilisateur" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Entry x:Name="UsernameEntry" Placeholder="Nom d'utilisateur" Style="{StaticResource InputTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
 
-            <Label Text="Biographie"/>
-            <Label x:Name="BioLabel" FontAttributes="Bold"/>
+                        <VerticalStackLayout Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                             Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                             Spacing="8">
+                            <Label Text="Email" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Entry x:Name="EmailEntry" Keyboard="Email" Placeholder="adresse@email.fr" Style="{StaticResource InputTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
 
-            <Label Text="Département"/>
-            <Label x:Name="DepartmentLabel" FontAttributes="Bold"/>
+                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,*'}"
+                          RowDefinitions="{OnIdiom Phone='Auto,Auto', Default='Auto'}"
+                          ColumnSpacing="18"
+                          RowSpacing="16">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Prenom" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Entry x:Name="FirstNameEntry" Placeholder="Prenom" Style="{StaticResource InputTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
 
-            <Label Text="Vérifié"/>
-            <Label x:Name="VerifiedLabel" FontAttributes="Bold"/>
+                        <VerticalStackLayout Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                             Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                             Spacing="8">
+                            <Label Text="Date de naissance" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <DatePicker x:Name="BirthDatePicker" Style="{StaticResource DateTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
 
-            <Button Text="Se déconnecter"
-                    Clicked="OnLogoutClicked"/>
+                    <VerticalStackLayout Spacing="8">
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                            <CheckBox x:Name="HasBirthDateCheckBox" IsChecked="False" CheckedChanged="OnHasBirthDateChanged" />
+                            <Label Text="Renseigner une date de naissance" Style="{StaticResource SectionCaptionStyle}" VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
 
-            <Label x:Name="StatusLabel"
-                   Text="Chargement du profil..."
-                   LineBreakMode="WordWrap"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Biographie" Style="{StaticResource FieldLabelStyle}" />
+                        <Border Style="{StaticResource InputBorderStyle}" Padding="12,10">
+                            <Editor x:Name="BioEditor" Placeholder="Quelques mots sur toi" AutoSize="TextChanges" HeightRequest="140" Style="{StaticResource InputTextStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Departement" Style="{StaticResource FieldLabelStyle}" />
+                        <Border Style="{StaticResource InputBorderStyle}">
+                            <Picker x:Name="DepartmentPicker"
+                                    Title="Choisir un departement"
+                                    ItemsSource="{Binding Departments}"
+                                    ItemDisplayBinding="{Binding DisplayLabel}"
+                                    Style="{StaticResource PickerTextStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,*'}"
+                          RowDefinitions="{OnIdiom Phone='Auto,Auto', Default='Auto'}"
+                          ColumnSpacing="18"
+                          RowSpacing="16">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Verification" Style="{StaticResource FieldLabelStyle}" />
+                            <Label x:Name="VerifiedLabel" Style="{StaticResource SectionCaptionStyle}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                             Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                             Spacing="6">
+                            <Label Text="Statut du compte" Style="{StaticResource FieldLabelStyle}" />
+                            <Label x:Name="BanLabel" Style="{StaticResource SectionCaptionStyle}" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,*'}"
+                          RowDefinitions="{OnIdiom Phone='Auto,Auto', Default='Auto'}"
+                          ColumnSpacing="14"
+                          RowSpacing="12">
+                        <Button x:Name="SaveButton"
+                                Text="Enregistrer"
+                                Clicked="OnSaveClicked"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                        <Button x:Name="LogoutButton"
+                                Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                Text="Se deconnecter"
+                                Clicked="OnLogoutClicked"
+                                BackgroundColor="White"
+                                TextColor="#111111"
+                                BorderColor="#111111"
+                                BorderWidth="1.2"
+                                CornerRadius="14"
+                                MinimumHeightRequest="48" />
+                    </Grid>
+
+                    <Border BackgroundColor="#F8F5F2"
+                            Padding="14"
+                            Stroke="#111111"
+                            StrokeShape="RoundRectangle 16">
+                        <Label x:Name="StatusLabel"
+                               Text="Chargement du profil..."
+                               LineBreakMode="WordWrap"
+                               Style="{StaticResource SectionCaptionStyle}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

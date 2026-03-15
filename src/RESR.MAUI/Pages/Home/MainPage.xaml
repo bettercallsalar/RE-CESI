@@ -148,6 +148,14 @@
                                     <TapGestureRecognizer Tapped="OnCreateArticleHeaderTapped" />
                                 </Label.GestureRecognizers>
                             </Label>
+                            <Label x:Name="HeaderCreateEventLabel"
+                                   Text="Creer un evenement"
+                                   Style="{StaticResource HeaderLinkLabelStyle}"
+                                   IsVisible="False">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnCreateEventHeaderTapped" />
+                                </Label.GestureRecognizers>
+                            </Label>
                             <Label x:Name="HeaderLogoutLabel"
                                    Text="Logout"
                                    Style="{StaticResource HeaderLinkLabelStyle}"

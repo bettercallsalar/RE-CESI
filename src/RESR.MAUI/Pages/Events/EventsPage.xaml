@@ -51,7 +51,7 @@
             </VerticalStackLayout>
 
             <Grid Grid.Row="1"
-                  ColumnDefinitions="*,Auto"
+                  ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="12">
                 <SearchBar x:Name="KeywordSearchBar"
                            Placeholder="Rechercher un evenement"
@@ -61,6 +61,11 @@
                         Grid.Column="1"
                         Text="Rechercher"
                         Clicked="OnSearchButtonClicked" />
+                <Button x:Name="CreateEventButton"
+                        Grid.Column="2"
+                        Text="Creer"
+                        IsVisible="False"
+                        Clicked="OnCreateEventClicked" />
             </Grid>
 
             <HorizontalStackLayout Grid.Row="2"
@@ -109,6 +114,10 @@
                                            Style="{StaticResource CardMetaStyle}" />
                                     <Label Text="{Binding Summary}"
                                            Style="{StaticResource CardSummaryStyle}" />
+                                    <Button Text="Modifier"
+                                            Clicked="OnEditEventClicked"
+                                            CommandParameter="{Binding IdResource}"
+                                            HorizontalOptions="End" />
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>

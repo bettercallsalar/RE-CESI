@@ -1,5 +1,6 @@
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
 using RESR.Models.Users;
@@ -42,6 +43,11 @@ public partial class HomePage : ContentPage
         await Shell.Current.GoToAsync(nameof(CreateArticlePage));
     }
 
+    private async void OnGoToCreateEventClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(CreateEventPage));
+    }
+
     private void UpdateButtons()
     {
         var isAuthenticated = _session.IsAuthenticated;
@@ -49,5 +55,6 @@ public partial class HomePage : ContentPage
         RegisterButton.IsVisible = !isAuthenticated;
         ProfileButton.IsVisible = isAuthenticated;
         CreateArticleButton.IsVisible = isAuthenticated;
+        CreateEventButton.IsVisible = isAuthenticated;
     }
 }

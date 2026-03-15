@@ -109,6 +109,10 @@
                                            Style="{StaticResource CardMetaStyle}" />
                                     <Label Text="{Binding Summary}"
                                            Style="{StaticResource CardSummaryStyle}" />
+                                    <Button Text="Modifier"
+                                            Clicked="OnEditArticleClicked"
+                                            CommandParameter="{Binding IdResource}"
+                                            HorizontalOptions="End" />
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>

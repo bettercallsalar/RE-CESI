@@ -8,4 +8,5 @@ public interface IUsersApiClient
     Task LoginAsync(Login login, CancellationToken ct);
     Task<PaginatedUsersResponse> GetUsersAsync(CancellationToken ct);
     Task<UserResponse?> GetMeAsync(CancellationToken ct);
+    Task<UserResponse> UpdateOwnProfileAsync(UpdateOwnProfileRequest request, CancellationToken ct);
 }

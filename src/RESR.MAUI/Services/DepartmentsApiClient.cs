@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+using System.Text.Json;
 using RESR.Models.Departments;
 
 namespace RESR.MAUI.Services;
@@ -25,7 +25,11 @@ public sealed class DepartmentsApiClient : IDepartmentsApiClient
                 throw new ApiException(response.StatusCode, message);
             }
 
-            var departments = await response.Content.ReadFromJsonAsync<IReadOnlyList<DepartmentResponse>>(cancellationToken: ct);
+            await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
+            var departments = await JsonSerializer.DeserializeAsync<IReadOnlyList<DepartmentResponse>>(
+                responseStream,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                ct);
             return departments ?? Array.Empty<DepartmentResponse>();
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)

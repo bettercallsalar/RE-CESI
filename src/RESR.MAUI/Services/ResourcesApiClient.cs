@@ -1,5 +1,5 @@
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using System.Text.Json;
 using RESR.Models.Resources;
 
 namespace RESR.MAUI.Services;
@@ -54,7 +54,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
                 throw new ApiException(response.StatusCode, message);
             }
 
-            var payload = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: ct);
+            await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
+            var payload = await JsonSerializer.DeserializeAsync<TResponse>(
+                responseStream,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web),
+                ct);
             return payload ?? fallback;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
