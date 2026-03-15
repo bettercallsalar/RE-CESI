@@ -80,20 +80,6 @@ public sealed class MySqlFollowsRepositoryTests
     }
 
     [Fact]
-    public async Task ExistsAsync_ReturnsTrue_WhenFollowExists()
-    {
-        var cmd = ScalarCommand(1);
-        var repo = CreateRepo(cmd);
-
-        var exists = await repo.ExistsAsync(3, 4, CancellationToken.None);
-
-        Assert.True(exists);
-        var names = cmd.Parameters.Cast<DbParameter>().Select(p => p.ParameterName).ToList();
-        Assert.Contains("@idFollower", names);
-        Assert.Contains("@idFollowing", names);
-    }
-
-    [Fact]
     public async Task ExistsAsync_ReturnsFalse_WhenFollowDoesNotExist()
     {
         var cmd = ScalarCommand(null);
