@@ -87,7 +87,7 @@ export function AdminDashboardPage() {
                 Gestion des utilisateurs
               </Text>
               <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
-                Listez uniquement les comptes avec le role User et gerez-les depuis un endpoint backend securise.
+                Recherchez les comptes, filtrez-les par role et mettez a jour leur role depuis une interface admin securisee.
               </Text>
             </Stack>
             <HStack justify="space-between" spacing={4}>

@@ -25,7 +25,7 @@ public sealed class UserFactory : IUserFactory
             Bio = bio,
             Department = department,
             IdRole = idRole,
-            IsVerified = false,
+            IsVerified = true,
             IsBanned = false,
             DeletedAt = null
         };

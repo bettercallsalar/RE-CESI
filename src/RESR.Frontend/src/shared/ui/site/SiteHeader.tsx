@@ -16,8 +16,9 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import type { IconType } from "react-icons";
-import { FiBookmark, FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { FiBookmark, FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiLogOut, FiMenu, FiShield, FiUser, FiUsers } from "react-icons/fi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { AppIcon } from "@/shared/ui/icons/AppIcon";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
@@ -30,6 +31,14 @@ interface NavLinkItem {
   icon: IconType;
   href: string;
 }
+
+interface NavActionItem {
+  label: string;
+  icon: IconType;
+  onClick: () => void;
+}
+
+type UserMenuItem = NavLinkItem | NavActionItem;
 
 function HeaderLink({ label, icon, href }: NavLinkItem) {
   return (
@@ -66,26 +75,51 @@ function MobileHeaderLink({ label, icon, href }: NavLinkItem) {
   );
 }
 
+function MobileHeaderAction({ label, icon, onClick }: NavActionItem) {
+  return (
+    <Button
+      _hover={{ bg: "canvas.100", color: "ink.800" }}
+      borderRadius="12px"
+      color="brand.500"
+      justifyContent="start"
+      onClick={onClick}
+      px={3}
+      py={2.5}
+      variant="ghost"
+      w="100%"
+    >
+      <HStack align="center" minH="24px" spacing={2}>
+        <AppIcon color="brand.500" icon={icon} size="lg" />
+        <Text fontSize="15px" fontWeight="600" lineHeight="1.3">
+          {label}
+        </Text>
+      </HStack>
+    </Button>
+  );
+}
+
 function getUserLabel(firstName?: string, username?: string) {
   return firstName?.trim() || username?.trim() || "Mon compte";
 }
 
-function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard: boolean; label: string }) {
-  const items: NavLinkItem[] = canAccessAdminDashboard
+function UserMenu({ canAccessAdminDashboard, label, onSignOut }: { canAccessAdminDashboard: boolean; label: string; onSignOut: () => void }) {
+  const items: UserMenuItem[] = canAccessAdminDashboard
       ? [
         { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Marques", icon: FiBookmark, href: "/marques" },
         { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" },
+        { label: "Se deconnecter", icon: FiLogOut, onClick: onSignOut }
       ]
     : [
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Marques", icon: FiBookmark, href: "/marques" },
         { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" },
+        { label: "Se deconnecter", icon: FiLogOut, onClick: onSignOut }
       ];
 
   return (
@@ -116,25 +150,46 @@ function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard:
       </MenuButton>
       <MenuList bg="white" borderColor="canvas.200" boxShadow="xl" minW="220px" p={2}>
         {items.map((item) => (
-          <MenuItem
-            as="a"
-            _focus={{ bg: "canvas.100", color: "ink.800" }}
-            _hover={{ bg: "canvas.100", color: "ink.800" }}
-            alignItems="center"
-            bg="white"
-            borderRadius="10px"
-            color="brand.500"
-            fontSize="16px"
-            fontWeight="600"
-            href={item.href}
-            key={item.label}
-            minH="52px"
-          >
-            <HStack align="center" spacing={2}>
-              <AppIcon color="brand.500" icon={item.icon} size="lg" />
-              <Text>{item.label}</Text>
-            </HStack>
-          </MenuItem>
+          "href" in item ? (
+            <MenuItem
+              as="a"
+              _focus={{ bg: "canvas.100", color: "ink.800" }}
+              _hover={{ bg: "canvas.100", color: "ink.800" }}
+              alignItems="center"
+              bg="white"
+              borderRadius="10px"
+              color="brand.500"
+              fontSize="16px"
+              fontWeight="600"
+              href={item.href}
+              key={item.label}
+              minH="52px"
+            >
+              <HStack align="center" spacing={2}>
+                <AppIcon color="brand.500" icon={item.icon} size="lg" />
+                <Text>{item.label}</Text>
+              </HStack>
+            </MenuItem>
+          ) : (
+            <MenuItem
+              _focus={{ bg: "canvas.100", color: "ink.800" }}
+              _hover={{ bg: "canvas.100", color: "ink.800" }}
+              alignItems="center"
+              bg="white"
+              borderRadius="10px"
+              color="brand.500"
+              fontSize="16px"
+              fontWeight="600"
+              key={item.label}
+              minH="52px"
+              onClick={item.onClick}
+            >
+              <HStack align="center" spacing={2}>
+                <AppIcon color="brand.500" icon={item.icon} size="lg" />
+                <Text>{item.label}</Text>
+              </HStack>
+            </MenuItem>
+          )
         ))}
       </MenuList>
     </Menu>
@@ -143,12 +198,14 @@ function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard:
 
 function MobileNavigation({
   canAccessAdminDashboard,
+  onSignOut,
   variant,
   userLabel
 }: {
   canAccessAdminDashboard: boolean;
   variant: "public" | "authenticated";
   userLabel: string;
+  onSignOut: () => void;
 }) {
   const userDisclosure = useDisclosure();
   const publicItems: NavLinkItem[] = [
@@ -157,21 +214,23 @@ function MobileNavigation({
     { label: "Events", icon: FiCalendar, href: "/events" },
     { label: "Mon compte", icon: FiUser, href: "/login" }
   ];
-  const userItems: NavLinkItem[] = canAccessAdminDashboard
+  const userItems: UserMenuItem[] = canAccessAdminDashboard
     ? [
         { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Marques", icon: FiBookmark, href: "/marques" },
         { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" },
+        { label: "Se deconnecter", icon: FiLogOut, onClick: onSignOut }
       ]
     : [
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
         { label: "Marques", icon: FiBookmark, href: "/marques" },
         { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
-        { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
+        { label: "Mes events", icon: FiCalendar, href: "/mes-events" },
+        { label: "Se deconnecter", icon: FiLogOut, onClick: onSignOut }
       ];
   const authenticatedItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
@@ -228,9 +287,13 @@ function MobileNavigation({
           </Button>
           <Collapse in={userDisclosure.isOpen}>
             <Stack pt={1.5} spacing={1}>
-              {userItems.map((item) => (
-                <MobileHeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
-              ))}
+              {userItems.map((item) =>
+                "href" in item ? (
+                  <MobileHeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
+                ) : (
+                  <MobileHeaderAction icon={item.icon} key={item.label} label={item.label} onClick={item.onClick} />
+                )
+              )}
             </Stack>
           </Collapse>
         </Box>
@@ -241,8 +304,12 @@ function MobileNavigation({
 
 export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const { isOpen, onToggle } = useDisclosure();
-  const { canAccessAdminDashboard, user } = useAuth();
+  const { canAccessAdminDashboard, signOut, user } = useAuth();
   const userLabel = getUserLabel(user?.firstName, user?.username);
+  const handleSignOut = () => {
+    signOut();
+    navigateTo("/login", { replace: true });
+  };
   const publicItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
     { label: "Articles", icon: FiFileText, href: "/articles" },
@@ -274,7 +341,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
               {(variant === "authenticated" ? authenticatedItems : publicItems).map((item) => (
                 <HeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
               ))}
-              {variant === "authenticated" ? <UserMenu canAccessAdminDashboard={canAccessAdminDashboard} label={userLabel} /> : null}
+              {variant === "authenticated" ? <UserMenu canAccessAdminDashboard={canAccessAdminDashboard} label={userLabel} onSignOut={handleSignOut} /> : null}
             </HStack>
           </Show>
           <Show below="lg">
@@ -296,7 +363,7 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
 
       <Show below="lg">
         <Collapse animateOpacity in={isOpen}>
-          <MobileNavigation canAccessAdminDashboard={canAccessAdminDashboard} userLabel={userLabel} variant={variant} />
+          <MobileNavigation canAccessAdminDashboard={canAccessAdminDashboard} onSignOut={handleSignOut} userLabel={userLabel} variant={variant} />
         </Collapse>
       </Show>
     </Box>

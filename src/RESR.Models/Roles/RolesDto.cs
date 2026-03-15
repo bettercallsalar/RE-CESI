@@ -12,3 +12,9 @@ public sealed record RoleResponse(
     string? Description,
     IReadOnlyList<PermissionResponse> Permissions
 );
+
+public sealed record RoleSummaryResponse(
+    int IdRole,
+    string Name,
+    string? Description
+);
