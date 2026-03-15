@@ -8,6 +8,7 @@ public partial class EventsPage : ContentPage
     private const int PageSize = 10;
 
     private readonly IResourcesApiClient _resourcesApiClient;
+    private readonly IApiSession _session;
     private CancellationTokenSource? _loadCts;
     private bool _hasLoadedOnce;
     private int _currentPage;
@@ -16,9 +17,10 @@ public partial class EventsPage : ContentPage
     private string? _currentKeyword;
     private IReadOnlyList<EventListItem> _items = Array.Empty<EventListItem>();
 
-    public EventsPage(IResourcesApiClient resourcesApiClient)
+    public EventsPage(IResourcesApiClient resourcesApiClient, IApiSession session)
     {
         _resourcesApiClient = resourcesApiClient;
+        _session = session;
         InitializeComponent();
         ApplyState();
     }
@@ -26,6 +28,7 @@ public partial class EventsPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        CreateEventButton.IsVisible = _session.IsAuthenticated;
 
         if (_hasLoadedOnce)
             return;
@@ -69,6 +72,19 @@ public partial class EventsPage : ContentPage
             return;
 
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
+    }
+
+    private async void OnCreateEventClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(CreateEventPage));
+    }
+
+    private async void OnEditEventClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button { CommandParameter: int idResource })
+        {
+            await Shell.Current.GoToAsync($"{nameof(EditEventPage)}?idResource={idResource}");
+        }
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)
@@ -170,6 +186,7 @@ public partial class EventsPage : ContentPage
         var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
 
         return new EventListItem(
+            @event.IdResource,
             @event.Title,
             BuildSubtitle(@event, location),
             $"Organise par #{@event.IdUser}  |  {location}",
@@ -222,6 +239,7 @@ public partial class EventsPage : ContentPage
     }
 
     private sealed record EventListItem(
+        int IdResource,
         string Title,
         string Subtitle,
         string Meta,

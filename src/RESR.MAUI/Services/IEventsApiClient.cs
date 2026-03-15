@@ -2,17 +2,17 @@ using RESR.Models.Resources;
 
 namespace RESR.MAUI.Services;
 
-public interface IArticlesApiClient
+public interface IEventsApiClient
 {
-    Task<ArticleResponse> GetByIdAsync(int idResource, CancellationToken ct);
+    Task<EventResponse> GetByIdAsync(int idResource, CancellationToken ct);
     Task CreateAsync(
-        CreateArticleRequest request,
+        CreateEventRequest request,
         IReadOnlyList<SelectedImageUpload> images,
         int? defaultImageIndex,
         CancellationToken ct);
     Task UpdateAsync(
         int idResource,
-        UpdateArticleRequest request,
+        UpdateEventRequest request,
         IReadOnlyList<SelectedImageUpload> images,
         int? defaultImageIndex,
         CancellationToken ct);

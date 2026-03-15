@@ -71,6 +71,12 @@ public partial class ArticlesPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
+    private async void OnEditArticleClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button { CommandParameter: int idResource })
+            await Shell.Current.GoToAsync($"{nameof(EditArticlePage)}?idResource={idResource}");
+    }
+
     private async void OnArticleTapped(object? sender, TappedEventArgs e)
     {
         await OpenArticleAsync(sender);
