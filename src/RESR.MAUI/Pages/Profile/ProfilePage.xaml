@@ -2,41 +2,106 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Profile.ProfilePage"
-             Title="Mon profil">
+             Title="Mon profil"
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="10">
-            <Label Text="Mon profil"
-                   Style="{StaticResource Headline}"/>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="820"
+                             Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
+                             Spacing="18">
 
-            <Label Text="Nom d'utilisateur"/>
-            <Label x:Name="UsernameLabel" FontAttributes="Bold"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Label Text="Email"/>
-            <Label x:Name="EmailLabel" FontAttributes="Bold"/>
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Mon profil" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Retrouvez vos informations de compte dans une presentation plus lisible et plus stable sur mobile." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
 
-            <Label Text="Prénom"/>
-            <Label x:Name="FirstNameLabel" FontAttributes="Bold"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Style="{StaticResource FieldLabelStyle}"
+                           Text="Identite" />
+                    <Label x:Name="UsernameLabel"
+                           FontSize="26"
+                           Style="{StaticResource ValueLabelStyle}"
+                           Text="Chargement..." />
+                    <Label x:Name="EmailLabel"
+                           Style="{StaticResource BodyMutedLabelStyle}"
+                           Text="-" />
+                </VerticalStackLayout>
+            </Border>
 
-            <Label Text="Date de naissance"/>
-            <Label x:Name="BirthDateLabel" FontAttributes="Bold"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Prenom" />
+                        <Label x:Name="FirstNameLabel"
+                               Style="{StaticResource ValueLabelStyle}"
+                               Text="-" />
+                    </VerticalStackLayout>
 
-            <Label Text="Biographie"/>
-            <Label x:Name="BioLabel" FontAttributes="Bold"/>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Date de naissance" />
+                        <Label x:Name="BirthDateLabel"
+                               Style="{StaticResource ValueLabelStyle}"
+                               Text="-" />
+                    </VerticalStackLayout>
 
-            <Label Text="Département"/>
-            <Label x:Name="DepartmentLabel" FontAttributes="Bold"/>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Departement" />
+                        <Label x:Name="DepartmentLabel"
+                               Style="{StaticResource ValueLabelStyle}"
+                               Text="-" />
+                    </VerticalStackLayout>
 
-            <Label Text="Vérifié"/>
-            <Label x:Name="VerifiedLabel" FontAttributes="Bold"/>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Verification" />
+                        <Border x:Name="VerifiedBadge"
+                                HorizontalOptions="Start"
+                                Style="{StaticResource OutlineBadgeBorderStyle}">
+                            <Label x:Name="VerifiedLabel"
+                                   Style="{StaticResource OutlineBadgeLabelStyle}"
+                                   Text="-" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Button Text="Se déconnecter"
-                    Clicked="OnLogoutClicked"/>
+                    <VerticalStackLayout Spacing="6">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Biographie" />
+                        <Label x:Name="BioLabel"
+                               LineBreakMode="WordWrap"
+                               Style="{StaticResource BodyLabelStyle}"
+                               Text="-" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
 
-            <Label x:Name="StatusLabel"
-                   Text="Chargement du profil..."
-                   LineBreakMode="WordWrap"/>
+            <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="12">
+                    <Label x:Name="StatusLabel"
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Chargement du profil..." />
+
+                    <Button x:Name="LogoutButton"
+                            Clicked="OnLogoutClicked"
+                            Text="Se deconnecter" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

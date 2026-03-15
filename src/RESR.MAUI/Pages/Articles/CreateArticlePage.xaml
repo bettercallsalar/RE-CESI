@@ -2,60 +2,111 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.CreateArticlePage"
-             Title="Nouvel article">
+             Title="Nouvel article"
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="12">
-            <Label Text="Créer un article"
-                   Style="{StaticResource Headline}"/>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="860"
+                             Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
+                             Spacing="18">
 
-            <Label Text="Titre (max 50 caractères)"/>
-            <Entry x:Name="TitleEntry"
-                   Placeholder="Titre de l'article"
-                   MaxLength="50"
-                   TextChanged="OnTitleChanged"/>
-            <Label x:Name="TitleCounterLabel"
-                   Text="0/50"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Label Text="Visibilité"/>
-            <Picker x:Name="VisibilityPicker"
-                    Title="Choisir une visibilité"/>
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Publier un article" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Le formulaire reprend les reperes visuels du web tout en restant compact et ergonomique sur Android." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
 
-            <Label Text="Catégorie"/>
-            <Picker x:Name="CategoryPicker"
-                    Title="Choisir une catégorie"
-                    ItemsSource="{Binding Categories}"
-                    ItemDisplayBinding="{Binding Name}"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Nouvel article" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Les champs essentiels sont regroupes avec des aides de saisie plus visibles." />
+                    </VerticalStackLayout>
 
-            <Label Text="Description (max 5000 caractères)"/>
-            <Editor x:Name="DescriptionEditor"
-                    Placeholder="Résumé de l'article"
-                    AutoSize="TextChanges"
-                    MaxLength="5000"
-                    HeightRequest="160"/>
-            <Label Text="Limite: 5000 caractères"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Titre" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="TitleEntry"
+                                   MaxLength="50"
+                                   Placeholder="Titre de l'article"
+                                   TextChanged="OnTitleChanged" />
+                        </Border>
+                        <Label x:Name="TitleCounterLabel"
+                               Style="{StaticResource FieldHintLabelStyle}"
+                               Text="0/50" />
+                    </VerticalStackLayout>
 
-            <Label Text="Contenu"/>
-            <Editor x:Name="ContentEditor"
-                    Placeholder="Écris ton article ici..."
-                    AutoSize="TextChanges"
-                    HeightRequest="260"/>
-            <Label Text="Contenu obligatoire"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Visibilite" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Picker x:Name="VisibilityPicker"
+                                    Title="Choisir une visibilite" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Button Text="Créer l'article"
-                    Clicked="OnCreateClicked"
-                    x:Name="CreateButton"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Categorie" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Picker x:Name="CategoryPicker"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    ItemsSource="{Binding Categories}"
+                                    Title="Choisir une categorie" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label x:Name="StatusLabel"
-                   Text="Renseigne les champs obligatoires."
-                   LineBreakMode="WordWrap"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Description" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Editor x:Name="DescriptionEditor"
+                                    AutoSize="TextChanges"
+                                    HeightRequest="140"
+                                    MaxLength="5000"
+                                    Placeholder="Resume de l'article" />
+                        </Border>
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Limite : 5000 caracteres." />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Contenu" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Editor x:Name="ContentEditor"
+                                    AutoSize="TextChanges"
+                                    HeightRequest="240"
+                                    Placeholder="Ecrivez votre article ici..." />
+                        </Border>
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Le contenu est obligatoire." />
+                    </VerticalStackLayout>
+
+                    <Label x:Name="StatusLabel"
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Renseignez les champs obligatoires." />
+
+                    <Button x:Name="CreateButton"
+                            Clicked="OnCreateClicked"
+                            Text="Publier l'article" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>
