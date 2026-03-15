@@ -29,10 +29,10 @@ export function AdminDashboardPage() {
           <Stack bg="white" border="1px solid" borderColor="canvas.200" borderRadius="16px" minH="220px" p={{ base: 5, md: 6 }} spacing={5}>
             <Stack spacing={2}>
               <Text color="ink.800" fontSize={{ base: "20px", md: "22px" }} fontWeight="700">
-                Ressources a approuver
+                Articles et evenements a approuver
               </Text>
               <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
-                Ouvrez la page articles ou evenements selon vos permissions, puis approuvez ou desapprouvez chaque ressource depuis son detail.
+                Ouvrez la page articles ou evenements selon vos permissions, puis approuvez ou desapprouvez chaque article ou evenement depuis son detail.
               </Text>
             </Stack>
             <HStack flexWrap="wrap" justify="space-between" spacing={4}>
@@ -87,7 +87,7 @@ export function AdminDashboardPage() {
                 Gestion des utilisateurs
               </Text>
               <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
-                Listez uniquement les comptes avec le role User et gerez-les depuis un endpoint backend securise.
+                Recherchez les comptes, filtrez-les par role et mettez a jour leur role depuis une interface admin securisee.
               </Text>
             </Stack>
             <HStack justify="space-between" spacing={4}>

@@ -88,6 +88,17 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
         return user is null ? NotFound() : Ok(ToResponse(user));
     }
 
+    [HttpGet("{idUser:int}/profile")]
+    public async Task<ActionResult<PublicUserProfileResponse>> GetPublicProfile([FromRoute] int idUser, CancellationToken ct)
+    {
+        var (authResult, _) = await RequireAuthenticatedUserAsync(ct);
+        if (authResult is not null)
+            return authResult;
+
+        var user = await _service.GetByIdAsync(idUser, ct);
+        return user is null ? NotFound() : Ok(ToPublicProfileResponse(user));
+    }
+
     [HttpGet("me")]
     public async Task<ActionResult<UserResponse>> GetOwnProfile(CancellationToken ct)
     {
@@ -260,5 +271,14 @@ public sealed class UsersController : AuthenticatedResourceControllerBase
         u.IsBanned,
         u.Department,
         u.IdRole
+    );
+
+    private static PublicUserProfileResponse ToPublicProfileResponse(RESR.Models.Users.User u) => new(
+        u.IdUser,
+        u.Username,
+        u.FirstName,
+        u.Bio,
+        u.IsVerified,
+        u.Department
     );
 }

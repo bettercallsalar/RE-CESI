@@ -97,7 +97,7 @@
 
                     <Label Grid.Row="1"
                            Grid.Column="1"
-                           Text="Preparer un article lisible, structuré et simple à retrouver."
+                           Text="Preparer un article lisible, structure et simple a retrouver."
                            Style="{StaticResource SectionCaptionStyle}"
                            HorizontalTextAlignment="Center" />
                 </Grid>

@@ -179,7 +179,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         return @event is null ? NotFound() : Ok(await ToResponseAsync(@event, ct));
     }
 
-    [AuthorizePermission(PermissionNames.CreateResource)]
+    [AuthorizePermission]
     [HttpPost]
     public async Task<ActionResult> Create([FromForm] CreateEventFormRequest req, CancellationToken ct)
     {
@@ -215,7 +215,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.EditResource)]
+    [AuthorizePermission]
     [HttpPatch("{idResource:int}")]
     public async Task<ActionResult<EventResponse>> Update(
         [FromRoute] int idResource,
@@ -267,7 +267,7 @@ public sealed class EventsController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.DeleteResource)]
+    [AuthorizePermission]
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {

@@ -1,9 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Linq;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Services;
-using RESR.Models.Departments;
 using RESR.Models.Users;
 
 namespace RESR.MAUI.Pages.Profile;
@@ -11,22 +9,24 @@ namespace RESR.MAUI.Pages.Profile;
 public partial class ProfilePage : ContentPage
 {
     private readonly IUsersApiClient _usersApiClient;
-    private readonly IDepartmentsApiClient _departmentsApiClient;
+    private readonly IMarkedResourcesService _markedResourcesService;
     private readonly IApiSession _session;
+
     private CancellationTokenSource? _loadCts;
-    private UserResponse? _currentUser;
+    private IReadOnlyList<MarkedResourceItem> _favoriteItems = Array.Empty<MarkedResourceItem>();
+    private IReadOnlyList<MarkedResourceItem> _readLaterItems = Array.Empty<MarkedResourceItem>();
 
-    public ObservableCollection<DepartmentOption> Departments { get; } = new();
-
-    public ProfilePage(IUsersApiClient usersApiClient, IDepartmentsApiClient departmentsApiClient, IApiSession session)
+    public ProfilePage(
+        IUsersApiClient usersApiClient,
+        IMarkedResourcesService markedResourcesService,
+        IApiSession session)
     {
         _usersApiClient = usersApiClient;
-        _departmentsApiClient = departmentsApiClient;
+        _markedResourcesService = markedResourcesService;
         _session = session;
+
         InitializeComponent();
-        BindingContext = this;
-        BirthDatePicker.Date = DateTime.Today.AddYears(-18);
-        BirthDatePicker.IsEnabled = false;
+        ApplyCarouselsState();
     }
 
     protected override async void OnAppearing()
@@ -43,6 +43,12 @@ public partial class ProfilePage : ContentPage
         await LoadProfileAsync();
     }
 
+    protected override void OnDisappearing()
+    {
+        _loadCts?.Cancel();
+        base.OnDisappearing();
+    }
+
     private async Task LoadProfileAsync()
     {
         if (_loadCts is not null)
@@ -52,146 +58,129 @@ public partial class ProfilePage : ContentPage
         }
 
         _loadCts = new CancellationTokenSource();
-        StatusLabel.TextColor = Colors.Black;
-        StatusLabel.Text = "Chargement du profil...";
+        StatusLabel.Text = "Chargement du profil et des marques...";
 
         try
         {
-            var meTask = _usersApiClient.GetMeAsync(_loadCts.Token);
-            var departmentsTask = _departmentsApiClient.GetDepartmentsAsync(_loadCts.Token);
-            await Task.WhenAll(meTask, departmentsTask);
+            var profileTask = _usersApiClient.GetMeAsync(_loadCts.Token);
+            var favoritesTask = _markedResourcesService.GetFavoritesAsync(_loadCts.Token);
+            var readLaterTask = _markedResourcesService.GetReadLaterAsync(_loadCts.Token);
 
-            var me = meTask.Result;
+            await Task.WhenAll(profileTask, favoritesTask, readLaterTask);
+
+            var me = await profileTask;
             if (me is null)
             {
                 StatusLabel.Text = "Profil introuvable.";
                 return;
             }
 
-            _currentUser = me;
-            Departments.Clear();
-            foreach (var department in departmentsTask.Result.OrderBy(d => d.Code))
-            {
-                Departments.Add(new DepartmentOption(department.IdDepartment, department.Name, department.Code));
-            }
+            BindProfile(me);
 
-            UsernameEntry.Text = me.Username;
-            EmailEntry.Text = me.Email;
-            FirstNameEntry.Text = me.FirstName;
-            BioEditor.Text = me.Bio ?? string.Empty;
-            HasBirthDateCheckBox.IsChecked = me.BirthDate.HasValue;
-            BirthDatePicker.IsEnabled = me.BirthDate.HasValue;
-            BirthDatePicker.Date = me.BirthDate?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today.AddYears(-18);
-            DepartmentPicker.SelectedItem = Departments.FirstOrDefault(d => d.IdDepartment == me.Department.IdDepartment);
-            VerifiedLabel.Text = me.IsVerified ? "Compte verifie" : "Compte non verifie";
-            BanLabel.Text = me.IsBanned ? "Compte suspendu" : "Compte actif";
+            _favoriteItems = await favoritesTask;
+            _readLaterItems = await readLaterTask;
 
-            StatusLabel.Text = "Profil charge. Tu peux maintenant modifier tes informations.";
+            ApplyCarouselsState();
+            StatusLabel.Text = "Profil charge.";
         }
         catch (ApiException ex)
         {
-            StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}): {ex.Message}";
+            StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}) : {ex.Message}";
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.TextColor = Colors.Red;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.TextColor = Colors.Red;
             StatusLabel.Text = "Requete annulee.";
         }
         catch (Exception ex)
         {
-            StatusLabel.TextColor = Colors.Red;
             StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
         }
         finally
         {
-            _loadCts?.Dispose();
+            _loadCts.Dispose();
             _loadCts = null;
         }
     }
 
-    private void OnHasBirthDateChanged(object? sender, CheckedChangedEventArgs e)
+    private void BindProfile(UserResponse me)
     {
-        BirthDatePicker.IsEnabled = e.Value;
+        UsernameLabel.Text = me.Username;
+        EmailLabel.Text = me.Email;
+        FirstNameLabel.Text = me.FirstName;
+        BirthDateLabel.Text = me.BirthDate?.ToString("yyyy-MM-dd") ?? "Non renseignee";
+        BioLabel.Text = string.IsNullOrWhiteSpace(me.Bio) ? "Non renseignee" : me.Bio;
+        DepartmentLabel.Text = $"{me.Department.Name} ({me.Department.Code})";
+        VerifiedLabel.Text = me.IsVerified ? "Oui" : "Non";
     }
 
-    private async void OnSaveClicked(object? sender, EventArgs e)
+    private void ApplyCarouselsState()
     {
-        if (_currentUser is null)
-        {
-            StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = "Le profil n'est pas encore charge.";
-            return;
-        }
+        FavoritesCarousel.ItemsSource = _favoriteItems;
+        FavoritesCarousel.IsVisible = _favoriteItems.Count > 0;
+        FavoritesEmptyState.IsVisible = _favoriteItems.Count == 0;
+        FavoritesIndicator.IsVisible = _favoriteItems.Count > 1;
 
-        SaveButton.IsEnabled = false;
-        LogoutButton.IsEnabled = false;
-        StatusLabel.TextColor = Colors.Black;
-        StatusLabel.Text = "Enregistrement des modifications...";
+        ReadLaterCarousel.ItemsSource = _readLaterItems;
+        ReadLaterCarousel.IsVisible = _readLaterItems.Count > 0;
+        ReadLaterEmptyState.IsVisible = _readLaterItems.Count == 0;
+        ReadLaterIndicator.IsVisible = _readLaterItems.Count > 1;
+    }
+
+    private async void OnMarkedResourceTapped(object? sender, TappedEventArgs e)
+    {
+        await OpenMarkedResourceAsync(sender);
+    }
+
+    private async void OnMarkedResourceOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenMarkedResourceAsync(sender);
+    }
+
+    private async Task OpenMarkedResourceAsync(object? sender)
+    {
+        var item = sender is BindableObject bindable
+            ? bindable.BindingContext as MarkedResourceItem
+            : null;
+
+        if (item is null || string.IsNullOrWhiteSpace(item.Route) || Shell.Current is null)
+            return;
 
         try
         {
-            var username = UsernameEntry.Text?.Trim();
-            var email = EmailEntry.Text?.Trim();
-            var firstName = FirstNameEntry.Text?.Trim();
-            var bio = BioEditor.Text ?? string.Empty;
-            var department = DepartmentPicker.SelectedItem as DepartmentOption;
-            var birthDateValue = BirthDatePicker.Date ?? DateTime.Today.AddYears(-18);
-
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(firstName))
-            {
-                StatusLabel.TextColor = Colors.Red;
-                StatusLabel.Text = "Nom d'utilisateur, email et prenom sont obligatoires.";
-                return;
-            }
-
-            if (department is null)
-            {
-                StatusLabel.TextColor = Colors.Red;
-                StatusLabel.Text = "Selectionne un departement.";
-                return;
-            }
-
-            var updatedUser = await _usersApiClient.UpdateOwnProfileAsync(
-                new UpdateOwnProfileRequest(
-                    username,
-                    email,
-                    firstName,
-                    HasBirthDateCheckBox.IsChecked ? DateOnly.FromDateTime(birthDateValue) : null,
-                    bio,
-                    department.IdDepartment),
-                CancellationToken.None);
-
-            _currentUser = updatedUser;
-            VerifiedLabel.Text = updatedUser.IsVerified ? "Compte verifie" : "Compte non verifie";
-            BanLabel.Text = updatedUser.IsBanned ? "Compte suspendu" : "Compte actif";
-            StatusLabel.TextColor = Colors.Green;
-            StatusLabel.Text = "Profil mis a jour avec succes.";
-        }
-        catch (ApiException ex)
-        {
-            StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Mise a jour impossible ({(int)ex.StatusCode}): {ex.Message}";
-        }
-        catch (TimeoutException ex)
-        {
-            StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = ex.Message;
+            await Shell.Current.GoToAsync(item.Route);
         }
         catch (Exception ex)
         {
-            StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
-        finally
+    }
+
+    private async void OnSeeAllFavoritesClicked(object? sender, EventArgs e)
+    {
+        await NavigateToMarksAsync(MarkResourcesMode.Favorite);
+    }
+
+    private async void OnSeeAllReadLaterClicked(object? sender, EventArgs e)
+    {
+        await NavigateToMarksAsync(MarkResourcesMode.ReadLater);
+    }
+
+    private async Task NavigateToMarksAsync(MarkResourcesMode mode)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
         {
-            SaveButton.IsEnabled = true;
-            LogoutButton.IsEnabled = true;
+            await Shell.Current.GoToAsync($"{nameof(MarkResourcesPage)}?mode={mode}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
 
@@ -201,14 +190,14 @@ public partial class ProfilePage : ContentPage
         await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
     }
 
-    protected override void OnDisappearing()
+    private static string TrimMessage(string message)
     {
-        _loadCts?.Cancel();
-        base.OnDisappearing();
-    }
+        if (string.IsNullOrWhiteSpace(message))
+            return "Erreur inconnue.";
 
-    public sealed record DepartmentOption(int IdDepartment, string Name, int Code)
-    {
-        public string DisplayLabel => $"{Code} - {Name}";
+        var normalized = message.Replace("\r", " ").Replace("\n", " ").Trim();
+        return normalized.Length <= 180
+            ? normalized
+            : normalized[..177] + "...";
     }
 }

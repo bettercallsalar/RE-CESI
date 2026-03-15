@@ -2,13 +2,8 @@ import { Box, Button, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { PendingResourceCard } from "@/features/admin/components/PendingResourceCard";
 import { usePendingArticlesPage } from "@/features/admin/hooks/usePendingArticlesPage";
+import { formatPublicationDate } from "@/shared/lib/dates/formatPublicationDate";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
-
-function formatPublicationDate(value: string) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "long"
-  }).format(new Date(value));
-}
 
 export function PendingArticlesPage() {
   const { articles, isLoading, message } = usePendingArticlesPage();

@@ -1,4 +1,4 @@
-using System.Text.Json;
+using System.Net.Http.Json;
 using RESR.Models.Categories;
 
 namespace RESR.MAUI.Services;
@@ -25,11 +25,7 @@ public sealed class CategoriesApiClient : ICategoriesApiClient
                 throw new ApiException(response.StatusCode, message);
             }
 
-            await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
-            var categories = await JsonSerializer.DeserializeAsync<IReadOnlyList<CategoryResponse>>(
-                responseStream,
-                new JsonSerializerOptions(JsonSerializerDefaults.Web),
-                ct);
+            var categories = await response.Content.ReadFromJsonAsync<IReadOnlyList<CategoryResponse>>(cancellationToken: ct);
             return categories ?? Array.Empty<CategoryResponse>();
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)

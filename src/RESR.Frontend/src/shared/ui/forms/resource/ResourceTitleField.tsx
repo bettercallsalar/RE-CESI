@@ -13,7 +13,7 @@ export function ResourceTitleField({
   onChange,
   isRequired = true,
   label = "Titre",
-  placeholder = "Titre de la ressource",
+  placeholder = "Titre",
 }: ResourceTitleFieldProps) {
   return (
     <FormControl isRequired={isRequired}>

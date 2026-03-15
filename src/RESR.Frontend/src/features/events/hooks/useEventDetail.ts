@@ -100,7 +100,7 @@ export function useEventDetail(idResource: number) {
         createSuccessMessage(
           nextIsApproved
             ? "L'evenement a ete approuve et devient maintenant visible publiquement."
-            : "L'evenement a ete desapprouve et n'apparait plus dans les ressources publiques."
+            : "L'evenement a ete desapprouve et n'apparait plus parmi les events publics."
         )
       );
 

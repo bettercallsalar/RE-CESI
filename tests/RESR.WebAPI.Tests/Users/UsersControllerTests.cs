@@ -123,6 +123,61 @@ public sealed class UsersControllerTests
     }
 
     [Fact]
+    public async Task GetPublicProfile_ReturnsUnauthorized_WhenTokenMissing()
+    {
+        var controller = CreateController(out _);
+
+        var result = await controller.GetPublicProfile(1, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsNotFound_WhenMissing()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(2, It.IsAny<CancellationToken>())).ReturnsAsync((User?)null);
+
+        var result = await controller.GetPublicProfile(2, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsOk_WhenFound()
+    {
+        var controller = CreateAuthenticatedController(out var service);
+        service.Setup(s => s.GetByIdAsync(2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(idUser: 2, username: "alice", firstName: "Alice", email: "alice@example.com", bio: "Bio visible"));
+
+        var result = await controller.GetPublicProfile(2, CancellationToken.None);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var response = Assert.IsType<PublicUserProfileResponse>(ok.Value);
+        Assert.Equal(2, response.IdUser);
+        Assert.Equal("alice", response.Username);
+        Assert.Equal("Alice", response.FirstName);
+        Assert.Equal("Bio visible", response.Bio);
+        Assert.Equal(1, response.Department.IdDepartment);
+        Assert.Null(typeof(PublicUserProfileResponse).GetProperty("Email"));
+    }
+
+    [Fact]
+    public async Task GetPublicProfile_ReturnsUnauthorized_WhenTokenUserIsBanned()
+    {
+        var userRepository = new Mock<IUserRepository>();
+        userRepository.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildUser(isBanned: true));
+
+        var controller = CreateAuthenticatedController(out var service, userRepository.Object);
+
+        var result = await controller.GetPublicProfile(3, CancellationToken.None);
+
+        Assert.IsType<UnauthorizedObjectResult>(result.Result);
+        service.Verify(s => s.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task GetOwnProfile_ReturnsOk_WhenTokenUserExists()
     {
         var controller = CreateAuthenticatedController(out var service);

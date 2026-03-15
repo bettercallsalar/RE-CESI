@@ -74,9 +74,29 @@ public partial class ArticlesPage : ContentPage
     private async void OnEditArticleClicked(object? sender, EventArgs e)
     {
         if (sender is Button { CommandParameter: int idResource })
-        {
             await Shell.Current.GoToAsync($"{nameof(EditArticlePage)}?idResource={idResource}");
-        }
+    }
+
+    private async void OnArticleTapped(object? sender, TappedEventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async void OnArticleOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async Task OpenArticleAsync(object? sender)
+    {
+        var article = sender is BindableObject bindable
+            ? bindable.BindingContext as ArticleListItem
+            : null;
+
+        if (article is null)
+            return;
+
+        await NavigateToArticleDetailAsync(article.IdResource);
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)
@@ -218,6 +238,21 @@ public partial class ArticlesPage : ContentPage
             return "Erreur inconnue.";
 
         return ToExcerpt(message, 180);
+    }
+
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
     }
 
     private sealed record ArticleListItem(

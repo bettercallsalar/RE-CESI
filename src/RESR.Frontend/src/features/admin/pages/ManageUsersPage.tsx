@@ -1,14 +1,41 @@
-import { Box, Button, HStack, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, FormControl, FormLabel, HStack, Input, Select, SimpleGrid, Skeleton, Stack, Text } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useManageUsersPage } from "@/features/admin/hooks/useManageUsersPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
+import { PaginationControls } from "@/shared/ui/pagination/PaginationControls";
+
+const STANDARD_USER_ROLE_ID = 1;
 
 export function ManageUsersPage() {
-  const { hasPermission } = useAuth();
-  const { users, isLoading, isSubmitting, message, page, totalPages, totalCount, goToPage, setUserBanStatus } = useManageUsersPage();
+  const { hasPermission, user: currentUser } = useAuth();
+  const [roleSelections, setRoleSelections] = useState<Record<number, number>>({});
+  const {
+    users,
+    roles,
+    isLoading,
+    isSubmitting,
+    message,
+    page,
+    totalPages,
+    totalCount,
+    filters,
+    updateFilter,
+    applyFilters,
+    resetFilters,
+    goToPage,
+    setUserBanStatus,
+    setUserRole
+  } = useManageUsersPage();
   const canBanUsers = hasPermission(PermissionNames.banUser);
+  const roleNameById = new Map(roles.map((role) => [role.idRole, role.name]));
+
+  useEffect(() => {
+    setRoleSelections({});
+  }, [users]);
 
   return (
     <SiteLayout
@@ -19,7 +46,7 @@ export function ManageUsersPage() {
             Gestion des utilisateurs
           </Text>
           <Text color="ink.500" fontSize={{ base: "16px", sm: "17px", md: "18px" }} maxW="760px" textAlign="center">
-            Cette page liste uniquement les comptes avec le role User. Les comptes admins et superadmins ne sont pas exposes ici.
+            Recherchez un compte, filtrez par role, mettez a jour le role d'un utilisateur et bannissez les comptes standards si necessaire.
           </Text>
         </>
       }
@@ -30,10 +57,77 @@ export function ManageUsersPage() {
         </Button>
 
         <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }}>
-          {totalCount > 0 ? `${totalCount} utilisateur${totalCount > 1 ? "s" : ""} standard${totalCount > 1 ? "s" : ""} trouve${totalCount > 1 ? "s" : ""}.` : "Aucun utilisateur standard a afficher."}
+          {totalCount > 0 ? `${totalCount} utilisateur${totalCount > 1 ? "s" : ""} trouve${totalCount > 1 ? "s" : ""}.` : "Aucun utilisateur a afficher."}
         </Text>
 
         {message ? <MessageBanner message={message.message} title={message.title} tone={message.tone} /> : null}
+
+        <Stack
+          as="form"
+          bg="white"
+          border="1px solid"
+          borderColor="canvas.200"
+          borderRadius="16px"
+          p={{ base: 5, md: 6 }}
+          spacing={5}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void applyFilters();
+          }}
+        >
+          <Text color="ink.800" fontSize={{ base: "18px", md: "20px" }} fontWeight="700">
+            Rechercher et filtrer
+          </Text>
+
+          <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={5}>
+            <FormControl>
+              <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
+                Recherche
+              </FormLabel>
+              <Input
+                bg="white"
+                borderColor="canvas.200"
+                placeholder="Prenom, pseudo ou e-mail"
+                value={filters.keyword}
+                onChange={(event) => updateFilter("keyword", event.target.value)}
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
+                Role
+              </FormLabel>
+              <Select
+                bg="white"
+                borderColor="canvas.200"
+                placeholder="Tous les roles"
+                value={filters.idRole}
+                onChange={(event) => updateFilter("idRole", event.target.value ? Number(event.target.value) : "")}
+              >
+                {roles.map((role) => (
+                  <option key={role.idRole} value={role.idRole}>
+                    {role.name}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+          </SimpleGrid>
+
+          <HStack spacing={3} wrap="wrap">
+            <Button isDisabled={isLoading} type="submit">
+              Rechercher
+            </Button>
+            <Button
+              isDisabled={isLoading}
+              onClick={() => {
+                void resetFilters();
+              }}
+              variant="outline"
+            >
+              Reinitialiser
+            </Button>
+          </HStack>
+        </Stack>
 
         {isLoading ? (
           <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={{ base: 5, md: 6 }}>
@@ -57,7 +151,7 @@ export function ManageUsersPage() {
                     </Stack>
                     <Box bg="canvas.100" border="1px solid" borderColor="canvas.200" borderRadius="999px" px={3} py={1}>
                       <Text color="brand.500" fontSize={{ base: "13px", md: "14px" }} fontWeight="700">
-                        User
+                        {roleNameById.get(user.idRole) ?? `Role #${user.idRole}`}
                       </Text>
                     </Box>
                   </HStack>
@@ -85,52 +179,87 @@ export function ManageUsersPage() {
                       {user.isBanned ? "Compte banni" : "Compte actif"}
                     </Text>
                   </Stack>
-
-                  {canBanUsers ? (
-                    <Button
-                      _hover={user.isBanned ? { bg: "#276749" } : { bg: "#9B2C2C" }}
-                      bg={user.isBanned ? "#2F855A" : "#C53030"}
-                      color="white"
-                      fontSize={{ base: "14px", md: "15px" }}
-                      h="40px"
-                      isDisabled={isSubmitting}
-                      onClick={() => {
-                        void setUserBanStatus(user, !user.isBanned);
-                      }}
-                      px={4}
-                    >
-                      {user.isBanned ? "Debannir" : "Bannir"}
-                    </Button>
-                  ) : null}
                 </HStack>
+
+                <Stack spacing={3}>
+                  <FormControl>
+                    <FormLabel color="ink.800" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
+                      Changer le role
+                    </FormLabel>
+                    <Select
+                      bg="white"
+                      borderColor="canvas.200"
+                      isDisabled={currentUser?.idUser === user.idUser || roles.length === 0}
+                      value={roleSelections[user.idUser] ?? user.idRole}
+                      onChange={(event) =>
+                        setRoleSelections((current) => ({
+                          ...current,
+                          [user.idUser]: Number(event.target.value)
+                        }))
+                      }
+                    >
+                      {roles.map((role) => (
+                        <option key={role.idRole} value={role.idRole}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {currentUser?.idUser === user.idUser ? (
+                    <Text color="ink.500" fontSize={{ base: "13px", md: "14px" }}>
+                      Votre propre role ne peut pas etre modifie depuis cette page.
+                    </Text>
+                  ) : null}
+
+                  <HStack spacing={3} wrap="wrap">
+                    <Button as="a" href={getUserProfileHref(user.idUser)} variant="outline">
+                      Voir le profil
+                    </Button>
+
+                    <Button
+                      isDisabled={isSubmitting || (roleSelections[user.idUser] ?? user.idRole) === user.idRole || currentUser?.idUser === user.idUser}
+                      onClick={() => {
+                        void setUserRole(user, roleSelections[user.idUser] ?? user.idRole);
+                      }}
+                    >
+                      Mettre a jour le role
+                    </Button>
+
+                    {canBanUsers && user.idRole === STANDARD_USER_ROLE_ID ? (
+                      <Button
+                        _hover={user.isBanned ? { bg: "#276749" } : { bg: "#9B2C2C" }}
+                        bg={user.isBanned ? "#2F855A" : "#C53030"}
+                        color="white"
+                        fontSize={{ base: "14px", md: "15px" }}
+                        h="40px"
+                        isDisabled={isSubmitting}
+                        onClick={() => {
+                          void setUserBanStatus(user, !user.isBanned);
+                        }}
+                        px={4}
+                      >
+                        {user.isBanned ? "Debannir" : "Bannir"}
+                      </Button>
+                    ) : null}
+                  </HStack>
+                </Stack>
               </Stack>
             ))}
           </SimpleGrid>
         )}
 
-        <HStack justify="space-between" spacing={4}>
-          <Button
-            isDisabled={page <= 1 || isLoading}
-            onClick={() => {
-              void goToPage(page - 1);
-            }}
-            variant="outline"
-          >
-            Page precedente
-          </Button>
-          <Text color="ink.500" fontSize={{ base: "14px", md: "15px" }}>
-            Page {page} {totalPages > 0 ? `sur ${totalPages}` : ""}
-          </Text>
-          <Button
-            isDisabled={isLoading || totalPages === 0 || page >= totalPages}
-            onClick={() => {
-              void goToPage(page + 1);
-            }}
-            variant="outline"
-          >
-            Page suivante
-          </Button>
-        </HStack>
+        <PaginationControls
+          isLoading={isLoading}
+          onNext={() => {
+            void goToPage(page + 1);
+          }}
+          onPrevious={() => {
+            void goToPage(page - 1);
+          }}
+          page={page}
+          totalPages={totalPages}
+        />
       </Stack>
     </SiteLayout>
   );

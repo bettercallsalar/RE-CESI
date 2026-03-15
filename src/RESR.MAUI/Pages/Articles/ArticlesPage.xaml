@@ -3,16 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.ArticlesPage"
              Title="Articles"
-             BackgroundColor="#F4F1EC">
+             BackgroundColor="{StaticResource White}">
 
     <ContentPage.Resources>
         <Style x:Key="SectionCaptionStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
             <Setter Property="FontSize" Value="13" />
         </Style>
 
         <Style x:Key="CardTitleStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
             <Setter Property="FontSize" Value="20" />
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="LineBreakMode" Value="TailTruncation" />
@@ -20,12 +20,12 @@
         </Style>
 
         <Style x:Key="CardMetaStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#59567A" />
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
             <Setter Property="FontSize" Value="12" />
         </Style>
 
         <Style x:Key="CardSummaryStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#343052" />
+            <Setter Property="TextColor" Value="{StaticResource Gray900}" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="LineBreakMode" Value="WordWrap" />
             <Setter Property="MaxLines" Value="4" />
@@ -43,8 +43,7 @@
             <VerticalStackLayout Spacing="6">
                 <Label Text="Articles"
                        Style="{StaticResource Headline}"
-                       FontSize="{OnIdiom Phone='28', Default='34'}"
-                       TextColor="#1E1C44" />
+                       FontSize="{OnIdiom Phone='28', Default='34'}" />
                 <Label Text="Parcourez les articles publics approuves de la plateforme."
                        Style="{StaticResource SectionCaptionStyle}"
                        HorizontalTextAlignment="Center" />
@@ -85,11 +84,14 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border BackgroundColor="White"
-                                    Stroke="#E3DDD6"
+                                    Stroke="{StaticResource Gray200}"
                                     StrokeShape="RoundRectangle 24"
                                     Padding="20">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticleTapped" />
+                                </Border.GestureRecognizers>
                                 <VerticalStackLayout Spacing="10">
-                                    <Border BackgroundColor="#2E2AA5"
+                                    <Border BackgroundColor="{StaticResource Primary}"
                                             HorizontalOptions="Start"
                                             Padding="10,4"
                                             StrokeThickness="0"
@@ -109,10 +111,20 @@
                                            Style="{StaticResource CardMetaStyle}" />
                                     <Label Text="{Binding Summary}"
                                            Style="{StaticResource CardSummaryStyle}" />
-                                    <Button Text="Modifier"
-                                            Clicked="OnEditArticleClicked"
-                                            CommandParameter="{Binding IdResource}"
-                                            HorizontalOptions="End" />
+
+                                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,Auto'}"
+                                          RowDefinitions="{OnIdiom Phone='Auto,Auto', Default='Auto'}"
+                                          ColumnSpacing="10"
+                                          RowSpacing="10">
+                                        <Button Text="Lire l'article"
+                                                Clicked="OnArticleOpenClicked" />
+                                        <Button Text="Modifier"
+                                                Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                                Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                                Clicked="OnEditArticleClicked"
+                                                CommandParameter="{Binding IdResource}"
+                                                HorizontalOptions="End" />
+                                    </Grid>
                                 </VerticalStackLayout>
                             </Border>
                         </DataTemplate>
@@ -121,8 +133,8 @@
 
                 <Border x:Name="EmptyState"
                         IsVisible="False"
-                        BackgroundColor="#F8F5F2"
-                        Stroke="#DFD9D2"
+                        BackgroundColor="{StaticResource Gray100}"
+                        Stroke="{StaticResource Gray200}"
                         StrokeShape="RoundRectangle 24"
                         Padding="24">
                     <VerticalStackLayout Spacing="10"

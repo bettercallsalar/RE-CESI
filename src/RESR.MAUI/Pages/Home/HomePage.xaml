@@ -6,32 +6,27 @@
 
     <VerticalStackLayout Padding="20" Spacing="12">
         <Label Text="Bienvenue"
-               Style="{StaticResource Headline}" />
+               Style="{StaticResource Headline}"/>
 
-        <Label Text="Choisis une action pour continuer." />
+        <Label Text="Choisis une action pour continuer."/>
 
         <Button x:Name="LoginButton"
                 Text="Connexion"
-                Clicked="OnGoToLoginClicked" />
+                Clicked="OnGoToLoginClicked"/>
 
         <Button x:Name="RegisterButton"
                 Text="Inscription"
-                Clicked="OnGoToRegisterClicked" />
+                Clicked="OnGoToRegisterClicked"/>
 
         <Button x:Name="ProfileButton"
                 Text="Mon profil"
                 Clicked="OnGoToProfileClicked"
-                IsVisible="False" />
+                IsVisible="False"/>
 
         <Button x:Name="CreateArticleButton"
-                Text="Creer un article"
+                Text="Créer un article"
                 Clicked="OnGoToCreateArticleClicked"
-                IsVisible="False" />
-
-        <Button x:Name="CreateEventButton"
-                Text="Creer un evenement"
-                Clicked="OnGoToCreateEventClicked"
-                IsVisible="False" />
+                IsVisible="False"/>
     </VerticalStackLayout>
 
 </ContentPage>
