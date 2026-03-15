@@ -73,8 +73,24 @@ public partial class ArticlesPage : ContentPage
 
     private async void OnArticleTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is BindableObject bindable && bindable.BindingContext is ArticleListItem item)
-            await NavigateToArticleDetailAsync(item.IdResource);
+        await OpenArticleAsync(sender);
+    }
+
+    private async void OnArticleOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async Task OpenArticleAsync(object? sender)
+    {
+        var article = sender is BindableObject bindable
+            ? bindable.BindingContext as ArticleListItem
+            : null;
+
+        if (article is null)
+            return;
+
+        await NavigateToArticleDetailAsync(article.IdResource);
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)

@@ -79,6 +79,16 @@
             <Setter Property="BorderWidth" Value="1" />
             <Setter Property="FontSize" Value="13" />
         </Style>
+
+        <Style x:Key="MarkButtonStyle" TargetType="Button">
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Padding" Value="14,10" />
+            <Setter Property="BackgroundColor" Value="{StaticResource Gray100}" />
+            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
+            <Setter Property="BorderColor" Value="{StaticResource Gray200}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView>
@@ -138,6 +148,51 @@
 
                     <Label x:Name="StatusLabel"
                            Text="Chargement de l'article..."
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border x:Name="MarksCard"
+                    Style="{StaticResource FormCardStyle}"
+                    IsVisible="False">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Enregistrer l'article"
+                               Style="{StaticResource FormSectionTitleStyle}" />
+                        <Label Text="Ajoute cet article a tes favoris ou a ta liste lire plus tard."
+                               Style="{StaticResource FormCaptionStyle}" />
+                    </VerticalStackLayout>
+
+                    <Border x:Name="MarkLoginHintBorder"
+                            IsVisible="False"
+                            BackgroundColor="{StaticResource Gray100}"
+                            Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 18"
+                            Padding="14,10">
+                        <Label Text="Connectez-vous pour enregistrer cet article."
+                               Style="{StaticResource FormStatusLabelStyle}" />
+                    </Border>
+
+                    <FlexLayout x:Name="MarkButtonsLayout"
+                                Direction="Row"
+                                Wrap="Wrap"
+                                JustifyContent="Start"
+                                AlignItems="Start">
+                        <Button x:Name="FavoriteButton"
+                                Text="⭐ Favori"
+                                Clicked="OnFavoriteClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource MarkButtonStyle}" />
+                        <Button x:Name="ReadLaterButton"
+                                Text="🔖 Lire plus tard"
+                                Clicked="OnReadLaterClicked"
+                                Margin="0,0,10,10"
+                                Style="{StaticResource MarkButtonStyle}" />
+                    </FlexLayout>
+
+                    <Label x:Name="MarkHintLabel"
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                    <Label x:Name="MarkStatusLabel"
                            Style="{StaticResource FormStatusLabelStyle}" />
                 </VerticalStackLayout>
             </Border>

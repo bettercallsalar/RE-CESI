@@ -42,6 +42,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync(uri, new PaginatedEventsResponse([], page, pageSize, 0, 0), ct);
     }
 
+    public async Task<EventResponse?> GetEventByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<EventResponse?>($"api/events/{idResource}", fallback: null, ct);
+    }
+
     private async Task<TResponse> GetAsync<TResponse>(string uri, TResponse fallback, CancellationToken ct)
     {
         try

@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using Microsoft.Maui.Graphics;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Services;
 using RESR.Models.Comments;
 using RESR.Models.Reactions;
@@ -11,11 +13,13 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     private readonly IResourcesApiClient _resourcesApiClient;
     private readonly ICommentsApiClient _commentsApiClient;
     private readonly IReactionsApiClient _reactionsApiClient;
+    private readonly IMarksApiClient _marksApiClient;
     private readonly IApiSession _session;
     private readonly IUsersApiClient _usersApiClient;
     private CancellationTokenSource? _loadCts;
     private CancellationTokenSource? _commentActionCts;
     private CancellationTokenSource? _reactionActionCts;
+    private CancellationTokenSource? _markActionCts;
     private int? _idResource;
     private bool _shouldLoad;
     private ArticleResponse? _article;
@@ -26,23 +30,28 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     private int? _replyToCommentId;
     private int? _currentUserId;
     private ReactionResponse? _currentUserReaction;
+    private bool _isFavorite;
+    private bool _isReadLater;
 
     public ArticleDetailPage(
         IResourcesApiClient resourcesApiClient,
         ICommentsApiClient commentsApiClient,
         IReactionsApiClient reactionsApiClient,
+        IMarksApiClient marksApiClient,
         IUsersApiClient usersApiClient,
         IApiSession session)
     {
         _resourcesApiClient = resourcesApiClient;
         _commentsApiClient = commentsApiClient;
         _reactionsApiClient = reactionsApiClient;
+        _marksApiClient = marksApiClient;
         _usersApiClient = usersApiClient;
         _session = session;
         InitializeComponent();
         BindableLayout.SetItemsSource(CommentsListLayout, _visibleCommentItems);
         UpdateCommentComposerState();
         UpdateReactionControlsState();
+        UpdateMarkControlsState();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -53,6 +62,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         {
             _idResource = idResource;
             _shouldLoad = true;
+            _article = null;
+            _isFavorite = false;
+            _isReadLater = false;
         }
     }
 
@@ -60,6 +72,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     {
         base.OnAppearing();
         UpdateCommentComposerState();
+        UpdateMarkControlsState();
 
         if (!_shouldLoad || !_idResource.HasValue)
             return;
@@ -73,6 +86,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         _loadCts?.Cancel();
         _commentActionCts?.Cancel();
         _reactionActionCts?.Cancel();
+        _markActionCts?.Cancel();
         base.OnDisappearing();
     }
 
@@ -85,6 +99,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         SetLoadingState(true);
         _currentUserId = null;
         _currentUserReaction = null;
+        MarksCard.IsVisible = false;
         CommentsCard.IsVisible = false;
         ReactionsCard.IsVisible = false;
 
@@ -96,6 +111,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
                 StatusLabel.Text = "Article introuvable.";
                 HeaderCaptionLabel.Text = "Aucun contenu a afficher.";
                 ArticleContentLayout.IsVisible = false;
+                MarksCard.IsVisible = false;
                 CommentsCard.IsVisible = false;
                 ReactionsCard.IsVisible = false;
                 return;
@@ -106,7 +122,11 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             Title = article.Title;
             HeaderCaptionLabel.Text = $"Article #{article.IdResource}";
             TitleLabel.Text = article.Title;
-            MetaLabel.Text = $"Auteur #{article.IdUser}  |  Publie le {article.CreatedAt:dd/MM/yyyy}";
+            var author = string.IsNullOrWhiteSpace(article.Author.Username)
+                ? $"Auteur #{article.IdUser}"
+                : article.Author.Username;
+
+            MetaLabel.Text = $"{author}  |  Publie le {article.CreatedAt:dd/MM/yyyy}";
 
             var description = Normalize(article.Description);
             DescriptionLabel.Text = description;
@@ -115,8 +135,10 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             ContentLabel.Text = Normalize(article.Content);
             StatusLabel.Text = string.Empty;
             ArticleContentLayout.IsVisible = true;
+            MarksCard.IsVisible = true;
             ReactionsCard.IsVisible = true;
             CommentsCard.IsVisible = true;
+            await LoadMarksAsync(article.IdResource, _loadCts.Token);
             await LoadReactionsAsync(article.IdResource, _loadCts.Token);
             await LoadCommentsAsync(article.IdResource, preserveExpansion: false, _loadCts.Token);
         }
@@ -125,6 +147,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             HeaderCaptionLabel.Text = "Erreur de chargement";
             StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
             ArticleContentLayout.IsVisible = false;
+            MarksCard.IsVisible = false;
             CommentsCard.IsVisible = false;
             ReactionsCard.IsVisible = false;
         }
@@ -133,6 +156,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             HeaderCaptionLabel.Text = "Temps depasse";
             StatusLabel.Text = ex.Message;
             ArticleContentLayout.IsVisible = false;
+            MarksCard.IsVisible = false;
             CommentsCard.IsVisible = false;
             ReactionsCard.IsVisible = false;
         }
@@ -145,6 +169,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             HeaderCaptionLabel.Text = "Erreur inattendue";
             StatusLabel.Text = $"Impossible d'afficher l'article : {TrimMessage(ex.Message)}";
             ArticleContentLayout.IsVisible = false;
+            MarksCard.IsVisible = false;
             CommentsCard.IsVisible = false;
             ReactionsCard.IsVisible = false;
         }
@@ -228,6 +253,64 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
     }
 
+    private async Task LoadMarksAsync(int idResource, CancellationToken ct)
+    {
+        SetMarkActionState(true);
+
+        try
+        {
+            if (!_session.IsAuthenticated)
+            {
+                _isFavorite = false;
+                _isReadLater = false;
+                MarkStatusLabel.Text = string.Empty;
+            }
+            else
+            {
+                var favoriteTask = _marksApiClient.GetFavoriteAsync(idResource, ct);
+                var readLaterTask = _marksApiClient.GetReadLaterAsync(idResource, ct);
+
+                await Task.WhenAll(favoriteTask, readLaterTask);
+
+                _isFavorite = await favoriteTask is not null;
+                _isReadLater = await readLaterTask is not null;
+                MarkStatusLabel.Text = string.Empty;
+            }
+
+            ApplyMarkButtonState(FavoriteButton, _isFavorite);
+            ApplyMarkButtonState(ReadLaterButton, _isReadLater);
+            UpdateMarkControlsState();
+        }
+        catch (ApiException ex)
+        {
+            _isFavorite = false;
+            _isReadLater = false;
+            ApplyMarkButtonState(FavoriteButton, isSelected: false);
+            ApplyMarkButtonState(ReadLaterButton, isSelected: false);
+            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            UpdateMarkControlsState();
+        }
+        catch (TimeoutException ex)
+        {
+            MarkStatusLabel.Text = ex.Message;
+            UpdateMarkControlsState();
+        }
+        catch (OperationCanceledException)
+        {
+            MarkStatusLabel.Text = "Chargement des favoris annule.";
+            UpdateMarkControlsState();
+        }
+        catch (Exception ex)
+        {
+            MarkStatusLabel.Text = $"Impossible d'afficher les marks : {TrimMessage(ex.Message)}";
+            UpdateMarkControlsState();
+        }
+        finally
+        {
+            SetMarkActionState(false);
+        }
+    }
+
     private void ApplyReactionCounters()
     {
         var likeCount = CountReactions(ReactionNames.Like);
@@ -235,9 +318,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         var loveCount = CountReactions(ReactionNames.Love);
         var totalCount = _reactions.Count;
 
-        LikeButton.Text = $"👍 Like ({likeCount})";
-        DislikeButton.Text = $"👎 Dislike ({dislikeCount})";
-        LoveButton.Text = $"❤️ Love ({loveCount})";
+        LikeButton.Text = $"?? Like ({likeCount})";
+        DislikeButton.Text = $"?? Dislike ({dislikeCount})";
+        LoveButton.Text = $"?? Love ({loveCount})";
 
         ReactionsSummaryLabel.Text = totalCount == 0
             ? "Aucune reaction pour le moment."
@@ -248,6 +331,13 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         ApplyReactionButtonState(DislikeButton, currentName == ReactionNames.Dislike);
         ApplyReactionButtonState(LoveButton, currentName == ReactionNames.Love);
         UpdateReactionControlsState();
+    }
+
+    private static void ApplyMarkButtonState(Button button, bool isSelected)
+    {
+        button.BackgroundColor = isSelected ? Color.FromArgb("#342B9A") : Color.FromArgb("#F7F7F7");
+        button.TextColor = isSelected ? Colors.White : Color.FromArgb("#2C2C2C");
+        button.BorderColor = isSelected ? Color.FromArgb("#342B9A") : Color.FromArgb("#D7D7D7");
     }
 
     private void ApplyReactionButtonState(Button button, bool isSelected)
@@ -280,11 +370,52 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
     }
 
+    private void UpdateMarkControlsState()
+    {
+        var isAuthenticated = _session.IsAuthenticated;
+        MarkLoginHintBorder.IsVisible = !isAuthenticated;
+
+        if (_article is null)
+        {
+            MarkHintLabel.Text = string.Empty;
+            return;
+        }
+
+        if (!isAuthenticated)
+        {
+            MarkHintLabel.Text = "Connectez-vous pour ajouter cet article a vos favoris ou a votre liste lire plus tard.";
+            return;
+        }
+
+        if (!_isFavorite && !_isReadLater)
+        {
+            MarkHintLabel.Text = "Vous pouvez enregistrer cet article de deux facons independantes.";
+            return;
+        }
+
+        if (_isFavorite && _isReadLater)
+        {
+            MarkHintLabel.Text = "Cet article est deja dans vos favoris et dans votre liste lire plus tard.";
+            return;
+        }
+
+        MarkHintLabel.Text = _isFavorite
+            ? "Cet article est deja dans vos favoris."
+            : "Cet article est deja dans votre liste lire plus tard.";
+    }
+
     private void SetReactionActionState(bool isBusy)
     {
         LikeButton.IsEnabled = !isBusy;
         DislikeButton.IsEnabled = !isBusy;
         LoveButton.IsEnabled = !isBusy;
+    }
+
+    private void SetMarkActionState(bool isBusy)
+    {
+        var canInteract = !isBusy && _article is not null;
+        FavoriteButton.IsEnabled = canInteract;
+        ReadLaterButton.IsEnabled = canInteract;
     }
 
     private int CountReactions(string reactionName)
@@ -615,6 +746,106 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
     }
 
+    private async void OnFavoriteClicked(object? sender, EventArgs e)
+    {
+        if (_article is null || _markActionCts is not null)
+            return;
+
+        if (!await EnsureAuthenticatedForMarksAsync())
+            return;
+
+        _markActionCts = new CancellationTokenSource();
+        SetMarkActionState(true);
+
+        try
+        {
+            if (_isFavorite)
+            {
+                await _marksApiClient.UnmarkAsFavoriteAsync(_article.IdResource, _markActionCts.Token);
+                MarkStatusLabel.Text = "Article retire des favoris.";
+            }
+            else
+            {
+                await _marksApiClient.MarkAsFavoriteAsync(_article.IdResource, _markActionCts.Token);
+                MarkStatusLabel.Text = "Article ajoute aux favoris.";
+            }
+
+            await LoadMarksAsync(_article.IdResource, _markActionCts.Token);
+        }
+        catch (ApiException ex)
+        {
+            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            MarkStatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            MarkStatusLabel.Text = "Action sur les favoris annulee.";
+        }
+        catch (Exception ex)
+        {
+            MarkStatusLabel.Text = $"Impossible de mettre a jour les favoris : {TrimMessage(ex.Message)}";
+        }
+        finally
+        {
+            _markActionCts.Dispose();
+            _markActionCts = null;
+            SetMarkActionState(false);
+        }
+    }
+
+    private async void OnReadLaterClicked(object? sender, EventArgs e)
+    {
+        if (_article is null || _markActionCts is not null)
+            return;
+
+        if (!await EnsureAuthenticatedForMarksAsync())
+            return;
+
+        _markActionCts = new CancellationTokenSource();
+        SetMarkActionState(true);
+
+        try
+        {
+            if (_isReadLater)
+            {
+                await _marksApiClient.UnmarkAsReadLaterAsync(_article.IdResource, _markActionCts.Token);
+                MarkStatusLabel.Text = "Article retire de la liste lire plus tard.";
+            }
+            else
+            {
+                await _marksApiClient.MarkAsReadLaterAsync(_article.IdResource, _markActionCts.Token);
+                MarkStatusLabel.Text = "Article ajoute a la liste lire plus tard.";
+            }
+
+            await LoadMarksAsync(_article.IdResource, _markActionCts.Token);
+        }
+        catch (ApiException ex)
+        {
+            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            MarkStatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            MarkStatusLabel.Text = "Action sur les marks annulee.";
+        }
+        catch (Exception ex)
+        {
+            MarkStatusLabel.Text = $"Impossible de mettre a jour les marks : {TrimMessage(ex.Message)}";
+        }
+        finally
+        {
+            _markActionCts.Dispose();
+            _markActionCts = null;
+            SetMarkActionState(false);
+        }
+    }
+
     private void OnToggleRepliesClicked(object? sender, EventArgs e)
     {
         if (sender is not BindableObject bindable || bindable.BindingContext is not CommentThreadItem item || !item.HasChildren)
@@ -710,6 +941,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         return normalized.Length <= 180
             ? normalized
             : normalized[..177].TrimEnd() + "...";
+    }
+
+    private async Task<bool> EnsureAuthenticatedForMarksAsync()
+    {
+        if (_session.IsAuthenticated)
+            return true;
+
+        MarkStatusLabel.Text = "Connectez-vous pour enregistrer cet article.";
+
+        if (Shell.Current is not null)
+            await Shell.Current.GoToAsync(nameof(LoginPage));
+
+        return false;
     }
 
     private sealed record CommentThreadItem(

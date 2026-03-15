@@ -1,5 +1,5 @@
-using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
@@ -92,6 +92,8 @@ public partial class MainPage : ContentPage
     {
         if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
             await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -103,6 +105,8 @@ public partial class MainPage : ContentPage
     {
         if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
             await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
