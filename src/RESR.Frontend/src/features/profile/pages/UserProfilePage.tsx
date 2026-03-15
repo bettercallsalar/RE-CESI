@@ -115,7 +115,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
                     <Badge
                       alignSelf="start"
                       bg={profile.isVerified ? "brand.500" : "canvas.200"}
-                      color={profile.isVerified ? "white" : "ink.800"}
+                      color={profile.isVerified ? "surface.onAccent" : "ink.800"}
                       fontSize="12px"
                       px={3}
                       py={1.5}
@@ -231,7 +231,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
             <Tabs index={tabIndex} onChange={setTabIndex} variant="unstyled">
               <TabList borderBottom="1px solid" borderColor="canvas.200" gap={3} overflowX="auto" pb={3}>
                 <Tab
-                  _selected={{ bg: "brand.500", color: "white" }}
+                  _selected={{ bg: "brand.500", color: "surface.onAccent" }}
                   bg="white"
                   border="1px solid"
                   borderColor="canvas.200"
@@ -245,7 +245,7 @@ export function UserProfilePage({ idUser }: UserProfilePageProps) {
                   Articles ({articlesTotalCount})
                 </Tab>
                 <Tab
-                  _selected={{ bg: "brand.500", color: "white" }}
+                  _selected={{ bg: "brand.500", color: "surface.onAccent" }}
                   bg="white"
                   border="1px solid"
                   borderColor="canvas.200"
