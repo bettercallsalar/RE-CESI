@@ -1,7 +1,9 @@
+using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Services;
+using RESR.Models.Resources;
 using RESR.Models.Users;
 
 namespace RESR.MAUI.Pages.Profile;
@@ -10,23 +12,29 @@ public partial class ProfilePage : ContentPage
 {
     private readonly IUsersApiClient _usersApiClient;
     private readonly IMarkedResourcesService _markedResourcesService;
+    private readonly IResourcesApiClient _resourcesApiClient;
     private readonly IApiSession _session;
 
     private CancellationTokenSource? _loadCts;
+    private UserResponse? _me;
     private IReadOnlyList<MarkedResourceItem> _favoriteItems = Array.Empty<MarkedResourceItem>();
     private IReadOnlyList<MarkedResourceItem> _readLaterItems = Array.Empty<MarkedResourceItem>();
+    private IReadOnlyList<OwnArticleCard> _articleCards = Array.Empty<OwnArticleCard>();
 
     public ProfilePage(
         IUsersApiClient usersApiClient,
         IMarkedResourcesService markedResourcesService,
+        IResourcesApiClient resourcesApiClient,
         IApiSession session)
     {
         _usersApiClient = usersApiClient;
         _markedResourcesService = markedResourcesService;
+        _resourcesApiClient = resourcesApiClient;
         _session = session;
 
         InitializeComponent();
         ApplyCarouselsState();
+        ApplyArticlesState();
     }
 
     protected override async void OnAppearing()
@@ -58,7 +66,9 @@ public partial class ProfilePage : ContentPage
         }
 
         _loadCts = new CancellationTokenSource();
-        StatusLabel.Text = "Chargement du profil et des marques...";
+        LoadingIndicator.IsVisible = true;
+        LoadingIndicator.IsRunning = true;
+        StatusLabel.Text = "Chargement du profil, des marques et des articles...";
 
         try
         {
@@ -66,26 +76,37 @@ public partial class ProfilePage : ContentPage
             var favoritesTask = _markedResourcesService.GetFavoritesAsync(_loadCts.Token);
             var readLaterTask = _markedResourcesService.GetReadLaterAsync(_loadCts.Token);
 
-            await Task.WhenAll(profileTask, favoritesTask, readLaterTask);
-
-            var me = await profileTask;
-            if (me is null)
+            _me = await profileTask;
+            if (_me is null)
             {
                 StatusLabel.Text = "Profil introuvable.";
                 return;
             }
 
-            BindProfile(me);
+            BindProfile(_me);
+
+            var articlesTask = _resourcesApiClient.GetMyArticlesAsync(_me.IdUser, 1, 6, keyword: null, _loadCts.Token);
+
+            await Task.WhenAll(favoritesTask, readLaterTask, articlesTask);
 
             _favoriteItems = await favoritesTask;
             _readLaterItems = await readLaterTask;
+            var articles = await articlesTask;
+
+            _articleCards = articles.Items.Select(ToOwnArticleCard).ToList();
 
             ApplyCarouselsState();
+            ApplyArticlesState();
+
+            MyArticlesSummaryLabel.Text = _articleCards.Count == 0
+                ? "Aucun article charge pour le moment."
+                : $"{articles.TotalCount} article(s) trouves.";
+
             StatusLabel.Text = "Profil charge.";
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}) : {ex.Message}";
+            StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
         }
         catch (TimeoutException ex)
         {
@@ -97,11 +118,13 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
         }
         finally
         {
-            _loadCts.Dispose();
+            LoadingIndicator.IsVisible = false;
+            LoadingIndicator.IsRunning = false;
+            _loadCts?.Dispose();
             _loadCts = null;
         }
     }
@@ -128,6 +151,15 @@ public partial class ProfilePage : ContentPage
         ReadLaterCarousel.IsVisible = _readLaterItems.Count > 0;
         ReadLaterEmptyState.IsVisible = _readLaterItems.Count == 0;
         ReadLaterIndicator.IsVisible = _readLaterItems.Count > 1;
+    }
+
+    private void ApplyArticlesState()
+    {
+        MyArticlesCarousel.ItemsSource = _articleCards;
+        MyArticlesCarousel.IsVisible = _articleCards.Count > 0;
+        MyArticlesEmptyState.IsVisible = _articleCards.Count == 0;
+        MyArticlesIndicator.IsVisible = _articleCards.Count > 1;
+        ViewAllArticlesButton.IsVisible = _articleCards.Count > 0 && _me is not null;
     }
 
     private async void OnMarkedResourceTapped(object? sender, TappedEventArgs e)
@@ -184,10 +216,106 @@ public partial class ProfilePage : ContentPage
         }
     }
 
+    private async void OnViewAllArticlesClicked(object? sender, EventArgs e)
+    {
+        if (_me is null || Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync(
+                $"{nameof(UserArticlesPage)}?idUser={_me.IdUser}&username={Uri.EscapeDataString(_me.Username)}&firstName={Uri.EscapeDataString(_me.FirstName)}&isOwnProfile=true");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
+    private async void OnMyArticleTapped(object? sender, TappedEventArgs e)
+    {
+        if (!TryGetBoundItem<OwnArticleCard>(sender, out var item))
+            return;
+
+        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: true);
+    }
+
+    private async void OnMyArticleOpenClicked(object? sender, EventArgs e)
+    {
+        if (!TryGetBoundItem<OwnArticleCard>(sender, out var item))
+            return;
+
+        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: true);
+    }
+
+    private async Task NavigateToArticleDetailAsync(int idResource, bool useOwnAccess)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync(
+                $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private async void OnLogoutClicked(object? sender, EventArgs e)
     {
         _session.Clear();
         await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+    }
+
+    private static OwnArticleCard ToOwnArticleCard(ArticleResponse article)
+    {
+        var summary = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        var metaParts = new List<string>
+        {
+            $"Visibilite {article.Visibility.ToLowerInvariant()}"
+        };
+
+        if (!article.IsApproved)
+            metaParts.Add("non approuve");
+
+        return new OwnArticleCard(
+            article.IdResource,
+            article.Title,
+            $"Publie le {article.CreatedAt:dd/MM/yyyy}",
+            string.Join("  |  ", metaParts),
+            ToExcerpt(summary, 180));
+    }
+
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
+    {
+        item = ((sender as BindableObject)?.BindingContext as TItem)!;
+        return item is not null;
+    }
+
+    private static string FirstNonEmpty(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                return value.Trim();
+        }
+
+        return string.Empty;
+    }
+
+    private static string ToExcerpt(string value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
+        if (normalized.Length <= maxLength)
+            return normalized;
+
+        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
     }
 
     private static string TrimMessage(string message)
@@ -195,9 +323,16 @@ public partial class ProfilePage : ContentPage
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        var normalized = message.Replace("\r", " ").Replace("\n", " ").Trim();
-        return normalized.Length <= 180
-            ? normalized
-            : normalized[..177] + "...";
+        return ToExcerpt(message, 180);
+    }
+
+    private sealed record OwnArticleCard(
+        int IdResource,
+        string Title,
+        string Subtitle,
+        string Meta,
+        string Summary)
+    {
+        public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }
 }

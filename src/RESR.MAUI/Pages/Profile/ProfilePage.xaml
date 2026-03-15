@@ -6,15 +6,15 @@
              BackgroundColor="#F4F1EC">
 
     <ContentPage.Resources>
+        <Style x:Key="SectionCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
         <Style x:Key="SectionTitleStyle" TargetType="Label">
             <Setter Property="TextColor" Value="#1E1C44" />
             <Setter Property="FontSize" Value="24" />
             <Setter Property="FontAttributes" Value="Bold" />
-        </Style>
-
-        <Style x:Key="SectionCaptionStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="#6A678A" />
-            <Setter Property="FontSize" Value="13" />
         </Style>
 
         <Style x:Key="FieldLabelStyle" TargetType="Label">
@@ -60,17 +60,23 @@
                     Padding="{OnIdiom Phone='18', Default='24'}"
                     Stroke="#D7D7D7"
                     StrokeShape="RoundRectangle 26">
-                <VerticalStackLayout Spacing="8">
+                <VerticalStackLayout Spacing="10">
                     <Label Text="Mon profil"
                            Style="{StaticResource Headline}"
                            FontSize="{OnIdiom Phone='28', Default='32'}"
                            TextColor="#1E1C44" />
-                    <Label Text="Retrouve tes informations, tes favoris et ta liste lire plus tard."
-                           Style="{StaticResource SectionCaptionStyle}"
-                           HorizontalTextAlignment="Center" />
-                    <Label x:Name="StatusLabel"
-                           Text="Chargement du profil..."
+                    <Label Text="Retrouve tes informations, tes marques et les articles que tu as crees."
                            Style="{StaticResource SectionCaptionStyle}" />
+                    <HorizontalStackLayout Spacing="10">
+                        <ActivityIndicator x:Name="LoadingIndicator"
+                                           IsVisible="False"
+                                           IsRunning="False"
+                                           VerticalOptions="Center" />
+                        <Label x:Name="StatusLabel"
+                               Text="Chargement du profil..."
+                               Style="{StaticResource SectionCaptionStyle}"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
@@ -310,10 +316,99 @@
                 </VerticalStackLayout>
             </Border>
 
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='18', Default='24'}"
+                    Stroke="#D7D7D7"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Mes articles"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label x:Name="MyArticlesSummaryLabel"
+                                   Text="Chargement des articles..."
+                                   Style="{StaticResource SectionCaptionStyle}" />
+                        </VerticalStackLayout>
+
+                        <Button x:Name="ViewAllArticlesButton"
+                                Grid.Column="1"
+                                Text="Voir tout"
+                                Clicked="OnViewAllArticlesClicked" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="MyArticlesCarousel"
+                                      HeightRequest="{OnIdiom Phone='320', Tablet='360', Default='380'}"
+                                      IndicatorView="MyArticlesIndicator"
+                                      IsBounceEnabled="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0"
+                                      IsVisible="False">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border BackgroundColor="#F8F8FB"
+                                                Stroke="#D7D7D7"
+                                                StrokeShape="RoundRectangle 22"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center"
+                                                Padding="18">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMyArticleTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Spacing="10">
+                                                <Border BackgroundColor="#2E2AA5"
+                                                        HorizontalOptions="Start"
+                                                        Padding="10,4"
+                                                        StrokeThickness="0"
+                                                        StrokeShape="RoundRectangle 12">
+                                                    <Label Text="Mon article"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="White" />
+                                                </Border>
+                                                <Label Text="{Binding Title}"
+                                                       Style="{StaticResource CardTitleStyle}" />
+                                                <Label Text="{Binding Subtitle}"
+                                                       Style="{StaticResource CardMetaStyle}"
+                                                       IsVisible="{Binding HasSubtitle}" />
+                                                <Label Text="{Binding Meta}"
+                                                       Style="{StaticResource CardMetaStyle}" />
+                                                <Label Text="{Binding Summary}"
+                                                       Style="{StaticResource CardSummaryStyle}" />
+                                                <Button Text="Lire l'article"
+                                                        HorizontalOptions="End"
+                                                        Clicked="OnMyArticleOpenClicked" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="MyArticlesEmptyState"
+                                IsVisible="False"
+                                BackgroundColor="#F8F5F2"
+                                Stroke="#DFD9D2"
+                                StrokeShape="RoundRectangle 24"
+                                Padding="24">
+                            <Label Text="Vous n'avez pas encore d'article visible."
+                                   HorizontalTextAlignment="Center"
+                                   Style="{StaticResource CardSummaryStyle}" />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="MyArticlesIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
+                </VerticalStackLayout>
+            </Border>
+
             <Button Text="Se deconnecter"
                     Clicked="OnLogoutClicked"
                     HorizontalOptions="Center" />
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

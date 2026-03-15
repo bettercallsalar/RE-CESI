@@ -3,34 +3,78 @@ using RESR.Models.Resources;
 
 namespace RESR.MAUI.Pages.Articles;
 
-public partial class ArticlesPage : ContentPage
+public partial class UserArticlesPage : ContentPage, IQueryAttributable
 {
     private const int PageSize = 10;
 
     private readonly IResourcesApiClient _resourcesApiClient;
+    private readonly IApiSession _session;
     private CancellationTokenSource? _loadCts;
-    private bool _hasLoadedOnce;
+    private int? _idUser;
+    private bool _isOwnProfile;
+    private bool _shouldLoad;
     private int _currentPage;
     private int _totalPages;
     private int _totalCount;
     private string? _currentKeyword;
+    private string _username = string.Empty;
+    private string _firstName = string.Empty;
     private IReadOnlyList<ArticleListItem> _items = Array.Empty<ArticleListItem>();
 
-    public ArticlesPage(IResourcesApiClient resourcesApiClient)
+    public UserArticlesPage(IResourcesApiClient resourcesApiClient, IApiSession session)
     {
         _resourcesApiClient = resourcesApiClient;
+        _session = session;
         InitializeComponent();
         ApplyState();
+    }
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("idUser", out var rawId) &&
+            int.TryParse(rawId?.ToString(), out var idUser) &&
+            idUser > 0)
+        {
+            _idUser = idUser;
+            _shouldLoad = true;
+        }
+
+        if (query.TryGetValue("isOwnProfile", out var rawOwnProfile) &&
+            bool.TryParse(rawOwnProfile?.ToString(), out var isOwnProfile))
+        {
+            _isOwnProfile = isOwnProfile;
+        }
+        else
+        {
+            _isOwnProfile = false;
+        }
+
+        _username = Uri.UnescapeDataString(query.TryGetValue("username", out var rawUsername)
+            ? rawUsername?.ToString() ?? string.Empty
+            : string.Empty);
+
+        _firstName = Uri.UnescapeDataString(query.TryGetValue("firstName", out var rawFirstName)
+            ? rawFirstName?.ToString() ?? string.Empty
+            : string.Empty);
+
+        UpdateHeader();
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        if (_hasLoadedOnce)
+        if (!_shouldLoad || !_idUser.HasValue)
             return;
 
-        _hasLoadedOnce = true;
+        _shouldLoad = false;
+
+        if (_isOwnProfile && !_session.IsAuthenticated)
+        {
+            StatusLabel.Text = "Connectez-vous pour consulter vos articles.";
+            return;
+        }
+
         await ReloadAsync(triggeredByRefresh: false);
     }
 
@@ -71,32 +115,20 @@ public partial class ArticlesPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
-    private async void OnEditArticleClicked(object? sender, EventArgs e)
-    {
-        if (sender is Button { CommandParameter: int idResource })
-            await Shell.Current.GoToAsync($"{nameof(EditArticlePage)}?idResource={idResource}");
-    }
-
     private async void OnArticleTapped(object? sender, TappedEventArgs e)
     {
-        await OpenArticleAsync(sender);
+        if (!TryGetBoundItem<ArticleListItem>(sender, out var item))
+            return;
+
+        await NavigateToArticleDetailAsync(item.IdResource, _isOwnProfile);
     }
 
     private async void OnArticleOpenClicked(object? sender, EventArgs e)
     {
-        await OpenArticleAsync(sender);
-    }
-
-    private async Task OpenArticleAsync(object? sender)
-    {
-        var article = sender is BindableObject bindable
-            ? bindable.BindingContext as ArticleListItem
-            : null;
-
-        if (article is null)
+        if (!TryGetBoundItem<ArticleListItem>(sender, out var item))
             return;
 
-        await NavigateToArticleDetailAsync(article.IdResource);
+        await NavigateToArticleDetailAsync(item.IdResource, _isOwnProfile);
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)
@@ -107,7 +139,7 @@ public partial class ArticlesPage : ContentPage
 
     private async Task LoadPageAsync(int page, bool append, bool triggeredByRefresh)
     {
-        if (_loadCts is not null)
+        if (_loadCts is not null || !_idUser.HasValue)
             return;
 
         _loadCts = new CancellationTokenSource();
@@ -115,8 +147,11 @@ public partial class ArticlesPage : ContentPage
 
         try
         {
-            var response = await _resourcesApiClient.GetArticlesAsync(page, PageSize, _currentKeyword, _loadCts.Token);
-            var mappedItems = response.Items.Select(ToListItem).ToList();
+            PaginatedArticlesResponse response = _isOwnProfile
+                ? await _resourcesApiClient.GetMyArticlesAsync(_idUser.Value, page, PageSize, _currentKeyword, _loadCts.Token)
+                : await _resourcesApiClient.GetArticlesByUserAsync(_idUser.Value, page, PageSize, _currentKeyword, _loadCts.Token);
+
+            var mappedItems = response.Items.Select(article => ToListItem(article, _isOwnProfile)).ToList();
 
             _items = append
                 ? _items.Concat(mappedItems).ToList()
@@ -155,10 +190,27 @@ public partial class ArticlesPage : ContentPage
         }
         finally
         {
-            _loadCts.Dispose();
+            _loadCts?.Dispose();
             _loadCts = null;
             SetLoadingState(false, triggeredByRefresh);
         }
+    }
+
+    private void UpdateHeader()
+    {
+        if (_isOwnProfile)
+        {
+            PageTitleLabel.Text = "Mes articles";
+            PageCaptionLabel.Text = "Retrouve ici les articles que tu as crees.";
+            return;
+        }
+
+        var displayName = string.IsNullOrWhiteSpace(_firstName)
+            ? (string.IsNullOrWhiteSpace(_username) ? "cet utilisateur" : _username)
+            : _firstName;
+
+        PageTitleLabel.Text = $"Articles de {displayName}";
+        PageCaptionLabel.Text = "Parcourez les articles publics de ce profil.";
     }
 
     private void ApplyState()
@@ -185,22 +237,46 @@ public partial class ArticlesPage : ContentPage
         if (_totalCount == 0)
         {
             return string.IsNullOrWhiteSpace(_currentKeyword)
-                ? "Aucun article public disponible."
+                ? "Aucun article disponible."
                 : $"Aucun article pour \"{_currentKeyword}\".";
         }
 
         return $"{_totalCount} article(s) trouves. Page {_currentPage}/{Math.Max(1, _totalPages)}.";
     }
 
-    private static ArticleListItem ToListItem(ArticleResponse article)
+    private async Task NavigateToArticleDetailAsync(int idResource, bool useOwnAccess)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            var route = $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}";
+            await Shell.Current.GoToAsync(route);
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
+    private static ArticleListItem ToListItem(ArticleResponse article, bool includeOwnerMeta)
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        var metaParts = new List<string>
+        {
+            $"Auteur #{article.IdUser}",
+            $"Visibilite {article.Visibility.ToLowerInvariant()}"
+        };
+
+        if (includeOwnerMeta && !article.IsApproved)
+            metaParts.Add("non approuve");
 
         return new ArticleListItem(
             article.IdResource,
             article.Title,
             $"Publie le {article.CreatedAt:dd/MM/yyyy}",
-            $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
+            string.Join("  |  ", metaParts),
             ToExcerpt(description, 220));
     }
 
@@ -240,20 +316,12 @@ public partial class ArticlesPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
-    private async Task NavigateToArticleDetailAsync(int idResource)
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
     {
-        if (Shell.Current is null)
-            return;
-
-        try
-        {
-            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
-        }
-        catch (Exception ex)
-        {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
-        }
+        item = ((sender as BindableObject)?.BindingContext as TItem)!;
+        return item is not null;
     }
+
     private sealed record ArticleListItem(
         int IdResource,
         string Title,

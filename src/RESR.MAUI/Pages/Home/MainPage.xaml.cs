@@ -283,11 +283,6 @@ public partial class MainPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
-    private async Task NavigateToArticleDetailAsync(int idResource)
-    {
-        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
-    }
-
     private async Task NavigateToAsync(string route)
     {
         if (Shell.Current is null)
@@ -301,6 +296,11 @@ public partial class MainPage : ContentPage
         {
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
+    }
+
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
     }
 
     private async Task NavigateToRootAsync()

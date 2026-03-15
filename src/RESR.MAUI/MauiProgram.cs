@@ -31,10 +31,12 @@ public static class MauiProgram
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
 		builder.Services.AddTransient<ProfilePage>();
+		builder.Services.AddTransient<UserProfilePage>();
 		builder.Services.AddTransient<CreateArticlePage>();
 		builder.Services.AddTransient<EditArticlePage>();
 		builder.Services.AddTransient<ArticleDetailPage>();
 		builder.Services.AddTransient<ArticlesPage>();
+		builder.Services.AddTransient<UserArticlesPage>();
 		builder.Services.AddTransient<EventsPage>();
 		builder.Services.AddTransient<CreateEventPage>();
 		builder.Services.AddTransient<EditEventPage>();
@@ -50,6 +52,11 @@ public static class MauiProgram
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
 		builder.Services.AddHttpClient<IResourcesApiClient, ResourcesApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<IFollowsApiClient, FollowsApiClient>(httpClient =>
 		{
 			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);

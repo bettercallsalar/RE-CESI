@@ -45,6 +45,15 @@
             <Setter Property="LineBreakMode" Value="WordWrap" />
         </Style>
 
+        <Style x:Key="AuthorButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+
         <Style x:Key="CommentAuthorStyle" TargetType="Label">
             <Setter Property="TextColor" Value="{StaticResource Gray950}" />
             <Setter Property="FontSize" Value="14" />
@@ -130,6 +139,14 @@
                                Style="{StaticResource FormSectionTitleStyle}"
                                FontSize="30" />
 
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="Par"
+                                   Style="{StaticResource FormCaptionStyle}" />
+                            <Button x:Name="AuthorButton"
+                                    Style="{StaticResource AuthorButtonStyle}"
+                                    Clicked="OnAuthorClicked" />
+                        </HorizontalStackLayout>
+
                         <Label x:Name="MetaLabel"
                                Style="{StaticResource FormCaptionStyle}" />
 
@@ -179,12 +196,12 @@
                                 JustifyContent="Start"
                                 AlignItems="Start">
                         <Button x:Name="FavoriteButton"
-                                Text="⭐ Favori"
+                                Text="&#x2B50; Favori"
                                 Clicked="OnFavoriteClicked"
                                 Margin="0,0,10,10"
                                 Style="{StaticResource MarkButtonStyle}" />
                         <Button x:Name="ReadLaterButton"
-                                Text="🔖 Lire plus tard"
+                                Text="&#x1F516; Lire plus tard"
                                 Clicked="OnReadLaterClicked"
                                 Margin="0,0,10,10"
                                 Style="{StaticResource MarkButtonStyle}" />
@@ -228,19 +245,19 @@
                                 JustifyContent="Start"
                                 AlignItems="Start">
                         <Button x:Name="LikeButton"
-                                Text="👍 Like"
+                                Text="&#x1F44D; Like"
                                 CommandParameter="like"
                                 Clicked="OnReactionClicked"
                                 Margin="0,0,10,10"
                                 Style="{StaticResource ReactionButtonStyle}" />
                         <Button x:Name="DislikeButton"
-                                Text="👎 Dislike"
+                                Text="&#x1F44E; Dislike"
                                 CommandParameter="dislike"
                                 Clicked="OnReactionClicked"
                                 Margin="0,0,10,10"
                                 Style="{StaticResource ReactionButtonStyle}" />
                         <Button x:Name="LoveButton"
-                                Text="❤️ Love"
+                                Text="&#x2764;&#xFE0F; Love"
                                 CommandParameter="love"
                                 Clicked="OnReactionClicked"
                                 Margin="0,0,10,10"
@@ -368,5 +385,4 @@
             </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

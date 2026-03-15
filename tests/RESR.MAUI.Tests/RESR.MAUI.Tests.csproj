@@ -27,9 +27,11 @@
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiSession.cs" Link="Services\ApiSession.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\CommentsApiClient.cs" Link="Services\CommentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\DepartmentsApiClient.cs" Link="Services\DepartmentsApiClient.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\FollowsApiClient.cs" Link="Services\FollowsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IApiSession.cs" Link="Services\IApiSession.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ICommentsApiClient.cs" Link="Services\ICommentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IDepartmentsApiClient.cs" Link="Services\IDepartmentsApiClient.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\IFollowsApiClient.cs" Link="Services\IFollowsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IMarksApiClient.cs" Link="Services\IMarksApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IReactionsApiClient.cs" Link="Services\IReactionsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\IResourcesApiClient.cs" Link="Services\IResourcesApiClient.cs" />
