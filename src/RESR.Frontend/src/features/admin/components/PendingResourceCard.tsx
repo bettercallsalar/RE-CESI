@@ -51,7 +51,7 @@ export function PendingResourceCard({
         </Stack>
 
         <Text color="ink.500" fontSize={{ base: "15px", md: "16px" }} minH="48px">
-          {description || "Aucune description fournie pour cette ressource."}
+          {description || "Aucune description fournie."}
         </Text>
       </Stack>
 

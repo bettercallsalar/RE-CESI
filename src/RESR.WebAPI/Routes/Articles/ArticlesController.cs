@@ -169,7 +169,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         return Ok(await ToResponseAsync(article, ct));
     }
 
-    [AuthorizePermission(PermissionNames.CreateResource)]
+    [AuthorizePermission]
     [HttpPost]
     public async Task<ActionResult> Create([FromForm] CreateArticleFormRequest req, CancellationToken ct)
     {
@@ -200,7 +200,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.EditResource)]
+    [AuthorizePermission]
     [HttpPatch("{idResource:int}")]
     public async Task<ActionResult<ArticleResponse>> Update(
         [FromRoute] int idResource,
@@ -248,7 +248,7 @@ public sealed class ArticlesController : AuthenticatedResourceControllerBase
         }
     }
 
-    [AuthorizePermission(PermissionNames.DeleteResource)]
+    [AuthorizePermission]
     [HttpDelete("{idResource:int}")]
     public async Task<ActionResult> Delete([FromRoute] int idResource, CancellationToken ct)
     {

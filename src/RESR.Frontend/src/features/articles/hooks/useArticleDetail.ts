@@ -100,7 +100,7 @@ export function useArticleDetail(idResource: number) {
         createSuccessMessage(
           nextIsApproved
             ? "L'article a ete approuve et devient maintenant visible publiquement."
-            : "L'article a ete desapprouve et n'apparait plus dans les ressources publiques."
+            : "L'article a ete desapprouve et n'apparait plus parmi les articles publics."
         )
       );
 

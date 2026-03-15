@@ -2,48 +2,138 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Auth.RegisterPage"
-             Title="Inscription">
+             Title="Inscription"
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="12">
-            <Label Text="Inscription"
-                   FontAttributes="Bold"/>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="820"
+                             Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
+                             Spacing="18">
 
-            <Entry x:Name="RegisterUsernameEntry"
-                   Placeholder="Nom d'utilisateur"/>
-            <Entry x:Name="RegisterFirstNameEntry"
-                   Placeholder="Prénom"/>
-            <Entry x:Name="RegisterEmailEntry"
-                   Placeholder="Courriel"
-                   Keyboard="Email"/>
-            <Entry x:Name="RegisterPasswordEntry"
-                   Placeholder="Mot de passe"
-                   IsPassword="True"/>
-            <Entry x:Name="RegisterBirthDateEntry"
-                   Placeholder="Date de naissance (JJ-MM-AAAA) - optionnel"/>
-            <Picker x:Name="RegisterDepartmentPicker"
-                    Title="Choisir un département"
-                    ItemsSource="{Binding Departments}"
-                    ItemDisplayBinding="{Binding Name}"/>
-            <Editor x:Name="RegisterBioEntry"
-                    Placeholder="Biographie - optionnel"
-                    AutoSize="TextChanges"
-                    HeightRequest="90"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Button Text="S'inscrire"
-                    Clicked="OnRegisterClicked"/>
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Inscription" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Creer un compte." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
 
-            <Label x:Name="StatusLabel"
-                   Text="Renseigne les informations pour créer un compte."
-                   LineBreakMode="WordWrap"/>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Creer mon compte" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Renseignez les informations necessaires a la creation du compte." />
+                    </VerticalStackLayout>
 
-            <BoxView HeightRequest="1"
-                     Opacity="0.2"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Nom d'utilisateur" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="RegisterUsernameEntry"
+                                   Placeholder="Votre identifiant public" />
+                        </Border>
+                    </VerticalStackLayout>
 
-            <Label Text="Déjà un compte ?"/>
-            <Button Text="Se connecter"
-                    Clicked="OnGoToLoginClicked"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Prenom" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="RegisterFirstNameEntry"
+                                   Placeholder="Votre prenom" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Courriel" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="RegisterEmailEntry"
+                                   Keyboard="Email"
+                                   Placeholder="prenom.nom@exemple.fr" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Mot de passe" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="RegisterPasswordEntry"
+                                   IsPassword="True"
+                                   Placeholder="Choisissez un mot de passe" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Departement" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Picker x:Name="RegisterDepartmentPicker"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    ItemsSource="{Binding Departments}"
+                                    Title="Choisir un departement" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <HorizontalStackLayout Spacing="10"
+                                               VerticalOptions="Center">
+                            <CheckBox x:Name="BirthDateCheckBox"
+                                      CheckedChanged="OnBirthDateCheckedChanged" />
+                            <Label Style="{StaticResource BodyMutedLabelStyle}"
+                                   Text="Ajouter une date de naissance (optionnel)" />
+                        </HorizontalStackLayout>
+
+                        <Border x:Name="BirthDateFieldContainer"
+                                Opacity="0.5"
+                                Style="{StaticResource FieldBorderStyle}">
+                            <DatePicker x:Name="RegisterBirthDatePicker"
+                                        Format="dd/MM/yyyy"
+                                        IsEnabled="False" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Biographie" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Editor x:Name="RegisterBioEntry"
+                                    AutoSize="TextChanges"
+                                    HeightRequest="140"
+                                    Placeholder="Quelques mots pour vous presenter (optionnel)" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Label x:Name="StatusLabel"
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Renseignez les informations pour creer un compte." />
+
+                    <Button x:Name="RegisterButton"
+                            Clicked="OnRegisterClicked"
+                            Text="Creer mon compte" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Style="{StaticResource FieldLabelStyle}"
+                           Text="Deja inscrit ?" />
+                    <Button Clicked="OnGoToLoginClicked"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Text="Se connecter" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

@@ -10,3 +10,9 @@ export interface Role {
   description: string | null;
   permissions: Permission[];
 }
+
+export interface RoleSummary {
+  idRole: number;
+  name: string;
+  description: string | null;
+}

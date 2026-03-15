@@ -19,8 +19,17 @@ import { EventsPage } from "@/features/events/pages/EventsPage";
 import { MyEventsPage } from "@/features/events/pages/MyEventsPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { RegisterPage } from "@/features/auth/pages/RegisterPage";
+import { FollowingFeedPage } from "@/features/follows/pages/FollowingFeedPage";
+import { ReadLaterPage } from "@/features/marks/pages/ReadLaterPage";
+import { AccessibilityPage } from "@/pages/AccessibilityPage";
+import { ContactPage } from "@/pages/ContactPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { UserProfilePage } from "@/features/profile/pages/UserProfilePage";
 import { HomePage } from "@/pages/HomePage";
+import { LegalNoticePage } from "@/pages/LegalNoticePage";
+import { PrivacyCookiesPage } from "@/pages/PrivacyCookiesPage";
+import { TermsOfUsePage } from "@/pages/TermsOfUsePage";
 import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { AppLoader } from "@/shared/ui/AppLoader";
 
@@ -34,6 +43,8 @@ function App() {
   const articleEditMatch = pathname.match(/^\/articles\/(\d+)\/modifier$/);
   const eventDetailMatch = pathname.match(/^\/events\/(\d+)$/);
   const eventEditMatch = pathname.match(/^\/events\/(\d+)\/modifier$/);
+  const userProfileMatch = pathname.match(/^\/utilisateurs\/(\d+)$/);
+  const isRegisterPath = pathname === "/register" || pathname === "/inscription";
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
@@ -50,7 +61,23 @@ function App() {
       window.history.replaceState({}, "", "/");
       setPathname("/");
     }
+    if (isRegisterPath && status === "authenticated") {
+      window.history.replaceState({}, "", "/");
+      setPathname("/");
+    }
     if (pathname === "/mon-compte" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/suivis" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/marques" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (userProfileMatch && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
@@ -108,7 +135,7 @@ function App() {
       window.history.replaceState({}, "", redirectPath);
       setPathname(redirectPath);
     }
-  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, pathname, status]);
+  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, isRegisterPath, pathname, status, userProfileMatch]);
 
   if (pathname === "/admin") {
     if (status === "loading") {
@@ -222,12 +249,76 @@ function App() {
     return <AppLoader label="Redirection vers la connexion" />;
   }
 
+  if (pathname === "/suivis") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de vos suivis" />;
+    }
+
+    if (status === "authenticated") {
+      return <FollowingFeedPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/marques") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de vos articles et events enregistres" />;
+    }
+
+    if (status === "authenticated") {
+      return <ReadLaterPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (userProfileMatch) {
+    if (status === "loading") {
+      return <AppLoader label="Chargement du profil utilisateur" />;
+    }
+
+    if (status === "authenticated") {
+      return <UserProfilePage idUser={Number(userProfileMatch[1])} />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
   if (pathname === "/login") {
     if (status === "loading") {
       return <AppLoader label="Restauration de votre session" />;
     }
 
     return <LoginPage />;
+  }
+
+  if (isRegisterPath) {
+    if (status === "loading") {
+      return <AppLoader label="Preparation du formulaire d'inscription" />;
+    }
+
+    return <RegisterPage />;
+  }
+
+  if (pathname === "/mentions-legales") {
+    return <LegalNoticePage />;
+  }
+
+  if (pathname === "/accessibilite") {
+    return <AccessibilityPage />;
+  }
+
+  if (pathname === "/contact" || pathname === "/contacts") {
+    return <ContactPage />;
+  }
+
+  if (pathname === "/donnees-personnelles-cookies") {
+    return <PrivacyCookiesPage />;
+  }
+
+  if (pathname === "/conditions-generales-utilisation" || pathname === "/cgu") {
+    return <TermsOfUsePage />;
   }
 
   if (pathname === "/articles") {

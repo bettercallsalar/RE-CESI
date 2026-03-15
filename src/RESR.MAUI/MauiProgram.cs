@@ -1,13 +1,14 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Devices;
-using RESR.MAUI.Services;
-using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Pages.Information;
 using RESR.MAUI.Pages.Profile;
+using RESR.MAUI.Services;
 
 namespace RESR.MAUI;
 
@@ -31,11 +32,20 @@ public static class MauiProgram
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
 		builder.Services.AddTransient<ProfilePage>();
+		builder.Services.AddTransient<UserProfilePage>();
 		builder.Services.AddTransient<CreateArticlePage>();
+		builder.Services.AddTransient<EditArticlePage>();
+		builder.Services.AddTransient<ArticleDetailPage>();
 		builder.Services.AddTransient<ArticlesPage>();
+		builder.Services.AddTransient<UserArticlesPage>();
 		builder.Services.AddTransient<EventsPage>();
+		builder.Services.AddTransient<CreateEventPage>();
+		builder.Services.AddTransient<EditEventPage>();
+		builder.Services.AddTransient<MarkResourcesPage>();
 		builder.Services.AddTransient<InformationPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
+		builder.Services.AddTransient<IMarkedResourcesService, MarkedResourcesService>();
+
 		var apiBaseAddress = ResolveApiBaseAddress();
 
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
@@ -48,7 +58,32 @@ public static class MauiProgram
 			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
 		});
+		builder.Services.AddHttpClient<IFollowsApiClient, FollowsApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<IMarksApiClient, MarksApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<IReactionsApiClient, ReactionsApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<ICommentsApiClient, CommentsApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
 		builder.Services.AddHttpClient<IArticlesApiClient, ArticlesApiClient>(httpClient =>
+		{
+			httpClient.BaseAddress = apiBaseAddress;
+			httpClient.Timeout = TimeSpan.FromSeconds(10);
+		});
+		builder.Services.AddHttpClient<IEventsApiClient, EventsApiClient>(httpClient =>
 		{
 			httpClient.BaseAddress = apiBaseAddress;
 			httpClient.Timeout = TimeSpan.FromSeconds(10);
@@ -80,5 +115,3 @@ public static class MauiProgram
 		return new Uri($"http://{host}:8080/");
 	}
 }
-
-

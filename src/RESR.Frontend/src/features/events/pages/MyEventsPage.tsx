@@ -274,7 +274,7 @@ export function MyEventsPage() {
                 </Button>
                 <Button
                   bg="red.500"
-                  color="white"
+                  color="surface.onCritical"
                   isDisabled={!isDeleteConfirmed}
                   isLoading={isDeleting}
                   loadingText="Suppression"

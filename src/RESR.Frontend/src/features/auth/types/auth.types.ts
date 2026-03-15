@@ -5,8 +5,34 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterAccountPayload {
+  username: string;
+  email: string;
+  password: string;
+  firstName: string;
+  birthDate: string | null;
+  bio: string | null;
+  idDepartment: number;
+}
+
+export interface RegisterAccountFormValues {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  birthDate: string;
+  bio: string;
+  idDepartment: number | "";
+}
+
 export interface LoginResponse {
   token: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  userId: number;
 }
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
