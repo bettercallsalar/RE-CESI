@@ -28,6 +28,26 @@
             <Setter Property="FontSize" Value="15" />
             <Setter Property="LineBreakMode" Value="WordWrap" />
         </Style>
+
+        <Style x:Key="CardTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="LineBreakMode" Value="TailTruncation" />
+            <Setter Property="MaxLines" Value="2" />
+        </Style>
+
+        <Style x:Key="CardMetaStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#59567A" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="CardSummaryStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#343052" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="MaxLines" Value="4" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView>
@@ -133,13 +153,79 @@
                     Stroke="#D7D7D7"
                     StrokeShape="RoundRectangle 26">
                 <VerticalStackLayout Spacing="14">
-                    <Label Text="Favoris"
-                           Style="{StaticResource SectionTitleStyle}" />
-                    <Label x:Name="FavoritesEmptyLabel"
-                           Text="Aucune ressource en favori."
-                           Style="{StaticResource SectionCaptionStyle}" />
-                    <VerticalStackLayout x:Name="FavoritesContainer"
-                                         Spacing="12" />
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <Label Text="Favoris"
+                               Style="{StaticResource SectionTitleStyle}" />
+                        <Button Grid.Column="1"
+                                Text="Voir tout"
+                                Clicked="OnSeeAllFavoritesClicked" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="FavoritesCarousel"
+                                      HeightRequest="{OnIdiom Phone='280', Tablet='300', Default='320'}"
+                                      IndicatorView="FavoritesIndicator"
+                                      IsBounceEnabled="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0"
+                                      IsVisible="False">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border BackgroundColor="#F8F8FB"
+                                                Stroke="#D7D7D7"
+                                                StrokeShape="RoundRectangle 22"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center"
+                                                Padding="18">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMarkedResourceTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Spacing="10">
+                                                <Border BackgroundColor="#2E2AA5"
+                                                        HorizontalOptions="Start"
+                                                        Padding="10,4"
+                                                        StrokeThickness="0"
+                                                        StrokeShape="RoundRectangle 12">
+                                                    <Label Text="{Binding Type}"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="White" />
+                                                </Border>
+                                                <Label Text="{Binding Title}"
+                                                       Style="{StaticResource CardTitleStyle}" />
+                                                <Label Text="{Binding Subtitle}"
+                                                       Style="{StaticResource CardMetaStyle}" />
+                                                <Label Text="{Binding Summary}"
+                                                       Style="{StaticResource CardSummaryStyle}" />
+                                                <Button Text="Ouvrir"
+                                                        HorizontalOptions="End"
+                                                        IsVisible="{Binding HasRoute}"
+                                                        Clicked="OnMarkedResourceOpenClicked" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="FavoritesEmptyState"
+                                IsVisible="False"
+                                BackgroundColor="#F8F5F2"
+                                Stroke="#DFD9D2"
+                                StrokeShape="RoundRectangle 24"
+                                Padding="24">
+                            <Label Text="Aucune ressource en favori."
+                                   HorizontalTextAlignment="Center"
+                                   Style="{StaticResource CardSummaryStyle}" />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="FavoritesIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
                 </VerticalStackLayout>
             </Border>
 
@@ -148,13 +234,79 @@
                     Stroke="#D7D7D7"
                     StrokeShape="RoundRectangle 26">
                 <VerticalStackLayout Spacing="14">
-                    <Label Text="Lire plus tard"
-                           Style="{StaticResource SectionTitleStyle}" />
-                    <Label x:Name="ReadLaterEmptyLabel"
-                           Text="Aucune ressource a lire plus tard."
-                           Style="{StaticResource SectionCaptionStyle}" />
-                    <VerticalStackLayout x:Name="ReadLaterContainer"
-                                         Spacing="12" />
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <Label Text="Lire plus tard"
+                               Style="{StaticResource SectionTitleStyle}" />
+                        <Button Grid.Column="1"
+                                Text="Voir tout"
+                                Clicked="OnSeeAllReadLaterClicked" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="ReadLaterCarousel"
+                                      HeightRequest="{OnIdiom Phone='280', Tablet='300', Default='320'}"
+                                      IndicatorView="ReadLaterIndicator"
+                                      IsBounceEnabled="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0"
+                                      IsVisible="False">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border BackgroundColor="#F8F8FB"
+                                                Stroke="#D7D7D7"
+                                                StrokeShape="RoundRectangle 22"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center"
+                                                Padding="18">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMarkedResourceTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Spacing="10">
+                                                <Border BackgroundColor="#2E2AA5"
+                                                        HorizontalOptions="Start"
+                                                        Padding="10,4"
+                                                        StrokeThickness="0"
+                                                        StrokeShape="RoundRectangle 12">
+                                                    <Label Text="{Binding Type}"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="White" />
+                                                </Border>
+                                                <Label Text="{Binding Title}"
+                                                       Style="{StaticResource CardTitleStyle}" />
+                                                <Label Text="{Binding Subtitle}"
+                                                       Style="{StaticResource CardMetaStyle}" />
+                                                <Label Text="{Binding Summary}"
+                                                       Style="{StaticResource CardSummaryStyle}" />
+                                                <Button Text="Ouvrir"
+                                                        HorizontalOptions="End"
+                                                        IsVisible="{Binding HasRoute}"
+                                                        Clicked="OnMarkedResourceOpenClicked" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="ReadLaterEmptyState"
+                                IsVisible="False"
+                                BackgroundColor="#F8F5F2"
+                                Stroke="#DFD9D2"
+                                StrokeShape="RoundRectangle 24"
+                                Padding="24">
+                            <Label Text="Aucune ressource a lire plus tard."
+                                   HorizontalTextAlignment="Center"
+                                   Style="{StaticResource CardSummaryStyle}" />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="ReadLaterIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
                 </VerticalStackLayout>
             </Border>
 

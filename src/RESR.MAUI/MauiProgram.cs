@@ -6,6 +6,7 @@ using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Pages.Profile;
 
 namespace RESR.MAUI;
@@ -34,7 +35,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<ArticleDetailPage>();
 		builder.Services.AddTransient<ArticlesPage>();
 		builder.Services.AddTransient<EventsPage>();
+		builder.Services.AddTransient<MarkResourcesPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
+		builder.Services.AddTransient<IMarkedResourcesService, MarkedResourcesService>();
 		var apiBaseAddress = ResolveApiBaseAddress();
 
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>

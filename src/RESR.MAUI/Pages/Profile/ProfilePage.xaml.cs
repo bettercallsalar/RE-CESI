@@ -1,38 +1,32 @@
-using Microsoft.Maui.Controls.Shapes;
-using Microsoft.Maui.Graphics;
-using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Services;
-using RESR.Models.Marks;
-using RESR.Models.Resources;
 using RESR.Models.Users;
 
 namespace RESR.MAUI.Pages.Profile;
 
 public partial class ProfilePage : ContentPage
 {
-    private const int MarksPageSize = 50;
-
     private readonly IUsersApiClient _usersApiClient;
-    private readonly IMarksApiClient _marksApiClient;
-    private readonly IResourcesApiClient _resourcesApiClient;
+    private readonly IMarkedResourcesService _markedResourcesService;
     private readonly IApiSession _session;
 
     private CancellationTokenSource? _loadCts;
+    private IReadOnlyList<MarkedResourceItem> _favoriteItems = Array.Empty<MarkedResourceItem>();
+    private IReadOnlyList<MarkedResourceItem> _readLaterItems = Array.Empty<MarkedResourceItem>();
 
     public ProfilePage(
         IUsersApiClient usersApiClient,
-        IMarksApiClient marksApiClient,
-        IResourcesApiClient resourcesApiClient,
+        IMarkedResourcesService markedResourcesService,
         IApiSession session)
     {
         _usersApiClient = usersApiClient;
-        _marksApiClient = marksApiClient;
-        _resourcesApiClient = resourcesApiClient;
+        _markedResourcesService = markedResourcesService;
         _session = session;
 
         InitializeComponent();
+        ApplyCarouselsState();
     }
 
     protected override async void OnAppearing()
@@ -65,14 +59,12 @@ public partial class ProfilePage : ContentPage
 
         _loadCts = new CancellationTokenSource();
         StatusLabel.Text = "Chargement du profil et des marques...";
-        FavoritesContainer.Children.Clear();
-        ReadLaterContainer.Children.Clear();
 
         try
         {
             var profileTask = _usersApiClient.GetMeAsync(_loadCts.Token);
-            var favoritesTask = LoadAllMarksAsync((page, pageSize, ct) => _marksApiClient.GetFavoritesAsync(page, pageSize, ct), _loadCts.Token);
-            var readLaterTask = LoadAllMarksAsync((page, pageSize, ct) => _marksApiClient.GetReadLaterAsync(page, pageSize, ct), _loadCts.Token);
+            var favoritesTask = _markedResourcesService.GetFavoritesAsync(_loadCts.Token);
+            var readLaterTask = _markedResourcesService.GetReadLaterAsync(_loadCts.Token);
 
             await Task.WhenAll(profileTask, favoritesTask, readLaterTask);
 
@@ -85,12 +77,10 @@ public partial class ProfilePage : ContentPage
 
             BindProfile(me);
 
-            var favorites = await BuildProfileMarkItemsAsync(await favoritesTask, _loadCts.Token);
-            var readLater = await BuildProfileMarkItemsAsync(await readLaterTask, _loadCts.Token);
+            _favoriteItems = await favoritesTask;
+            _readLaterItems = await readLaterTask;
 
-            RenderMarks(FavoritesContainer, FavoritesEmptyLabel, favorites);
-            RenderMarks(ReadLaterContainer, ReadLaterEmptyLabel, readLater);
-
+            ApplyCarouselsState();
             StatusLabel.Text = "Profil charge.";
         }
         catch (ApiException ex)
@@ -127,168 +117,66 @@ public partial class ProfilePage : ContentPage
         VerifiedLabel.Text = me.IsVerified ? "Oui" : "Non";
     }
 
-    private async Task<IReadOnlyList<MarkResponse>> LoadAllMarksAsync(
-        Func<int, int, CancellationToken, Task<PaginatedMarksResponse>> fetchPageAsync,
-        CancellationToken ct)
+    private void ApplyCarouselsState()
     {
-        var items = new List<MarkResponse>();
-        var page = 1;
+        FavoritesCarousel.ItemsSource = _favoriteItems;
+        FavoritesCarousel.IsVisible = _favoriteItems.Count > 0;
+        FavoritesEmptyState.IsVisible = _favoriteItems.Count == 0;
+        FavoritesIndicator.IsVisible = _favoriteItems.Count > 1;
 
-        while (true)
-        {
-            var response = await fetchPageAsync(page, MarksPageSize, ct);
-            items.AddRange(response.Items);
-
-            if (response.TotalPages <= 0 || page >= response.TotalPages)
-                break;
-
-            page++;
-        }
-
-        return items;
+        ReadLaterCarousel.ItemsSource = _readLaterItems;
+        ReadLaterCarousel.IsVisible = _readLaterItems.Count > 0;
+        ReadLaterEmptyState.IsVisible = _readLaterItems.Count == 0;
+        ReadLaterIndicator.IsVisible = _readLaterItems.Count > 1;
     }
 
-    private async Task<IReadOnlyList<ProfileMarkItem>> BuildProfileMarkItemsAsync(
-        IReadOnlyList<MarkResponse> marks,
-        CancellationToken ct)
+    private async void OnMarkedResourceTapped(object? sender, TappedEventArgs e)
     {
-        if (marks.Count == 0)
-            return [];
-
-        var items = await Task.WhenAll(marks.Select(mark => BuildProfileMarkItemAsync(mark, ct)));
-        return items
-            .Where(item => item is not null)
-            .Select(item => item!)
-            .ToList();
+        await OpenMarkedResourceAsync(sender);
     }
 
-    private async Task<ProfileMarkItem?> BuildProfileMarkItemAsync(MarkResponse mark, CancellationToken ct)
+    private async void OnMarkedResourceOpenClicked(object? sender, EventArgs e)
     {
-        var article = await _resourcesApiClient.GetArticleByIdAsync(mark.IdRessource, ct);
-        if (article is not null)
-        {
-            var summary = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
-
-            return new ProfileMarkItem(
-                mark.IdRessource,
-                "Article",
-                article.Title,
-                $"Publie le {article.CreatedAt:dd/MM/yyyy}",
-                ToExcerpt(summary, 160),
-                Route: $"{nameof(ArticleDetailPage)}?idResource={mark.IdRessource}");
-        }
-
-        var @event = await _resourcesApiClient.GetEventByIdAsync(mark.IdRessource, ct);
-        if (@event is not null)
-        {
-            var summary = FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
-            var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
-
-            return new ProfileMarkItem(
-                mark.IdRessource,
-                "Evenement",
-                @event.Title,
-                @event.EndDate.HasValue
-                    ? $"Du {@event.StartDate:dd/MM/yyyy} au {@event.EndDate:dd/MM/yyyy}"
-                    : $"Le {@event.StartDate:dd/MM/yyyy}",
-                ToExcerpt($"{summary}  |  {location}", 160),
-                Route: null);
-        }
-
-        return new ProfileMarkItem(
-            mark.IdRessource,
-            "Ressource",
-            $"Ressource #{mark.IdRessource}",
-            "Ressource indisponible",
-            "Cette ressource n'est plus accessible depuis l'application.",
-            Route: null);
+        await OpenMarkedResourceAsync(sender);
     }
 
-    private void RenderMarks(
-        VerticalStackLayout container,
-        Label emptyLabel,
-        IReadOnlyList<ProfileMarkItem> items)
+    private async Task OpenMarkedResourceAsync(object? sender)
     {
-        container.Children.Clear();
-        emptyLabel.IsVisible = items.Count == 0;
+        var item = sender is BindableObject bindable
+            ? bindable.BindingContext as MarkedResourceItem
+            : null;
 
-        foreach (var item in items)
-            container.Children.Add(BuildMarkCard(item));
-    }
-
-    private View BuildMarkCard(ProfileMarkItem item)
-    {
-        var badge = new Border
-        {
-            BackgroundColor = Color.FromArgb("#342B9A"),
-            Padding = new Thickness(10, 4),
-            StrokeThickness = 0,
-            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(12) },
-            HorizontalOptions = LayoutOptions.Start,
-            Content = new Label
-            {
-                Text = item.Type,
-                FontSize = 12,
-                FontAttributes = FontAttributes.Bold,
-                TextColor = Colors.White
-            }
-        };
-
-        var openButton = new Button
-        {
-            Text = "Ouvrir",
-            HorizontalOptions = LayoutOptions.End,
-            IsVisible = !string.IsNullOrWhiteSpace(item.Route)
-        };
-
-        openButton.Clicked += async (_, _) => await NavigateToMarkedResourceAsync(item.Route);
-
-        return new Border
-        {
-            BackgroundColor = Color.FromArgb("#F8F8FB"),
-            Stroke = Color.FromArgb("#D7D7D7"),
-            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(20) },
-            Padding = new Thickness(18),
-            Content = new VerticalStackLayout
-            {
-                Spacing = 10,
-                Children =
-                {
-                    badge,
-                    new Label
-                    {
-                        Text = item.Title,
-                        FontAttributes = FontAttributes.Bold,
-                        FontSize = 18,
-                        TextColor = Color.FromArgb("#1E1C44")
-                    },
-                    new Label
-                    {
-                        Text = item.Subtitle,
-                        FontSize = 12,
-                        TextColor = Color.FromArgb("#6A678A")
-                    },
-                    new Label
-                    {
-                        Text = item.Summary,
-                        FontSize = 14,
-                        TextColor = Color.FromArgb("#2C2C2C"),
-                        LineBreakMode = LineBreakMode.WordWrap
-                    },
-                    openButton
-                }
-            }
-        };
-    }
-
-    private async Task NavigateToMarkedResourceAsync(string? route)
-    {
-        if (string.IsNullOrWhiteSpace(route) || Shell.Current is null)
+        if (item is null || string.IsNullOrWhiteSpace(item.Route) || Shell.Current is null)
             return;
 
         try
         {
-            await Shell.Current.GoToAsync(route);
+            await Shell.Current.GoToAsync(item.Route);
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
+    private async void OnSeeAllFavoritesClicked(object? sender, EventArgs e)
+    {
+        await NavigateToMarksAsync(MarkResourcesMode.Favorite);
+    }
+
+    private async void OnSeeAllReadLaterClicked(object? sender, EventArgs e)
+    {
+        await NavigateToMarksAsync(MarkResourcesMode.ReadLater);
+    }
+
+    private async Task NavigateToMarksAsync(MarkResourcesMode mode)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(MarkResourcesPage)}?mode={mode}");
         }
         catch (Exception ex)
         {
@@ -302,42 +190,14 @@ public partial class ProfilePage : ContentPage
         await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
     }
 
-    private static string FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-                return value.Trim();
-        }
-
-        return string.Empty;
-    }
-
-    private static string ToExcerpt(string value, int maxLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
-        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
-        if (normalized.Length <= maxLength)
-            return normalized;
-
-        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
-    }
-
     private static string TrimMessage(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        return ToExcerpt(message, 180);
+        var normalized = message.Replace("\r", " ").Replace("\n", " ").Trim();
+        return normalized.Length <= 180
+            ? normalized
+            : normalized[..177] + "...";
     }
-
-    private sealed record ProfileMarkItem(
-        int IdResource,
-        string Type,
-        string Title,
-        string Subtitle,
-        string Summary,
-        string? Route);
 }

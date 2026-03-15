@@ -2,6 +2,7 @@ using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
 using RESR.MAUI.Pages.Profile;
 
 namespace RESR.MAUI;
@@ -19,6 +20,7 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(ArticleDetailPage), typeof(ArticleDetailPage));
 		Routing.RegisterRoute(nameof(ArticlesPage), typeof(ArticlesPage));
 		Routing.RegisterRoute(nameof(EventsPage), typeof(EventsPage));
+		Routing.RegisterRoute(nameof(MarkResourcesPage), typeof(MarkResourcesPage));
 
 		Items.Add(new ShellContent
 		{

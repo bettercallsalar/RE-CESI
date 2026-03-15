@@ -61,11 +61,11 @@
                     <HorizontalStackLayout x:Name="MarkActionsLayout"
                                            Spacing="10">
                         <Button x:Name="FavoriteButton"
-                                Text="Favori"
+                                Text="⭐ Favori"
                                 Style="{StaticResource MarkButtonStyle}"
                                 Clicked="OnFavoriteClicked" />
                         <Button x:Name="ReadLaterButton"
-                                Text="Lire plus tard"
+                                Text="🔖 Lire plus tard"
                                 Style="{StaticResource MarkButtonStyle}"
                                 Clicked="OnReadLaterClicked" />
                     </HorizontalStackLayout>
