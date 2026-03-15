@@ -26,6 +26,28 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
     }
 
+    public async Task<PaginatedArticlesResponse> GetArticlesByUserAsync(int idUser, int page, int pageSize, string? keyword, CancellationToken ct)
+    {
+        var uri = BuildListingUri("api/articles", page, pageSize, keyword, ("idUser", idUser.ToString()));
+        return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
+    }
+
+    public async Task<PaginatedArticlesResponse> GetMyArticlesAsync(int idUser, int page, int pageSize, string? keyword, CancellationToken ct)
+    {
+        var uri = BuildListingUri($"api/articles/{idUser}/my-articles", page, pageSize, keyword);
+        return await GetAsync(uri, new PaginatedArticlesResponse([], page, pageSize, 0, 0), ct);
+    }
+
+    public async Task<ArticleResponse?> GetArticleByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync($"api/articles/{idResource}", fallback: (ArticleResponse?)null, ct);
+    }
+
+    public async Task<ArticleResponse?> GetOwnArticleByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync($"api/articles/me/{idResource}", fallback: (ArticleResponse?)null, ct);
+    }
+
     public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct)
     {
         return await GetEventsAsync(page, pageSize, keyword: null, ct);
@@ -70,7 +92,12 @@ public sealed class ResourcesApiClient : IResourcesApiClient
             : new AuthenticationHeaderValue("Bearer", _session.Token);
     }
 
-    private static string BuildListingUri(string basePath, int page, int pageSize, string? keyword)
+    private static string BuildListingUri(
+        string basePath,
+        int page,
+        int pageSize,
+        string? keyword,
+        params (string Key, string Value)[] extraQueryParameters)
     {
         var queryParameters = new List<string>
         {
@@ -80,6 +107,12 @@ public sealed class ResourcesApiClient : IResourcesApiClient
 
         if (!string.IsNullOrWhiteSpace(keyword))
             queryParameters.Add($"keyword={Uri.EscapeDataString(keyword.Trim())}");
+
+        foreach (var (key, value) in extraQueryParameters)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                queryParameters.Add($"{key}={Uri.EscapeDataString(value)}");
+        }
 
         return $"{basePath}?{string.Join("&", queryParameters)}";
     }

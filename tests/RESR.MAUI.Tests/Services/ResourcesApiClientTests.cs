@@ -32,10 +32,15 @@ public sealed class ResourcesApiClientTests
                       "modifiedAt": null,
                       "deletedAt": null,
                       "idUser": 2,
+                      "author": {
+                        "idUser": 2,
+                        "username": "alice",
+                        "firstName": "Alice"
+                      },
                       "idCategory": 1,
                       "content": "Contenu",
                       "isApproved": true,
-                      "idDepartment": null,
+                      "defaultImageId": null,
                       "files": []
                     }
                   ],
@@ -96,6 +101,80 @@ public sealed class ResourcesApiClientTests
     }
 
     [Fact]
+    public async Task GetArticlesByUserAsync_AddsIdUserQueryString_WhenProvided()
+    {
+        var session = new StubApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles?page=1&pageSize=6&idUser=42", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "items": [],
+                  "page": 1,
+                  "pageSize": 6,
+                  "totalCount": 0,
+                  "totalPages": 0
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        await sut.GetArticlesByUserAsync(42, 1, 6, keyword: null, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task GetMyArticlesAsync_UsesOwnRoute_AndBearerHeader()
+    {
+        var session = new StubApiSession
+        {
+            Token = "jwt-token-for-own-articles"
+        };
+
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles/7/my-articles?page=1&pageSize=6&keyword=suivi", request.RequestUri?.PathAndQuery);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("jwt-token-for-own-articles", request.Headers.Authorization.Parameter);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "items": [],
+                  "page": 1,
+                  "pageSize": 6,
+                  "totalCount": 0,
+                  "totalPages": 0
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        await sut.GetMyArticlesAsync(7, 1, 6, "suivi", CancellationToken.None);
+    }
+
+    [Fact]
     public async Task GetEventsAsync_SendsBearerHeader_WhenSessionIsAuthenticated()
     {
         var session = new StubApiSession
@@ -127,6 +206,11 @@ public sealed class ResourcesApiClientTests
                       "modifiedAt": null,
                       "deletedAt": null,
                       "idUser": 3,
+                      "author": {
+                        "idUser": 3,
+                        "username": "bob",
+                        "firstName": "Bob"
+                      },
                       "idCategory": 1,
                       "subtitle": "Sous titre",
                       "startDate": "2026-03-20T10:00:00Z",
@@ -139,7 +223,8 @@ public sealed class ResourcesApiClientTests
                         "code": 75
                       },
                       "isApproved": true,
-                      "files": []
+                      "files": [],
+                      "defaultImageId": null
                     }
                   ],
                   "page": 1,
@@ -162,6 +247,109 @@ public sealed class ResourcesApiClientTests
 
         Assert.Single(page.Items);
         Assert.Equal("Forum test", page.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetArticleByIdAsync_ReturnsPayload_FromPublicEndpoint()
+    {
+        var session = new StubApiSession();
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles/12", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idResource": 12,
+                  "idArticle": 4,
+                  "title": "Article detail",
+                  "description": "Description detail",
+                  "type": "article",
+                  "visibility": "PUBLIC",
+                  "createdAt": "2026-03-13T08:00:00Z",
+                  "modifiedAt": null,
+                  "deletedAt": null,
+                  "idUser": 2,
+                  "author": { "idUser": 2, "username": "alice", "firstName": "Alice" },
+                  "idCategory": 1,
+                  "content": "Corps complet",
+                  "isApproved": true,
+                  "defaultImageId": null,
+                  "files": []
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        var article = await sut.GetArticleByIdAsync(12, CancellationToken.None);
+
+        Assert.NotNull(article);
+        Assert.Equal("Article detail", article!.Title);
+        Assert.Equal(12, article.IdResource);
+    }
+
+    [Fact]
+    public async Task GetOwnArticleByIdAsync_UsesOwnRoute_AndBearerHeader()
+    {
+        var session = new StubApiSession
+        {
+            Token = "jwt-token-for-own-detail"
+        };
+
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/articles/me/12", request.RequestUri?.PathAndQuery);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("jwt-token-for-own-detail", request.Headers.Authorization.Parameter);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = Json("""
+                {
+                  "idResource": 12,
+                  "idArticle": 4,
+                  "title": "Mon article detail",
+                  "description": "Description detail",
+                  "type": "article",
+                  "visibility": "PRIVATE",
+                  "createdAt": "2026-03-13T08:00:00Z",
+                  "modifiedAt": null,
+                  "deletedAt": null,
+                  "idUser": 7,
+                  "author": { "idUser": 7, "username": "owner", "firstName": "Owner" },
+                  "idCategory": 1,
+                  "content": "Corps complet",
+                  "isApproved": false,
+                  "defaultImageId": null,
+                  "files": []
+                }
+                """)
+            });
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        var article = await sut.GetOwnArticleByIdAsync(12, CancellationToken.None);
+
+        Assert.NotNull(article);
+        Assert.Equal("PRIVATE", article!.Visibility);
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

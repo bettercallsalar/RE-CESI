@@ -90,7 +90,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        if (!TryGetBoundItem<HomeResourceCard>(sender, out var item))
+            return;
+
+        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -100,7 +103,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        await NavigateToAsync(nameof(ArticlesPage));
+        if (!TryGetBoundItem<HomeResourceCard>(sender, out var item))
+            return;
+
+        await NavigateToArticleDetailAsync(item.IdResource, useOwnAccess: false);
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -205,6 +211,7 @@ public partial class MainPage : ContentPage
     {
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         return new HomeResourceCard(
+            IdResource: article.IdResource,
             Badge: "Article public",
             HeroCaption: "ARTICLE",
             Title: article.Title,
@@ -219,6 +226,7 @@ public partial class MainPage : ContentPage
         var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
 
         return new HomeResourceCard(
+            IdResource: @event.IdResource,
             Badge: "Evenement public",
             HeroCaption: "EVENT",
             Title: @event.Title,
@@ -290,6 +298,22 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private async Task NavigateToArticleDetailAsync(int idResource, bool useOwnAccess)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            var route = $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}";
+            await Shell.Current.GoToAsync(route);
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private async Task NavigateToRootAsync()
     {
         if (Shell.Current is null)
@@ -305,7 +329,14 @@ public partial class MainPage : ContentPage
         }
     }
 
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
+    {
+        item = ((sender as BindableObject)?.BindingContext as TItem)!;
+        return item is not null;
+    }
+
     private sealed record HomeResourceCard(
+        int IdResource,
         string Badge,
         string HeroCaption,
         string Title,

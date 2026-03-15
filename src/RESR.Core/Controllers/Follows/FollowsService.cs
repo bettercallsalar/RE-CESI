@@ -16,6 +16,9 @@ public sealed class FollowsService : IFollowsService
     public Task<IReadOnlyList<FollowUser>> GetAllFollowingAsync(int idUser, CancellationToken ct) =>
         _repo.GetAllFollowingAsync(idUser, ct);
 
+    public Task<bool> ExistsAsync(int idFollower, int idFollowing, CancellationToken ct) =>
+        _repo.ExistsAsync(idFollower, idFollowing, ct);
+
     public async Task CreateAsync(int idFollower, int idFollowing, CancellationToken ct)
     {
         if (idFollower == idFollowing)

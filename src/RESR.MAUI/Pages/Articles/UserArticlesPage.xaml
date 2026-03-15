@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="RESR.MAUI.Pages.Articles.ArticlesPage"
+             x:Class="RESR.MAUI.Pages.Articles.UserArticlesPage"
              Title="Articles"
              BackgroundColor="#F4F1EC">
 
@@ -41,11 +41,13 @@
               MaximumWidthRequest="1100">
 
             <VerticalStackLayout Spacing="6">
-                <Label Text="Articles"
+                <Label x:Name="PageTitleLabel"
+                       Text="Articles"
                        Style="{StaticResource Headline}"
                        FontSize="{OnIdiom Phone='28', Default='34'}"
                        TextColor="#1E1C44" />
-                <Label Text="Parcourez les articles publics approuves de la plateforme."
+                <Label x:Name="PageCaptionLabel"
+                       Text="Chargement..."
                        Style="{StaticResource SectionCaptionStyle}"
                        HorizontalTextAlignment="Center" />
             </VerticalStackLayout>
@@ -97,7 +99,7 @@
                                             Padding="10,4"
                                             StrokeThickness="0"
                                             StrokeShape="RoundRectangle 12">
-                                        <Label Text="Article public"
+                                        <Label Text="Article"
                                                FontSize="12"
                                                FontAttributes="Bold"
                                                TextColor="White" />

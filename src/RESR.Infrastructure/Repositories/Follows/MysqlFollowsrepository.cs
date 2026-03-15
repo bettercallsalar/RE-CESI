@@ -72,6 +72,27 @@ public sealed class MySqlFollowsRepository : IFollowsRepository
         return list;
     }
 
+    public async Task<bool> ExistsAsync(int idFollower, int idFollowing, CancellationToken ct)
+    {
+        const string sql = """
+        SELECT 1
+        FROM `follows`
+        WHERE id_follower = @idFollower AND id_following = @idFollowing
+        LIMIT 1
+        """;
+
+        await using var conn = _connectionFactory();
+        await conn.OpenAsync(ct);
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        AddParameter(cmd, "@idFollower", idFollower);
+        AddParameter(cmd, "@idFollowing", idFollowing);
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        return result is not null;
+    }
+
     public async Task<bool> CreateAsync(int idFollower, int idFollowing, CancellationToken ct)
     {
         const string sql = """

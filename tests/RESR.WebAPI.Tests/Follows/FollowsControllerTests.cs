@@ -128,6 +128,30 @@ public sealed class FollowsControllerTests
     }
 
     [Fact]
+    public async Task Exists_ReturnsNoContent_WhenFollowExists()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.ExistsAsync(1, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var result = await controller.Exists(1, 2, CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task Exists_ReturnsNotFound_WhenFollowMissing()
+    {
+        var controller = CreateController(out var service);
+        service.Setup(s => s.ExistsAsync(1, 2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var result = await controller.Exists(1, 2, CancellationToken.None);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
     public async Task Create_ReturnsNoContent_WhenSuccess()
     {
         var controller = CreateController(out var service);

@@ -51,6 +51,19 @@ public sealed class FollowsController : ControllerBase
         return Ok(new PaginatedFollowUsersResponse(items, page, pageSize, totalCount, totalPages));
     }
 
+    [HttpGet("{idFollower:int}/{idFollowing:int}")]
+    public async Task<ActionResult> Exists(
+        [FromRoute] int idFollower,
+        [FromRoute] int idFollowing,
+        CancellationToken ct = default)
+    {
+        if (idFollower <= 0 || idFollowing <= 0)
+            return BadRequest(new { message = "IdFollower and IdFollowing must be greater than 0" });
+
+        var exists = await _service.ExistsAsync(idFollower, idFollowing, ct);
+        return exists ? NoContent() : NotFound();
+    }
+
     [HttpPost]
     [AuthorizePermission(PermissionNames.FollowUser)]
     public async Task<ActionResult> Create([FromBody] FollowRequest request, CancellationToken ct)
