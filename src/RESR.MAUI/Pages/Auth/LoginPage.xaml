@@ -23,7 +23,7 @@
                         <Label Style="{StaticResource PageTitleLabelStyle}"
                                Text="Connexion" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Accedez a votre espace personnel depuis une interface claire et adaptee au tactile." />
+                               Text="Accedez a votre espace personnel." />
                     </VerticalStackLayout>
                 </Grid>
             </Border>

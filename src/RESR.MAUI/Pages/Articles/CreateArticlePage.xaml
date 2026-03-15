@@ -23,7 +23,7 @@
                         <Label Style="{StaticResource PageTitleLabelStyle}"
                                Text="Publier un article" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Le formulaire reprend les reperes visuels du web tout en restant compact et ergonomique sur Android." />
+                               Text="Renseignez les informations de publication." />
                     </VerticalStackLayout>
                 </Grid>
             </Border>
@@ -34,7 +34,7 @@
                         <Label Style="{StaticResource SectionTitleLabelStyle}"
                                Text="Nouvel article" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Les champs essentiels sont regroupes avec des aides de saisie plus visibles." />
+                               Text="Completez les champs obligatoires avant publication." />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">

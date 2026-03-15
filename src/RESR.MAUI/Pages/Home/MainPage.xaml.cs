@@ -9,6 +9,7 @@ namespace RESR.MAUI.Pages.Home;
 
 public partial class MainPage : ContentPage
 {
+    private const int CarouselItemLimit = 5;
     private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
     private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
     private static readonly Color SuccessStatusColor = Color.FromArgb("#1D6B43");
@@ -122,16 +123,23 @@ public partial class MainPage : ContentPage
 
         try
         {
-            var articleTask = _resourcesApiClient.GetArticlesAsync(1, 5, _loadCts.Token);
-            var eventTask = _resourcesApiClient.GetEventsAsync(1, 5, _loadCts.Token);
+            var articleTask = _resourcesApiClient.GetArticlesAsync(1, CarouselItemLimit, _loadCts.Token);
+            var eventTask = _resourcesApiClient.GetEventsAsync(1, CarouselItemLimit, _loadCts.Token);
 
             await Task.WhenAll(articleTask, eventTask);
 
             var articles = await articleTask;
             var events = await eventTask;
 
-            _articleCards = articles.Items.Select(ToArticleCard).ToList();
-            _eventCards = events.Items.Select(ToEventCard).ToList();
+            _articleCards = articles.Items
+                .Take(CarouselItemLimit)
+                .Select(ToArticleCard)
+                .ToList();
+
+            _eventCards = events.Items
+                .Take(CarouselItemLimit)
+                .Select(ToEventCard)
+                .ToList();
 
             ApplyArticleState();
             ApplyEventState();
@@ -285,7 +293,7 @@ public partial class MainPage : ContentPage
         if (!string.IsNullOrWhiteSpace(username))
             return username;
 
-        return $"Utilisateur #{author.IdUser}";
+        return "un utilisateur";
     }
 
     private static string TrimMessage(string message)

@@ -25,7 +25,7 @@
                         <Label Style="{StaticResource PageTitleLabelStyle}"
                                Text="Articles" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Parcourez les articles publics approuves avec une mise en page claire et tactile." />
+                               Text="Parcourez les articles publics approuves." />
                     </VerticalStackLayout>
                 </Grid>
             </Border>

@@ -23,7 +23,7 @@
                         <Label Style="{StaticResource PageTitleLabelStyle}"
                                Text="Inscription" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Creer un compte sur mobile doit rester simple, lisible et robuste." />
+                               Text="Creer un compte." />
                     </VerticalStackLayout>
                 </Grid>
             </Border>
@@ -34,7 +34,7 @@
                         <Label Style="{StaticResource SectionTitleLabelStyle}"
                                Text="Creer mon compte" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Les champs essentiels sont demandes en premier, avec des controles adaptes au tactile." />
+                               Text="Renseignez les informations necessaires a la creation du compte." />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">

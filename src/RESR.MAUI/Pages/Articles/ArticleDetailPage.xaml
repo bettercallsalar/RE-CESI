@@ -52,6 +52,7 @@
             <Setter Property="FontAttributes" Value="Bold" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalOptions" Value="Start" />
+            <Setter Property="VerticalOptions" Value="Center" />
         </Style>
 
         <Style x:Key="CommentAuthorStyle" TargetType="Label">
@@ -139,9 +140,11 @@
                                Style="{StaticResource FormSectionTitleStyle}"
                                FontSize="30" />
 
-                        <HorizontalStackLayout Spacing="6">
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
                             <Label Text="Par"
-                                   Style="{StaticResource FormCaptionStyle}" />
+                                   Style="{StaticResource FormCaptionStyle}"
+                                   VerticalOptions="Center" />
                             <Button x:Name="AuthorButton"
                                     Style="{StaticResource AuthorButtonStyle}"
                                     Clicked="OnAuthorClicked" />

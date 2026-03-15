@@ -59,7 +59,7 @@
                                    Text="(RE) Sources Relationnelles" />
                             <Label HorizontalTextAlignment="Center"
                                    Style="{StaticResource MetaLabelStyle}"
-                                   Text="Plateforme d'echange inspiree du web, adaptee au mobile et a la tablette" />
+                                   Text="Articles et evenements publics" />
                         </VerticalStackLayout>
 
                         <Button x:Name="MenuButton"
@@ -149,7 +149,7 @@
                            Text="Bienvenue sur (RE) Sources Relationnelles !" />
                     <Label HorizontalTextAlignment="Center"
                            Style="{StaticResource BodyMutedLabelStyle}"
-                           Text="La plateforme d'echange preferee des francais, pensee pour une consultation confortable sur smartphone et tablette." />
+                           Text="Consultez les derniers articles et evenements publics." />
                 </VerticalStackLayout>
 
                 <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
@@ -181,7 +181,7 @@
                             <Label Style="{StaticResource SectionTitleLabelStyle}"
                                    Text="Les derniers articles" />
                             <Label Style="{StaticResource BodyMutedLabelStyle}"
-                                   Text="Une selection publique recente, alignee sur l'identite visuelle du frontend web." />
+                                   Text="Les 5 derniers articles publies." />
                         </VerticalStackLayout>
 
                         <Button Grid.Column="1"
@@ -283,7 +283,7 @@
                             <Label Style="{StaticResource SectionTitleLabelStyle}"
                                    Text="Les derniers evenements" />
                             <Label Style="{StaticResource BodyMutedLabelStyle}"
-                                   Text="Une lecture simple de l'agenda public, concue pour rester lisible en portrait comme en tablette." />
+                                   Text="Les 5 derniers evenements publies." />
                         </VerticalStackLayout>
 
                         <Button Grid.Column="1"
@@ -378,45 +378,6 @@
                                    Margin="0,-2,0,0" />
                 </VerticalStackLayout>
 
-                <Border Style="{StaticResource SurfaceBorderStyle}">
-                    <VerticalStackLayout Spacing="18">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Style="{StaticResource FooterTitleLabelStyle}"
-                                   Text="Nous suivre sur les reseaux sociaux" />
-                            <HorizontalStackLayout Spacing="10">
-                                <Border Style="{StaticResource OutlineBadgeBorderStyle}">
-                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
-                                           Text="X" />
-                                </Border>
-                                <Border Style="{StaticResource OutlineBadgeBorderStyle}">
-                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
-                                           Text="f" />
-                                </Border>
-                                <Border Style="{StaticResource OutlineBadgeBorderStyle}">
-                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
-                                           Text="in" />
-                                </Border>
-                                <Border Style="{StaticResource OutlineBadgeBorderStyle}">
-                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
-                                           Text="yt" />
-                                </Border>
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Spacing="8">
-                            <Label Style="{StaticResource FooterTitleLabelStyle}"
-                                   Text="Legal &amp; contact" />
-                            <Label Style="{StaticResource MetaLabelStyle}"
-                                   Text="Mentions legales" />
-                            <Label Style="{StaticResource MetaLabelStyle}"
-                                   Text="Donnees personnelles et cookies" />
-                            <Label Style="{StaticResource MetaLabelStyle}"
-                                   Text="Conditions generales d'utilisation" />
-                            <Label Style="{StaticResource MetaLabelStyle}"
-                                   Text="Contacts" />
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
             </VerticalStackLayout>
         </ScrollView>
     </RefreshView>

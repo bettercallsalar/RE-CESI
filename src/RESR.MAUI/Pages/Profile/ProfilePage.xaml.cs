@@ -10,6 +10,7 @@ namespace RESR.MAUI.Pages.Profile;
 
 public partial class ProfilePage : ContentPage
 {
+    private const int CarouselItemLimit = 5;
     private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
     private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
     private static readonly Color SuccessStatusColor = Color.FromArgb("#1D6B43");
@@ -99,15 +100,24 @@ public partial class ProfilePage : ContentPage
 
             BindProfile(_me);
 
-            var articlesTask = _resourcesApiClient.GetMyArticlesAsync(_me.IdUser, 1, 6, keyword: null, _loadCts.Token);
+            var articlesTask = _resourcesApiClient.GetMyArticlesAsync(_me.IdUser, 1, CarouselItemLimit, keyword: null, _loadCts.Token);
 
             await Task.WhenAll(favoritesTask, readLaterTask, articlesTask);
 
-            _favoriteItems = await favoritesTask;
-            _readLaterItems = await readLaterTask;
+            _favoriteItems = (await favoritesTask)
+                .Take(CarouselItemLimit)
+                .ToList();
+
+            _readLaterItems = (await readLaterTask)
+                .Take(CarouselItemLimit)
+                .ToList();
+
             var articles = await articlesTask;
 
-            _articleCards = articles.Items.Select(ToOwnArticleCard).ToList();
+            _articleCards = articles.Items
+                .Take(CarouselItemLimit)
+                .Select(ToOwnArticleCard)
+                .ToList();
 
             ApplyCarouselsState();
             ApplyArticlesState();

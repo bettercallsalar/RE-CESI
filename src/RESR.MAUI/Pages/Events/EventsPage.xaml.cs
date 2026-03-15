@@ -236,7 +236,7 @@ public partial class EventsPage : ContentPage
         if (!string.IsNullOrWhiteSpace(username))
             return username;
 
-        return $"Utilisateur #{author.IdUser}";
+        return "un utilisateur";
     }
 
     private static string? NormalizeKeyword(string? value)
