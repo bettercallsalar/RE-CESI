@@ -103,7 +103,7 @@ public sealed class MarkedResourcesService : IMarkedResourcesService
         return new MarkedResourceItem(
             mark.IdRessource,
             "Ressource",
-            $"Ressource #{mark.IdRessource}",
+            "Ressource indisponible",
             "Ressource indisponible",
             "Cette ressource n'est plus accessible depuis l'application.",
             Route: null);

@@ -1,3 +1,4 @@
+using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Services;
 using RESR.Models.Departments;
 using RESR.Models.Users;
@@ -8,6 +9,10 @@ namespace RESR.MAUI.Pages.Auth;
 
 public partial class RegisterPage : ContentPage
 {
+    private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
+    private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
+    private static readonly Color SuccessStatusColor = Color.FromArgb("#1D6B43");
+
     private readonly IUsersApiClient _usersApiClient;
     private readonly IDepartmentsApiClient _departmentsApiClient;
     private CancellationTokenSource? _registerCts;
@@ -20,6 +25,11 @@ public partial class RegisterPage : ContentPage
         _departmentsApiClient = departmentsApiClient;
         InitializeComponent();
         BindingContext = this;
+
+        StatusLabel.TextColor = MutedStatusColor;
+        RegisterBirthDatePicker.MinimumDate = new DateTime(1900, 1, 1);
+        RegisterBirthDatePicker.MaximumDate = DateTime.Today;
+        ToggleBirthDateField(false);
     }
 
     protected override async void OnAppearing()
@@ -32,47 +42,68 @@ public partial class RegisterPage : ContentPage
         }
     }
 
+    private async void OnBackClicked(object? sender, EventArgs e)
+    {
+        await NavigateBackAsync();
+    }
+
+    private void OnBirthDateCheckedChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        ToggleBirthDateField(e.Value);
+    }
+
     private async void OnRegisterClicked(object? sender, EventArgs e)
     {
         if (_registerCts is not null)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Une requete est deja en cours...";
             return;
         }
 
         if (!TryBuildRegisterRequest(out var request, out var errorMessage))
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = errorMessage;
             return;
         }
 
         _registerCts = new CancellationTokenSource();
+        RegisterButton.IsEnabled = false;
+        StatusLabel.TextColor = MutedStatusColor;
+        StatusLabel.Text = "Creation du compte en cours...";
 
         try
         {
             await _usersApiClient.RegisterAsync(request, _registerCts.Token);
-            StatusLabel.Text = "Inscription reussie. Tu peux maintenant te connecter.";
+            StatusLabel.TextColor = SuccessStatusColor;
+            StatusLabel.Text = "Inscription reussie. Vous pouvez maintenant vous connecter.";
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur register ({(int)ex.StatusCode}): {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur register ({(int)ex.StatusCode}) : {DisplayText.ToExcerpt(ex.Message, 180)}";
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Requete annulee.";
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur inattendue : {DisplayText.ToExcerpt(ex.Message, 180)}";
         }
         finally
         {
             _registerCts.Dispose();
             _registerCts = null;
+            RegisterButton.IsEnabled = true;
         }
     }
 
@@ -97,28 +128,20 @@ public partial class RegisterPage : ContentPage
             string.IsNullOrWhiteSpace(RegisterEmailEntry.Text) ||
             string.IsNullOrWhiteSpace(RegisterPasswordEntry.Text))
         {
-            errorMessage = "Username, prenom, email et mot de passe sont requis.";
+            errorMessage = "Nom d'utilisateur, prenom, email et mot de passe sont requis.";
             return false;
         }
 
         if (RegisterDepartmentPicker.SelectedItem is not DepartmentResponse selectedDepartment)
         {
-            errorMessage = "Selectionne un departement.";
+            errorMessage = "Selectionnez un departement.";
             return false;
         }
 
-        var idDepartment = selectedDepartment.IdDepartment;
-
         DateOnly? birthDate = null;
-        if (!string.IsNullOrWhiteSpace(RegisterBirthDateEntry.Text))
+        if (BirthDateCheckBox.IsChecked && RegisterBirthDatePicker.Date is DateTime birthDateValue)
         {
-            if (!DateOnly.TryParse(RegisterBirthDateEntry.Text, out var parsedBirthDate))
-            {
-                errorMessage = "Date de naissance invalide. Format attendu: yyyy-MM-dd.";
-                return false;
-            }
-
-            birthDate = parsedBirthDate;
+            birthDate = DateOnly.FromDateTime(birthDateValue);
         }
 
         request = new RegisterUserRequest(
@@ -128,7 +151,7 @@ public partial class RegisterPage : ContentPage
             RegisterFirstNameEntry.Text.Trim(),
             birthDate,
             string.IsNullOrWhiteSpace(RegisterBioEntry.Text) ? null : RegisterBioEntry.Text.Trim(),
-            idDepartment
+            selectedDepartment.IdDepartment
         );
 
         return true;
@@ -148,15 +171,46 @@ public partial class RegisterPage : ContentPage
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur departements ({(int)ex.StatusCode}): {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur departements ({(int)ex.StatusCode}) : {DisplayText.ToExcerpt(ex.Message, 180)}";
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur inattendue : {DisplayText.ToExcerpt(ex.Message, 180)}";
+        }
+    }
+
+    private void ToggleBirthDateField(bool isEnabled)
+    {
+        RegisterBirthDatePicker.IsEnabled = isEnabled;
+        BirthDateFieldContainer.Opacity = isEnabled ? 1 : 0.5;
+    }
+
+    private async Task NavigateBackAsync()
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            if (Shell.Current.Navigation.NavigationStack.Count > 1)
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
         }
     }
 }

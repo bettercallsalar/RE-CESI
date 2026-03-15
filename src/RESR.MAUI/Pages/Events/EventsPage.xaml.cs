@@ -1,3 +1,4 @@
+using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
 
@@ -5,6 +6,9 @@ namespace RESR.MAUI.Pages.Events;
 
 public partial class EventsPage : ContentPage
 {
+    private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
+    private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
+
     private const int PageSize = 10;
 
     private readonly IResourcesApiClient _resourcesApiClient;
@@ -22,6 +26,7 @@ public partial class EventsPage : ContentPage
         _resourcesApiClient = resourcesApiClient;
         _session = session;
         InitializeComponent();
+        StatusLabel.TextColor = MutedStatusColor;
         ApplyState();
     }
 
@@ -41,6 +46,11 @@ public partial class EventsPage : ContentPage
     {
         _loadCts?.Cancel();
         base.OnDisappearing();
+    }
+
+    private async void OnBackClicked(object? sender, EventArgs e)
+    {
+        await NavigateBackAsync();
     }
 
     private async void OnSearchButtonClicked(object? sender, EventArgs e)
@@ -76,14 +86,17 @@ public partial class EventsPage : ContentPage
 
     private async void OnCreateEventClicked(object? sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync(nameof(CreateEventPage));
-    }
+        if (Shell.Current is null)
+            return;
 
-    private async void OnEditEventClicked(object? sender, EventArgs e)
-    {
-        if (sender is Button { CommandParameter: int idResource })
+        try
         {
-            await Shell.Current.GoToAsync($"{nameof(EditEventPage)}?idResource={idResource}");
+            await Shell.Current.GoToAsync(nameof(CreateEventPage));
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
 
@@ -115,10 +128,12 @@ public partial class EventsPage : ContentPage
             _totalCount = response.TotalCount;
 
             ApplyState();
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = BuildStatusMessage();
         }
         catch (ApiException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
             if (!append)
             {
@@ -131,15 +146,18 @@ public partial class EventsPage : ContentPage
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Chargement annule.";
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue : {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
         }
         finally
         {
@@ -162,6 +180,7 @@ public partial class EventsPage : ContentPage
         LoadingIndicator.IsVisible = isLoading;
         LoadingIndicator.IsRunning = isLoading;
         SearchButton.IsEnabled = !isLoading;
+        CreateEventButton.IsEnabled = !isLoading;
         LoadMoreButton.IsEnabled = !isLoading;
 
         if (triggeredByRefresh || !isLoading)
@@ -182,24 +201,42 @@ public partial class EventsPage : ContentPage
 
     private static EventListItem ToListItem(EventResponse @event)
     {
-        var description = FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
-        var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
+        var author = GetAuthorLabel(@event.Author);
+        var location = DisplayText.FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
+        var summary = DisplayText.FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
 
         return new EventListItem(
-            @event.IdResource,
-            @event.Title,
-            BuildSubtitle(@event, location),
-            $"Organise par #{@event.IdUser}  |  {location}",
-            ToExcerpt(description, 220));
+            Badge: @event.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Evenement public" : "Evenement prive",
+            DateLabel: @event.StartDate.ToString("dd/MM/yyyy"),
+            Eyebrow: "EVENT",
+            Title: DisplayText.Normalize(@event.Title),
+            Subtitle: BuildEventSubtitle(@event, location),
+            Meta: $"Par {author} | {location}",
+            Summary: DisplayText.ToExcerpt(summary, 220),
+            AccessibilityText: $"Evenement {DisplayText.Normalize(@event.Title)}, prevu {BuildEventSubtitle(@event, location)}. {DisplayText.ToExcerpt(summary, 160)}");
     }
 
-    private static string BuildSubtitle(EventResponse @event, string location)
+    private static string BuildEventSubtitle(EventResponse @event, string location)
     {
         var dateLine = @event.EndDate.HasValue
             ? $"Du {@event.StartDate:dd/MM/yyyy} au {@event.EndDate:dd/MM/yyyy}"
             : $"Le {@event.StartDate:dd/MM/yyyy}";
 
-        return $"{dateLine}  |  {location}";
+        return $"{dateLine} | {location}";
+    }
+
+    private static string GetAuthorLabel(ResourceAuthorResponse author)
+    {
+        var firstName = DisplayText.Normalize(author.FirstName);
+        var username = DisplayText.Normalize(author.Username);
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+            return firstName;
+
+        if (!string.IsNullOrWhiteSpace(username))
+            return username;
+
+        return "un utilisateur";
     }
 
     private static string? NormalizeKeyword(string? value)
@@ -207,43 +244,45 @@ public partial class EventsPage : ContentPage
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    private static string FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-                return value.Trim();
-        }
-
-        return string.Empty;
-    }
-
-    private static string ToExcerpt(string value, int maxLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
-        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
-        if (normalized.Length <= maxLength)
-            return normalized;
-
-        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
-    }
-
     private static string TrimMessage(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        return ToExcerpt(message, 180);
+        return DisplayText.ToExcerpt(message, 180);
+    }
+
+    private async Task NavigateBackAsync()
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            if (Shell.Current.Navigation.NavigationStack.Count > 1)
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+        }
     }
 
     private sealed record EventListItem(
-        int IdResource,
+        string Badge,
+        string DateLabel,
+        string Eyebrow,
         string Title,
         string Subtitle,
         string Meta,
-        string Summary)
+        string Summary,
+        string AccessibilityText)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }

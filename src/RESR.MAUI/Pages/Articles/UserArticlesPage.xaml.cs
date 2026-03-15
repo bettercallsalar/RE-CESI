@@ -265,7 +265,6 @@ public partial class UserArticlesPage : ContentPage, IQueryAttributable
         var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         var metaParts = new List<string>
         {
-            $"Auteur #{article.IdUser}",
             $"Visibilite {article.Visibility.ToLowerInvariant()}"
         };
 

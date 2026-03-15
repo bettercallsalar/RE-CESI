@@ -7,6 +7,7 @@ namespace RESR.MAUI.Pages.Profile;
 
 public partial class UserProfilePage : ContentPage, IQueryAttributable
 {
+    private const int CarouselItemLimit = 5;
     private readonly IResourcesApiClient _resourcesApiClient;
     private readonly IFollowsApiClient _followsApiClient;
     private readonly IUsersApiClient _usersApiClient;
@@ -100,8 +101,11 @@ public partial class UserProfilePage : ContentPage, IQueryAttributable
             else
                 _isFollowing = false;
 
-            var articles = await _resourcesApiClient.GetArticlesByUserAsync(idUser, 1, 6, keyword: null, _loadCts.Token);
-            _articleCards = articles.Items.Select(ToArticleCard).ToList();
+            var articles = await _resourcesApiClient.GetArticlesByUserAsync(idUser, 1, CarouselItemLimit, keyword: null, _loadCts.Token);
+            _articleCards = articles.Items
+                .Take(CarouselItemLimit)
+                .Select(ToArticleCard)
+                .ToList();
             ApplyArticleState();
 
             ArticlesSummaryLabel.Text = _articleCards.Count == 0
@@ -140,12 +144,12 @@ public partial class UserProfilePage : ContentPage, IQueryAttributable
     private void BindProfileHeader(int idUser)
     {
         var displayName = string.IsNullOrWhiteSpace(_firstName)
-            ? (string.IsNullOrWhiteSpace(_username) ? $"Utilisateur #{idUser}" : _username)
+            ? (string.IsNullOrWhiteSpace(_username) ? "Utilisateur" : _username)
             : _firstName;
 
         DisplayNameLabel.Text = displayName;
         UsernameLabel.Text = string.IsNullOrWhiteSpace(_username)
-            ? $"Profil #{idUser}"
+            ? "Profil public"
             : $"@{_username}";
     }
 
@@ -303,7 +307,7 @@ public partial class UserProfilePage : ContentPage, IQueryAttributable
             article.IdResource,
             article.Title,
             $"Publie le {article.CreatedAt:dd/MM/yyyy}",
-            $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
+            $"Visibilite {article.Visibility.ToLowerInvariant()}",
             ToExcerpt(summary, 180));
     }
 

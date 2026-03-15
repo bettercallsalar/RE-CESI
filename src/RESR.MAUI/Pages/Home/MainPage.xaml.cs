@@ -1,5 +1,5 @@
-using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Auth;
+using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
@@ -9,10 +9,16 @@ namespace RESR.MAUI.Pages.Home;
 
 public partial class MainPage : ContentPage
 {
+    private const int CarouselItemLimit = 5;
+    private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
+    private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
+    private static readonly Color SuccessStatusColor = Color.FromArgb("#1D6B43");
+
     private readonly IResourcesApiClient _resourcesApiClient;
     private readonly IApiSession _session;
     private CancellationTokenSource? _loadCts;
     private bool _hasLoadedOnce;
+    private bool _isMobileMenuOpen;
     private IReadOnlyList<HomeResourceCard> _articleCards = Array.Empty<HomeResourceCard>();
     private IReadOnlyList<HomeResourceCard> _eventCards = Array.Empty<HomeResourceCard>();
 
@@ -22,7 +28,9 @@ public partial class MainPage : ContentPage
         _session = session;
         InitializeComponent();
 
+        StatusLabel.TextColor = MutedStatusColor;
         UpdateAuthState();
+        SetMobileMenuState(false);
         ApplyArticleState();
         ApplyEventState();
     }
@@ -55,58 +63,44 @@ public partial class MainPage : ContentPage
         await LoadResourcesAsync(triggeredByRefresh: true);
     }
 
-    private async void OnArticlesHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnArticlesNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(ArticlesPage));
     }
 
-    private async void OnEventsHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnEventsNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(EventsPage));
     }
 
-    private async void OnAccountHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnAccountNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(_session.IsAuthenticated ? nameof(ProfilePage) : nameof(LoginPage));
     }
 
-    private async void OnCreateArticleHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnCreateArticleNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(CreateArticlePage));
     }
 
-    private async void OnRegisterHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnRegisterNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(RegisterPage));
     }
 
-    private async void OnLogoutHeaderTapped(object? sender, TappedEventArgs e)
+    private async void OnLogoutNavigationClicked(object? sender, EventArgs e)
     {
         _session.Clear();
         UpdateAuthState();
+        SetMobileMenuState(false);
+        StatusLabel.TextColor = SuccessStatusColor;
         StatusLabel.Text = "Deconnexion reussie.";
         await NavigateToRootAsync();
     }
 
-    private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
-    {
-        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
-            await NavigateToArticleDetailAsync(card.IdResource);
-        else
-            await NavigateToAsync(nameof(ArticlesPage));
-    }
-
-    private async void OnEventCardTapped(object? sender, TappedEventArgs e)
-    {
-        await NavigateToAsync(nameof(EventsPage));
-    }
-
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
-            await NavigateToArticleDetailAsync(card.IdResource);
-        else
-            await NavigateToAsync(nameof(ArticlesPage));
+        await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -116,9 +110,7 @@ public partial class MainPage : ContentPage
 
     private void OnMenuClicked(object? sender, EventArgs e)
     {
-        StatusLabel.Text = _session.IsAuthenticated
-            ? "Utilise les liens pour parcourir les ressources, creer un article ou acceder a ton profil."
-            : "Utilise les liens Articles et Evenements pour ouvrir les listes de recherche, ou connecte-toi.";
+        SetMobileMenuState(!_isMobileMenuOpen);
     }
 
     private async Task LoadResourcesAsync(bool triggeredByRefresh)
@@ -131,38 +123,50 @@ public partial class MainPage : ContentPage
 
         try
         {
-            var articleTask = _resourcesApiClient.GetArticlesAsync(1, 5, _loadCts.Token);
-            var eventTask = _resourcesApiClient.GetEventsAsync(1, 5, _loadCts.Token);
+            var articleTask = _resourcesApiClient.GetArticlesAsync(1, CarouselItemLimit, _loadCts.Token);
+            var eventTask = _resourcesApiClient.GetEventsAsync(1, CarouselItemLimit, _loadCts.Token);
 
             await Task.WhenAll(articleTask, eventTask);
 
             var articles = await articleTask;
             var events = await eventTask;
 
-            _articleCards = articles.Items.Select(ToArticleCard).ToList();
-            _eventCards = events.Items.Select(ToEventCard).ToList();
+            _articleCards = articles.Items
+                .Take(CarouselItemLimit)
+                .Select(ToArticleCard)
+                .ToList();
+
+            _eventCards = events.Items
+                .Take(CarouselItemLimit)
+                .Select(ToEventCard)
+                .ToList();
 
             ApplyArticleState();
             ApplyEventState();
 
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = BuildStatusMessage(articles.TotalCount, events.TotalCount);
             UpdateAuthState();
         }
         catch (ApiException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Chargement annule.";
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue : {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
         }
         finally
         {
@@ -201,38 +205,64 @@ public partial class MainPage : ContentPage
     private void UpdateAuthState()
     {
         var isAuthenticated = _session.IsAuthenticated;
-        HeaderAccountLabel.Text = isAuthenticated ? "Mon profil" : "Connexion";
-        HeaderRegisterLabel.IsVisible = !isAuthenticated;
-        HeaderCreateArticleLabel.IsVisible = isAuthenticated;
-        HeaderLogoutLabel.IsVisible = isAuthenticated;
+        var accountLabel = isAuthenticated ? "Mon compte" : "Connexion";
+
+        HeaderAccountButton.Text = accountLabel;
+        MobileAccountButton.Text = accountLabel;
+
+        HeaderRegisterButton.IsVisible = !isAuthenticated;
+        MobileRegisterButton.IsVisible = !isAuthenticated;
+
+        HeaderCreateArticleButton.IsVisible = isAuthenticated;
+        MobileCreateArticleButton.IsVisible = isAuthenticated;
+
+        HeaderLogoutButton.IsVisible = isAuthenticated;
+        MobileLogoutButton.IsVisible = isAuthenticated;
+    }
+
+    private void SetMobileMenuState(bool isOpen)
+    {
+        _isMobileMenuOpen = isOpen;
+        MobileMenuPanel.IsVisible = isOpen;
+        MenuButton.Text = isOpen ? "Fermer" : "Menu";
     }
 
     private static HomeResourceCard ToArticleCard(ArticleResponse article)
     {
-        var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        var author = GetAuthorLabel(article.Author);
+        var subtitle = string.IsNullOrWhiteSpace(DisplayText.Normalize(article.Description))
+            ? string.Empty
+            : DisplayText.ToExcerpt(article.Description, 82);
+        var summary = DisplayText.FirstNonEmpty(article.Content, article.Description, "Aucune description disponible.");
+
         return new HomeResourceCard(
-            article.IdResource,
-            Badge: "Article public",
+            Badge: article.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Article public" : "Article prive",
+            DateLabel: article.CreatedAt.ToString("dd/MM/yyyy"),
             HeroCaption: "ARTICLE",
-            Title: article.Title,
-            Subtitle: $"Publie le {article.CreatedAt:dd/MM/yyyy}",
-            Summary: ToExcerpt(description, 180),
-            Meta: $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}");
+            Title: DisplayText.Normalize(article.Title),
+            Subtitle: subtitle,
+            Summary: DisplayText.ToExcerpt(summary, 180),
+            Meta: $"Par {author}",
+            ActionLabel: "Voir les articles",
+            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 140)}");
     }
 
     private static HomeResourceCard ToEventCard(EventResponse @event)
     {
-        var description = FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
-        var location = FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
+        var author = GetAuthorLabel(@event.Author);
+        var location = DisplayText.FirstNonEmpty(@event.Address, @event.Department?.Name, "Lieu a confirmer");
+        var summary = DisplayText.FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
 
         return new HomeResourceCard(
-            @event.IdResource,
-            Badge: "Evenement public",
+            Badge: @event.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Evenement public" : "Evenement prive",
+            DateLabel: @event.StartDate.ToString("dd/MM/yyyy"),
             HeroCaption: "EVENT",
-            Title: @event.Title,
+            Title: DisplayText.Normalize(@event.Title),
             Subtitle: BuildEventSubtitle(@event, location),
-            Summary: ToExcerpt(description, 180),
-            Meta: $"Organise par #{@event.IdUser}  |  {location}");
+            Summary: DisplayText.ToExcerpt(summary, 180),
+            Meta: $"Par {author} | {location}",
+            ActionLabel: "Voir les evenements",
+            AccessibilityText: $"Evenement {DisplayText.Normalize(@event.Title)}, prevu {BuildEventSubtitle(@event, location)}. {DisplayText.ToExcerpt(summary, 140)}");
     }
 
     private static string BuildStatusMessage(int totalArticles, int totalEvents)
@@ -240,7 +270,7 @@ public partial class MainPage : ContentPage
         if (totalArticles == 0 && totalEvents == 0)
             return "Aucune ressource publique n'a ete trouvee pour le moment.";
 
-        return $"{totalArticles} article(s) et {totalEvents} evenement(s) publics charges.";
+        return $"{totalArticles} article(s) et {totalEvents} evenement(s) publics disponibles.";
     }
 
     private static string BuildEventSubtitle(EventResponse @event, string location)
@@ -249,30 +279,21 @@ public partial class MainPage : ContentPage
             ? $"Du {@event.StartDate:dd/MM/yyyy} au {@event.EndDate:dd/MM/yyyy}"
             : $"Le {@event.StartDate:dd/MM/yyyy}";
 
-        return $"{dateLine}  |  {location}";
+        return $"{dateLine} | {location}";
     }
 
-    private static string FirstNonEmpty(params string?[] values)
+    private static string GetAuthorLabel(ResourceAuthorResponse author)
     {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-                return value.Trim();
-        }
+        var firstName = DisplayText.Normalize(author.FirstName);
+        var username = DisplayText.Normalize(author.Username);
 
-        return string.Empty;
-    }
+        if (!string.IsNullOrWhiteSpace(firstName))
+            return firstName;
 
-    private static string ToExcerpt(string value, int maxLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
+        if (!string.IsNullOrWhiteSpace(username))
+            return username;
 
-        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
-        if (normalized.Length <= maxLength)
-            return normalized;
-
-        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
+        return "un utilisateur";
     }
 
     private static string TrimMessage(string message)
@@ -280,7 +301,7 @@ public partial class MainPage : ContentPage
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        return ToExcerpt(message, 180);
+        return DisplayText.ToExcerpt(message, 180);
     }
 
     private async Task NavigateToAsync(string route)
@@ -288,19 +309,17 @@ public partial class MainPage : ContentPage
         if (Shell.Current is null)
             return;
 
+        SetMobileMenuState(false);
+
         try
         {
             await Shell.Current.GoToAsync(route);
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
-    }
-
-    private async Task NavigateToArticleDetailAsync(int idResource)
-    {
-        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
     }
 
     private async Task NavigateToRootAsync()
@@ -314,30 +333,21 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
         }
     }
 
-    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item)
-    {
-        if (sender is BindableObject bindable && bindable.BindingContext is TItem typedItem)
-        {
-            item = typedItem;
-            return true;
-        }
-
-        item = default!;
-        return false;
-    }
-
     private sealed record HomeResourceCard(
-        int IdResource,
         string Badge,
+        string DateLabel,
         string HeroCaption,
         string Title,
         string Subtitle,
         string Summary,
-        string Meta)
+        string Meta,
+        string ActionLabel,
+        string AccessibilityText)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }

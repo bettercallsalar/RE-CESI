@@ -202,7 +202,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     private void BindArticle(ArticleResponse article)
     {
         Title = article.Title;
-        HeaderCaptionLabel.Text = $"Article #{article.IdResource}";
+        HeaderCaptionLabel.Text = "Detail de l'article";
         TitleLabel.Text = article.Title;
         DescriptionLabel.Text = Normalize(article.Description);
         DescriptionLabel.IsVisible = !string.IsNullOrWhiteSpace(DescriptionLabel.Text);
@@ -213,9 +213,16 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 
     private static string BuildAuthorLabel(ArticleResponse article)
     {
-        return string.IsNullOrWhiteSpace(article.Author.Username)
-            ? $"Utilisateur #{article.IdUser}"
-            : $"@{article.Author.Username}";
+        var username = Normalize(article.Author.Username);
+        var firstName = Normalize(article.Author.FirstName);
+
+        if (!string.IsNullOrWhiteSpace(username))
+            return $"@{username}";
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+            return firstName;
+
+        return "Utilisateur";
     }
 
     private static string BuildMetaLabel(ArticleResponse article)
@@ -676,9 +683,13 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 
     private string BuildCommentAuthorLabel(CommentResponse comment)
     {
-        var authorLabel = string.IsNullOrWhiteSpace(comment.Author.Username)
-            ? $"Utilisateur #{comment.IdUser}"
-            : $"@{comment.Author.Username}";
+        var username = Normalize(comment.Author.Username);
+        var firstName = Normalize(comment.Author.FirstName);
+        var authorLabel = !string.IsNullOrWhiteSpace(username)
+            ? $"@{username}"
+            : !string.IsNullOrWhiteSpace(firstName)
+                ? firstName
+                : "Utilisateur";
 
         if (_article is not null && comment.IdUser == _article.IdUser)
             return $"{authorLabel} | auteur";
@@ -711,7 +722,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         ComposerTitleLabel.Text = _replyToCommentId.HasValue ? "Publier une reponse" : "Ajouter un commentaire";
         PostCommentButton.Text = _replyToCommentId.HasValue ? "Publier la reponse" : "Publier";
         ReplyTargetLabel.Text = _replyToCommentId.HasValue
-            ? $"Reponse au commentaire #{_replyToCommentId.Value}"
+            ? "Reponse au commentaire selectionne"
             : string.Empty;
     }
 
@@ -751,7 +762,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
 
         _replyToCommentId = item.IdComment;
-        CommentsStatusLabel.Text = $"Reponse preparee pour le commentaire #{item.IdComment}.";
+        CommentsStatusLabel.Text = "Reponse preparee.";
         UpdateCommentComposerState();
         MainThread.BeginInvokeOnMainThread(() => CommentEditor.Focus());
     }

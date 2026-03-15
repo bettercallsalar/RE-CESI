@@ -10,6 +10,11 @@ namespace RESR.MAUI.Pages.Profile;
 
 public partial class ProfilePage : ContentPage
 {
+    private const int CarouselItemLimit = 5;
+    private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
+    private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
+    private static readonly Color SuccessStatusColor = Color.FromArgb("#1D6B43");
+
     private readonly IUsersApiClient _usersApiClient;
     private readonly IMarkedResourcesService _markedResourcesService;
     private readonly IResourcesApiClient _resourcesApiClient;
@@ -31,8 +36,8 @@ public partial class ProfilePage : ContentPage
         _markedResourcesService = markedResourcesService;
         _resourcesApiClient = resourcesApiClient;
         _session = session;
-
         InitializeComponent();
+        StatusLabel.TextColor = MutedStatusColor;
         ApplyCarouselsState();
         ApplyArticlesState();
     }
@@ -43,7 +48,8 @@ public partial class ProfilePage : ContentPage
 
         if (!_session.IsAuthenticated)
         {
-            StatusLabel.Text = "Connecte-toi pour acceder a ton profil.";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = "Connectez-vous pour acceder a votre profil.";
             await Shell.Current.GoToAsync(nameof(LoginPage));
             return;
         }
@@ -57,10 +63,16 @@ public partial class ProfilePage : ContentPage
         base.OnDisappearing();
     }
 
+    private async void OnBackClicked(object? sender, EventArgs e)
+    {
+        await NavigateBackAsync();
+    }
+
     private async Task LoadProfileAsync()
     {
         if (_loadCts is not null)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Chargement deja en cours...";
             return;
         }
@@ -68,6 +80,8 @@ public partial class ProfilePage : ContentPage
         _loadCts = new CancellationTokenSource();
         LoadingIndicator.IsVisible = true;
         LoadingIndicator.IsRunning = true;
+        LogoutButton.IsEnabled = false;
+        StatusLabel.TextColor = MutedStatusColor;
         StatusLabel.Text = "Chargement du profil, des marques et des articles...";
 
         try
@@ -79,21 +93,31 @@ public partial class ProfilePage : ContentPage
             _me = await profileTask;
             if (_me is null)
             {
+                StatusLabel.TextColor = ErrorStatusColor;
                 StatusLabel.Text = "Profil introuvable.";
                 return;
             }
 
             BindProfile(_me);
 
-            var articlesTask = _resourcesApiClient.GetMyArticlesAsync(_me.IdUser, 1, 6, keyword: null, _loadCts.Token);
+            var articlesTask = _resourcesApiClient.GetMyArticlesAsync(_me.IdUser, 1, CarouselItemLimit, keyword: null, _loadCts.Token);
 
             await Task.WhenAll(favoritesTask, readLaterTask, articlesTask);
 
-            _favoriteItems = await favoritesTask;
-            _readLaterItems = await readLaterTask;
+            _favoriteItems = (await favoritesTask)
+                .Take(CarouselItemLimit)
+                .ToList();
+
+            _readLaterItems = (await readLaterTask)
+                .Take(CarouselItemLimit)
+                .ToList();
+
             var articles = await articlesTask;
 
-            _articleCards = articles.Items.Select(ToOwnArticleCard).ToList();
+            _articleCards = articles.Items
+                .Take(CarouselItemLimit)
+                .Select(ToOwnArticleCard)
+                .ToList();
 
             ApplyCarouselsState();
             ApplyArticlesState();
@@ -102,30 +126,36 @@ public partial class ProfilePage : ContentPage
                 ? "Aucun article charge pour le moment."
                 : $"{articles.TotalCount} article(s) trouves.";
 
+            StatusLabel.TextColor = SuccessStatusColor;
             StatusLabel.Text = "Profil charge.";
         }
         catch (ApiException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Requete annulee.";
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
         }
         finally
         {
             LoadingIndicator.IsVisible = false;
             LoadingIndicator.IsRunning = false;
-            _loadCts?.Dispose();
+            _loadCts.Dispose();
             _loadCts = null;
+            LogoutButton.IsEnabled = true;
         }
     }
 
@@ -134,10 +164,12 @@ public partial class ProfilePage : ContentPage
         UsernameLabel.Text = me.Username;
         EmailLabel.Text = me.Email;
         FirstNameLabel.Text = me.FirstName;
-        BirthDateLabel.Text = me.BirthDate?.ToString("yyyy-MM-dd") ?? "Non renseignee";
+        BirthDateLabel.Text = me.BirthDate?.ToString("dd/MM/yyyy") ?? "Non renseignee";
         BioLabel.Text = string.IsNullOrWhiteSpace(me.Bio) ? "Non renseignee" : me.Bio;
         DepartmentLabel.Text = $"{me.Department.Name} ({me.Department.Code})";
-        VerifiedLabel.Text = me.IsVerified ? "Oui" : "Non";
+        VerifiedLabel.Text = me.IsVerified ? "Compte verifie" : "Verification en attente";
+        VerifiedBadge.Style = (Style)Application.Current!.Resources[me.IsVerified ? "FilledBadgeBorderStyle" : "OutlineBadgeBorderStyle"];
+        VerifiedLabel.Style = (Style)Application.Current!.Resources[me.IsVerified ? "BadgeLabelStyle" : "OutlineBadgeLabelStyle"];
     }
 
     private void ApplyCarouselsState()
@@ -187,6 +219,7 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
@@ -212,6 +245,7 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
@@ -228,6 +262,7 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
@@ -260,6 +295,7 @@ public partial class ProfilePage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
@@ -267,12 +303,36 @@ public partial class ProfilePage : ContentPage
     private async void OnLogoutClicked(object? sender, EventArgs e)
     {
         _session.Clear();
+        StatusLabel.TextColor = SuccessStatusColor;
+        StatusLabel.Text = "Deconnexion reussie.";
         await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+    }
+
+    private async Task NavigateBackAsync()
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            if (Shell.Current.Navigation.NavigationStack.Count > 1)
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
+        }
     }
 
     private static OwnArticleCard ToOwnArticleCard(ArticleResponse article)
     {
-        var summary = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        var summary = DisplayText.FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
         var metaParts = new List<string>
         {
             $"Visibilite {article.Visibility.ToLowerInvariant()}"
@@ -283,10 +343,10 @@ public partial class ProfilePage : ContentPage
 
         return new OwnArticleCard(
             article.IdResource,
-            article.Title,
+            DisplayText.Normalize(article.Title),
             $"Publie le {article.CreatedAt:dd/MM/yyyy}",
             string.Join("  |  ", metaParts),
-            ToExcerpt(summary, 180));
+            DisplayText.ToExcerpt(summary, 180));
     }
 
     private static bool TryGetBoundItem<TItem>(object? sender, out TItem item) where TItem : class
@@ -295,35 +355,12 @@ public partial class ProfilePage : ContentPage
         return item is not null;
     }
 
-    private static string FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-                return value.Trim();
-        }
-
-        return string.Empty;
-    }
-
-    private static string ToExcerpt(string value, int maxLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
-        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
-        if (normalized.Length <= maxLength)
-            return normalized;
-
-        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
-    }
-
     private static string TrimMessage(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        return ToExcerpt(message, 180);
+        return DisplayText.ToExcerpt(message, 180);
     }
 
     private sealed record OwnArticleCard(
