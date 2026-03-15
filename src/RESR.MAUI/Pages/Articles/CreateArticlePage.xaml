@@ -98,6 +98,55 @@
                                Text="Le contenu est obligatoire." />
                     </VerticalStackLayout>
 
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Images" />
+                        <Button x:Name="PickImagesButton"
+                                Clicked="OnPickImagesClicked"
+                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                Text="Ajouter des images" />
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Jusqu'a 6 images, 5 Mo maximum par image." />
+
+                        <CollectionView x:Name="SelectedImagesView"
+                                        HeightRequest="180"
+                                        IsVisible="False"
+                                        SelectionMode="None">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical"
+                                                   ItemSpacing="8" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
+                                        <VerticalStackLayout Spacing="4">
+                                            <Label Style="{StaticResource ValueLabelStyle}"
+                                                   Text="{Binding FileName}" />
+                                            <Label Style="{StaticResource BodyMutedLabelStyle}"
+                                                   Text="{Binding Description}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <Border x:Name="DefaultImageContainer"
+                                IsVisible="False"
+                                Style="{StaticResource SubtleSurfaceBorderStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Style="{StaticResource FieldLabelStyle}"
+                                       Text="Image par defaut" />
+                                <Border Style="{StaticResource FieldBorderStyle}">
+                                    <Picker x:Name="DefaultImagePicker"
+                                            ItemDisplayBinding="{Binding Label}"
+                                            ItemsSource="{Binding DefaultImageOptions}"
+                                            SelectedIndexChanged="OnDefaultImageChanged"
+                                            Title="Choisir l'image par defaut" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+
                     <Label x:Name="StatusLabel"
                            Style="{StaticResource StatusLabelStyle}"
                            Text="Renseignez les champs obligatoires." />

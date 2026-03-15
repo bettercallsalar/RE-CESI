@@ -4,6 +4,7 @@ using RESR.Models.Categories;
 using RESR.Models.Resources;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.IO;
 
 namespace RESR.MAUI.Pages.Articles;
 
@@ -15,11 +16,16 @@ public partial class CreateArticlePage : ContentPage
 
     private const int TitleMaxLength = 50;
     private const int DescriptionMaxLength = 5000;
+    private const int MaxImages = 6;
+    private const long MaxImageSizeBytes = 5 * 1024 * 1024;
 
     private readonly IArticlesApiClient _articlesApiClient;
     private readonly ICategoriesApiClient _categoriesApiClient;
 
     public ObservableCollection<CategoryResponse> Categories { get; } = new();
+    public ObservableCollection<ImageItem> SelectedImages { get; } = new();
+    public ObservableCollection<ImageOption> DefaultImageOptions { get; } = new();
+    private int? _defaultImageIndex;
 
     public CreateArticlePage(IArticlesApiClient articlesApiClient, ICategoriesApiClient categoriesApiClient)
     {
@@ -27,6 +33,7 @@ public partial class CreateArticlePage : ContentPage
         _categoriesApiClient = categoriesApiClient;
         InitializeComponent();
         BindingContext = this;
+        SelectedImagesView.ItemsSource = SelectedImages;
 
         VisibilityPicker.ItemsSource = new[] { "PUBLIC", "PRIVATE" };
         VisibilityPicker.SelectedIndex = 0;
@@ -63,6 +70,7 @@ public partial class CreateArticlePage : ContentPage
     private async void OnCreateClicked(object? sender, EventArgs e)
     {
         CreateButton.IsEnabled = false;
+        PickImagesButton.IsEnabled = false;
 
         try
         {
@@ -116,6 +124,8 @@ public partial class CreateArticlePage : ContentPage
                     visibility,
                     selectedCategory.IdCategory,
                     contentHtml),
+                SelectedImages.Select(image => image.Upload).ToList(),
+                _defaultImageIndex,
                 CancellationToken.None);
 
             StatusLabel.TextColor = SuccessStatusColor;
@@ -126,6 +136,11 @@ public partial class CreateArticlePage : ContentPage
             VisibilityPicker.SelectedIndex = 0;
             DescriptionEditor.Text = string.Empty;
             ContentEditor.Text = string.Empty;
+            SelectedImages.Clear();
+            DefaultImageOptions.Clear();
+            DefaultImageContainer.IsVisible = false;
+            SelectedImagesView.IsVisible = false;
+            _defaultImageIndex = null;
             UpdateTitleCounter();
         }
         catch (ApiException ex)
@@ -147,7 +162,76 @@ public partial class CreateArticlePage : ContentPage
         finally
         {
             CreateButton.IsEnabled = true;
+            PickImagesButton.IsEnabled = true;
         }
+    }
+
+    private async void OnPickImagesClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var picks = await FilePicker.Default.PickMultipleAsync(new PickOptions
+            {
+                PickerTitle = "Choisir des images",
+                FileTypes = FilePickerFileType.Images
+            });
+
+            if (picks is null)
+            {
+                return;
+            }
+
+            var images = new List<ImageItem>();
+
+            foreach (var pick in picks.Take(MaxImages))
+            {
+                if (pick is null)
+                {
+                    continue;
+                }
+
+                var image = await LoadImageAsync(pick);
+                images.Add(image);
+            }
+
+            if (images.Count == 0)
+            {
+                return;
+            }
+
+            SelectedImages.Clear();
+            foreach (var image in images)
+            {
+                SelectedImages.Add(image);
+            }
+
+            DefaultImageOptions.Clear();
+            for (var index = 0; index < SelectedImages.Count; index++)
+            {
+                DefaultImageOptions.Add(new ImageOption(index, $"{index + 1}. {SelectedImages[index].FileName}"));
+            }
+
+            _defaultImageIndex = 0;
+            DefaultImagePicker.SelectedIndex = 0;
+            DefaultImageContainer.IsVisible = true;
+            SelectedImagesView.IsVisible = true;
+
+            if (picks.Count() > MaxImages)
+            {
+                StatusLabel.TextColor = Colors.Red;
+                StatusLabel.Text = $"Seules les {MaxImages} premieres images ont ete conservees.";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = Colors.Red;
+            StatusLabel.Text = $"Selection des images impossible: {ex.Message}";
+        }
+    }
+
+    private void OnDefaultImageChanged(object? sender, EventArgs e)
+    {
+        _defaultImageIndex = DefaultImagePicker.SelectedIndex >= 0 ? DefaultImagePicker.SelectedIndex : null;
     }
 
     private async Task LoadCategoriesAsync()
@@ -200,4 +284,30 @@ public partial class CreateArticlePage : ContentPage
             StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
         }
     }
+
+    private static async Task<ImageItem> LoadImageAsync(FileResult pick)
+    {
+        await using var stream = await pick.OpenReadAsync();
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+
+        if (memory.Length > MaxImageSizeBytes)
+        {
+            throw new InvalidOperationException("Chaque image doit faire moins de 5 Mo.");
+        }
+
+        var contentType = string.IsNullOrWhiteSpace(pick.ContentType) ? "image/*" : pick.ContentType;
+        if (!contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Seules les images sont autorisees.");
+        }
+
+        return new ImageItem(
+            pick.FileName,
+            $"({Math.Round(memory.Length / 1024d, 1)} Ko)",
+            new SelectedImageUpload(pick.FileName, contentType, memory.ToArray(), memory.Length));
+    }
+
+    public sealed record ImageItem(string FileName, string Description, SelectedImageUpload Upload);
+    public sealed record ImageOption(int Index, string Label);
 }

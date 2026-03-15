@@ -14,6 +14,8 @@ const directTranslations: Record<string, string> = {
   "Missing or invalid Authorization header.": "En-tete d'autorisation manquant ou invalide.",
   "Invalid token or unauthorized access.": "Jeton invalide ou acces non autorise.",
   "Invalid token or missing subject claim.": "Jeton invalide ou identifiant utilisateur manquant.",
+  "A user cannot follow themselves": "Vous ne pouvez pas vous suivre vous-meme.",
+  "User already reacted to this resource": "Vous avez deja une reaction sur ce contenu.",
   "Title is required.": "Le titre est obligatoire.",
   "The request payload is invalid.": "Les donnees envoyees sont invalides.",
   "The Content field is required.": "Le contenu est obligatoire.",
@@ -24,11 +26,11 @@ const directTranslations: Record<string, string> = {
   "Comment is deleted": "Le commentaire est supprime.",
   "Comment is already deleted": "Le commentaire est deja supprime.",
   "Cannot reply to a deleted comment": "Impossible de repondre a un commentaire supprime.",
-  "Parent comment must belong to the same resource": "La reponse doit appartenir a la meme ressource.",
+  "Parent comment must belong to the same resource": "La reponse doit appartenir au meme contenu.",
   "You are not allowed to delete this comment": "Vous n'etes pas autorise a supprimer ce commentaire.",
   "IdUser must be greater than 0.": "L'identifiant utilisateur doit etre superieur a 0.",
   "IdUser must be greater than 0": "L'identifiant utilisateur doit etre superieur a 0.",
-  "IdResource must be greater than 0": "L'identifiant de la ressource doit etre superieur a 0.",
+  "IdResource must be greater than 0": "L'identifiant du contenu doit etre superieur a 0.",
   "IdComment must be greater than 0": "L'identifiant du commentaire doit etre superieur a 0.",
   "IdParentComment must be greater than 0": "L'identifiant du commentaire parent doit etre superieur a 0.",
   "IdCategory must be greater than 0.": "La categorie doit etre superieure a 0.",
@@ -80,6 +82,14 @@ function translateKnownMessage(message: string) {
     return `Utilisateur ${match?.[1]} introuvable.`;
   }
 
+  if (/^Follow (\d+)->(\d+) already exists\.?$/.test(message)) {
+    return "Vous suivez deja cet utilisateur.";
+  }
+
+  if (/^Follow (\d+)->(\d+) not found\.?$/.test(message)) {
+    return "Vous ne suivez pas ou plus cet utilisateur.";
+  }
+
   if (/^Article resource (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^Article resource (\d+) not found\.?$/);
     return `Article ${match?.[1]} introuvable.`;
@@ -92,7 +102,16 @@ function translateKnownMessage(message: string) {
 
   if (/^Resource (\d+) not found\.?$/.test(message)) {
     const match = message.match(/^Resource (\d+) not found\.?$/);
-    return `La ressource ${match?.[1]} est introuvable.`;
+    return `Le contenu ${match?.[1]} est introuvable.`;
+  }
+
+  if (/^Read later mark for resource (\d+) not found\.?$/.test(message)) {
+    return "Ce contenu n'est pas enregistre pour plus tard.";
+  }
+
+  if (/^Reaction (\d+) not found\.?$/.test(message)) {
+    const match = message.match(/^Reaction (\d+) not found\.?$/);
+    return `La reaction ${match?.[1]} est introuvable.`;
   }
 
   return message;

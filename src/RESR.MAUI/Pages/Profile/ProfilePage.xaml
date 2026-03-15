@@ -7,7 +7,7 @@
 
     <ScrollView>
         <VerticalStackLayout HorizontalOptions="Center"
-                             MaximumWidthRequest="820"
+                             MaximumWidthRequest="1080"
                              Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
                              Spacing="18">
 
@@ -23,7 +23,16 @@
                         <Label Style="{StaticResource PageTitleLabelStyle}"
                                Text="Mon profil" />
                         <Label Style="{StaticResource BodyMutedLabelStyle}"
-                               Text="Retrouvez vos informations de compte dans une presentation plus lisible et plus stable sur mobile." />
+                               Text="Retrouvez vos informations, vos marques et les articles que vous avez crees." />
+                        <HorizontalStackLayout Spacing="10"
+                                               VerticalOptions="Center">
+                            <ActivityIndicator x:Name="LoadingIndicator"
+                                               IsRunning="False"
+                                               IsVisible="False" />
+                            <Label x:Name="StatusLabel"
+                                   Style="{StaticResource StatusLabelStyle}"
+                                   Text="Chargement du profil..." />
+                        </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Grid>
             </Border>
@@ -43,8 +52,13 @@
             </Border>
 
             <Border Style="{StaticResource SurfaceBorderStyle}">
-                <VerticalStackLayout Spacing="16">
-                    <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="18"
+                      RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="16">
+                    <VerticalStackLayout Grid.Row="0"
+                                         Grid.Column="0"
+                                         Spacing="6">
                         <Label Style="{StaticResource FieldLabelStyle}"
                                Text="Prenom" />
                         <Label x:Name="FirstNameLabel"
@@ -52,7 +66,9 @@
                                Text="-" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="6">
+                    <VerticalStackLayout Grid.Row="0"
+                                         Grid.Column="1"
+                                         Spacing="6">
                         <Label Style="{StaticResource FieldLabelStyle}"
                                Text="Date de naissance" />
                         <Label x:Name="BirthDateLabel"
@@ -60,7 +76,9 @@
                                Text="-" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="6">
+                    <VerticalStackLayout Grid.Row="1"
+                                         Grid.Column="0"
+                                         Spacing="6">
                         <Label Style="{StaticResource FieldLabelStyle}"
                                Text="Departement" />
                         <Label x:Name="DepartmentLabel"
@@ -68,7 +86,9 @@
                                Text="-" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="6">
+                    <VerticalStackLayout Grid.Row="1"
+                                         Grid.Column="1"
+                                         Spacing="6">
                         <Label Style="{StaticResource FieldLabelStyle}"
                                Text="Verification" />
                         <Border x:Name="VerifiedBadge"
@@ -80,7 +100,9 @@
                         </Border>
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="6">
+                    <VerticalStackLayout Grid.Row="2"
+                                         Grid.ColumnSpan="2"
+                                         Spacing="6">
                         <Label Style="{StaticResource FieldLabelStyle}"
                                Text="Biographie" />
                         <Label x:Name="BioLabel"
@@ -88,19 +110,237 @@
                                Style="{StaticResource BodyLabelStyle}"
                                Text="-" />
                     </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Favoris" />
+                        <Button Grid.Column="1"
+                                Clicked="OnSeeAllFavoritesClicked"
+                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                Text="Voir tout" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="FavoritesCarousel"
+                                      HeightRequest="{OnIdiom Phone='280', Tablet='300', Default='320'}"
+                                      IndicatorView="FavoritesIndicator"
+                                      IsBounceEnabled="False"
+                                      IsVisible="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border Style="{StaticResource CardSurfaceBorderStyle}"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMarkedResourceTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Padding="18"
+                                                                 Spacing="10">
+                                                <Border HorizontalOptions="Start"
+                                                        Style="{StaticResource NeutralBadgeBorderStyle}">
+                                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
+                                                           Text="{Binding Type}" />
+                                                </Border>
+                                                <Label Style="{StaticResource CardTitleLabelStyle}"
+                                                       Text="{Binding Title}" />
+                                                <Label Style="{StaticResource MetaLabelStyle}"
+                                                       Text="{Binding Subtitle}" />
+                                                <Label MaxLines="4"
+                                                       Style="{StaticResource BodyLabelStyle}"
+                                                       Text="{Binding Summary}" />
+                                                <Button Clicked="OnMarkedResourceOpenClicked"
+                                                        HorizontalOptions="End"
+                                                        IsVisible="{Binding HasRoute}"
+                                                        Style="{StaticResource SmallSecondaryButtonStyle}"
+                                                        Text="Ouvrir" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="FavoritesEmptyState"
+                                IsVisible="False"
+                                Style="{StaticResource SubtleSurfaceBorderStyle}">
+                            <Label HorizontalTextAlignment="Center"
+                                   Style="{StaticResource BodyMutedLabelStyle}"
+                                   Text="Aucune ressource en favori." />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="FavoritesIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Lire plus tard" />
+                        <Button Grid.Column="1"
+                                Clicked="OnSeeAllReadLaterClicked"
+                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                Text="Voir tout" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="ReadLaterCarousel"
+                                      HeightRequest="{OnIdiom Phone='280', Tablet='300', Default='320'}"
+                                      IndicatorView="ReadLaterIndicator"
+                                      IsBounceEnabled="False"
+                                      IsVisible="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border Style="{StaticResource CardSurfaceBorderStyle}"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMarkedResourceTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Padding="18"
+                                                                 Spacing="10">
+                                                <Border HorizontalOptions="Start"
+                                                        Style="{StaticResource NeutralBadgeBorderStyle}">
+                                                    <Label Style="{StaticResource OutlineBadgeLabelStyle}"
+                                                           Text="{Binding Type}" />
+                                                </Border>
+                                                <Label Style="{StaticResource CardTitleLabelStyle}"
+                                                       Text="{Binding Title}" />
+                                                <Label Style="{StaticResource MetaLabelStyle}"
+                                                       Text="{Binding Subtitle}" />
+                                                <Label MaxLines="4"
+                                                       Style="{StaticResource BodyLabelStyle}"
+                                                       Text="{Binding Summary}" />
+                                                <Button Clicked="OnMarkedResourceOpenClicked"
+                                                        HorizontalOptions="End"
+                                                        IsVisible="{Binding HasRoute}"
+                                                        Style="{StaticResource SmallSecondaryButtonStyle}"
+                                                        Text="Ouvrir" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="ReadLaterEmptyState"
+                                IsVisible="False"
+                                Style="{StaticResource SubtleSurfaceBorderStyle}">
+                            <Label HorizontalTextAlignment="Center"
+                                   Style="{StaticResource BodyMutedLabelStyle}"
+                                   Text="Aucune ressource a lire plus tard." />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="ReadLaterIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Style="{StaticResource SectionTitleLabelStyle}"
+                                   Text="Mes articles" />
+                            <Label x:Name="MyArticlesSummaryLabel"
+                                   Style="{StaticResource MetaLabelStyle}"
+                                   Text="Chargement des articles..." />
+                        </VerticalStackLayout>
+
+                        <Button x:Name="ViewAllArticlesButton"
+                                Grid.Column="1"
+                                Clicked="OnViewAllArticlesClicked"
+                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                Text="Voir tout" />
+                    </Grid>
+
+                    <Grid IsClippedToBounds="True">
+                        <CarouselView x:Name="MyArticlesCarousel"
+                                      HeightRequest="{OnIdiom Phone='320', Tablet='360', Default='380'}"
+                                      IndicatorView="MyArticlesIndicator"
+                                      IsBounceEnabled="False"
+                                      IsVisible="False"
+                                      Loop="False"
+                                      PeekAreaInsets="0">
+                            <CarouselView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="{OnIdiom Phone='6,0', Default='24,0'}">
+                                        <Border Style="{StaticResource CardSurfaceBorderStyle}"
+                                                WidthRequest="{OnIdiom Phone='300', Tablet='520', Default='720'}"
+                                                HorizontalOptions="Center">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnMyArticleTapped" />
+                                            </Border.GestureRecognizers>
+                                            <VerticalStackLayout Padding="18"
+                                                                 Spacing="10">
+                                                <Border HorizontalOptions="Start"
+                                                        Style="{StaticResource FilledBadgeBorderStyle}">
+                                                    <Label Style="{StaticResource BadgeLabelStyle}"
+                                                           Text="Mon article" />
+                                                </Border>
+                                                <Label Style="{StaticResource CardTitleLabelStyle}"
+                                                       Text="{Binding Title}" />
+                                                <Label IsVisible="{Binding HasSubtitle}"
+                                                       Style="{StaticResource MetaLabelStyle}"
+                                                       Text="{Binding Subtitle}" />
+                                                <Label Style="{StaticResource MetaLabelStyle}"
+                                                       Text="{Binding Meta}" />
+                                                <Label MaxLines="4"
+                                                       Style="{StaticResource BodyLabelStyle}"
+                                                       Text="{Binding Summary}" />
+                                                <Button Clicked="OnMyArticleOpenClicked"
+                                                        HorizontalOptions="End"
+                                                        Style="{StaticResource SmallSecondaryButtonStyle}"
+                                                        Text="Lire l'article" />
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </CarouselView.ItemTemplate>
+                        </CarouselView>
+
+                        <Border x:Name="MyArticlesEmptyState"
+                                IsVisible="False"
+                                Style="{StaticResource SubtleSurfaceBorderStyle}">
+                            <Label HorizontalTextAlignment="Center"
+                                   Style="{StaticResource BodyMutedLabelStyle}"
+                                   Text="Vous n'avez pas encore d'article visible." />
+                        </Border>
+                    </Grid>
+
+                    <IndicatorView x:Name="MyArticlesIndicator"
+                                   HorizontalOptions="Center"
+                                   IndicatorSize="10"
+                                   IsVisible="False" />
                 </VerticalStackLayout>
             </Border>
 
             <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
-                <VerticalStackLayout Spacing="12">
-                    <Label x:Name="StatusLabel"
-                           Style="{StaticResource StatusLabelStyle}"
-                           Text="Chargement du profil..." />
-
+                <HorizontalStackLayout HorizontalOptions="End">
                     <Button x:Name="LogoutButton"
                             Clicked="OnLogoutClicked"
                             Text="Se deconnecter" />
-                </VerticalStackLayout>
+                </HorizontalStackLayout>
             </Border>
         </VerticalStackLayout>
     </ScrollView>

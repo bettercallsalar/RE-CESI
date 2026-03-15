@@ -2,9 +2,6 @@ namespace RESR.WebAPI.Security;
 
 public static class PermissionNames
 {
-    public const string CreateResource = "CreateResource";
-    public const string EditResource = "EditResource";
-    public const string DeleteResource = "DeleteResource";
     public const string ManageUsers = "ManageUsers";
     public const string ModerateContent = "ModerateContent";
     public const string ApproveArticle = "ApproveArticle";
@@ -17,6 +14,5 @@ public static class PermissionNames
     public const string BanUser = "BanUser";
     public const string DeleteComment = "DeleteComment";
     public const string DeleteOtherUserContent = "DeleteOtherUserContent";
-    public const string FollowUser = "FollowUser";
     public const string ViewOtherUserReactions = "ViewOtherUserReactions";
 }

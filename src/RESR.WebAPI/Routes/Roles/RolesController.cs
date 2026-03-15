@@ -15,6 +15,17 @@ public sealed class RolesController : ControllerBase
 
     public RolesController(IRoleService service) => _service = service;
 
+    [AuthorizePermission([PermissionNames.ManageRoles, PermissionNames.ManageUsers])]
+    [HttpGet("assignable")]
+    public async Task<ActionResult<IReadOnlyList<RoleSummaryResponse>>> GetAssignableRoles(CancellationToken ct)
+    {
+        var roles = await _service.GetAllAsync(ct);
+
+        return Ok(roles
+            .Select(role => new RoleSummaryResponse(role.IdRole, role.Name, role.Description))
+            .ToList());
+    }
+
     [AuthorizeRole(RoleIds.SuperAdmin)]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<RoleResponse>>> GetAll(CancellationToken ct)

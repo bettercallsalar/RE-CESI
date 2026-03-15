@@ -32,7 +32,7 @@
 
             <Border Grid.Row="1"
                     Style="{StaticResource SurfaceBorderStyle}">
-                <Grid ColumnDefinitions="*,Auto"
+                <Grid ColumnDefinitions="*,Auto,Auto"
                       ColumnSpacing="12">
                     <Border Style="{StaticResource FieldBorderStyle}">
                         <SearchBar x:Name="KeywordSearchBar"
@@ -46,6 +46,13 @@
                             Clicked="OnSearchButtonClicked"
                             Style="{StaticResource SmallPrimaryButtonStyle}"
                             Text="Rechercher" />
+
+                    <Button x:Name="CreateEventButton"
+                            Grid.Column="2"
+                            Clicked="OnCreateEventClicked"
+                            IsVisible="False"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Creer" />
                 </Grid>
             </Border>
 

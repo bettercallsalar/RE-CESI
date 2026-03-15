@@ -76,7 +76,7 @@ export function ConfirmationDialog({
               <Button
                 _hover={isDanger ? { bg: "#9B2C2C" } : undefined}
                 bg={isDanger ? "#C53030" : undefined}
-                color={isDanger ? "white" : undefined}
+                color={isDanger ? "surface.onCritical" : undefined}
                 isLoading={isLoading}
                 onClick={() => {
                   void onConfirm();

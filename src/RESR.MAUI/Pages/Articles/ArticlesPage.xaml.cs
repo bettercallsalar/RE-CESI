@@ -81,6 +81,16 @@ public partial class ArticlesPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
+    private async void OnArticleTapped(object? sender, TappedEventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
+    private async void OnArticleOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenArticleAsync(sender);
+    }
+
     private async Task ReloadAsync(bool triggeredByRefresh)
     {
         _currentKeyword = NormalizeKeyword(KeywordSearchBar.Text);
@@ -188,6 +198,7 @@ public partial class ArticlesPage : ContentPage
             : DisplayText.ToExcerpt(article.Description, 86);
 
         return new ArticleListItem(
+            IdResource: article.IdResource,
             Badge: article.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Article public" : "Article prive",
             DateLabel: article.CreatedAt.ToString("dd/MM/yyyy"),
             Eyebrow: "ARTICLE",
@@ -225,6 +236,17 @@ public partial class ArticlesPage : ContentPage
         return DisplayText.ToExcerpt(message, 180);
     }
 
+    private async Task OpenArticleAsync(object? sender)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ArticleListItem article)
+        {
+            return;
+        }
+
+        await NavigateToArticleDetailAsync(article.IdResource);
+    }
+
     private async Task NavigateBackAsync()
     {
         if (Shell.Current is null)
@@ -247,7 +269,24 @@ public partial class ArticlesPage : ContentPage
         }
     }
 
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private sealed record ArticleListItem(
+        int IdResource,
         string Badge,
         string DateLabel,
         string Eyebrow,

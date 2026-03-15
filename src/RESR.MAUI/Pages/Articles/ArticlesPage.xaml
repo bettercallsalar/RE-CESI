@@ -74,6 +74,9 @@
                         <DataTemplate>
                             <Border SemanticProperties.Description="{Binding AccessibilityText}"
                                     Style="{StaticResource CardSurfaceBorderStyle}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticleTapped" />
+                                </Border.GestureRecognizers>
                                 <Grid RowDefinitions="150,*">
                                     <Grid BackgroundColor="{StaticResource PlaceholderSurface}"
                                           Padding="18">
@@ -118,6 +121,10 @@
                                                MaxLines="5"
                                                Style="{StaticResource BodyLabelStyle}"
                                                Text="{Binding Summary}" />
+                                        <Button Clicked="OnArticleOpenClicked"
+                                                HorizontalOptions="End"
+                                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                                Text="Lire l'article" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </Border>

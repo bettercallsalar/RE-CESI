@@ -81,7 +81,7 @@ export function EventCard({
               </Badge>
             ) : null}
             {showStatusBadges ? (
-              <Badge bg={event.visibility === "PUBLIC" ? "brand.500" : "ink.800"} color="white" fontSize="12px" px={2.5} py={1} rounded="full">
+              <Badge bg={event.visibility === "PUBLIC" ? "brand.500" : "surface.strong"} color={event.visibility === "PUBLIC" ? "surface.onAccent" : "surface.onStrong"} fontSize="12px" px={2.5} py={1} rounded="full">
                 {visibilityLabel}
               </Badge>
             ) : null}
@@ -100,7 +100,7 @@ export function EventCard({
               </Badge>
             ) : null}
             {showStatusBadges && deletedLabel ? (
-              <Badge bg="red.500" color="white" fontSize="12px" px={2.5} py={1} rounded="full">
+              <Badge bg="red.500" color="surface.onCritical" fontSize="12px" px={2.5} py={1} rounded="full">
                 {deletedLabel}
               </Badge>
             ) : null}
@@ -141,7 +141,7 @@ export function EventCard({
                   key={`${action.label}-${action.href ?? "action"}`}
                   bg={action.tone === "danger" ? "red.500" : undefined}
                   borderColor={action.tone === "dangerSoft" ? "red.200" : undefined}
-                  color={action.tone === "danger" ? "white" : action.tone === "dangerSoft" ? "red.300" : undefined}
+                  color={action.tone === "danger" ? "surface.onCritical" : action.tone === "dangerSoft" ? "red.300" : undefined}
                   flexShrink={0}
                   isDisabled={action.isDisabled}
                   onClick={() => {
@@ -165,7 +165,7 @@ export function EventCard({
                   }
                   _disabled={
                     action.tone === "dangerSoft"
-                      ? { bg: "red.100", borderColor: "red.200", color: "white", opacity: 1, cursor: "not-allowed" }
+                      ? { bg: "red.100", borderColor: "red.200", color: "surface.onCritical", opacity: 1, cursor: "not-allowed" }
                       : undefined
                   }
                 >
