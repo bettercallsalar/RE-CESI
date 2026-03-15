@@ -92,6 +92,10 @@ export function LoginForm() {
               type="submit">
               Se connecter
             </Button>
+
+            <Button as="a" href="/register" fontSize={{ base: "15px", md: "16px" }} h="48px" variant="outline">
+              Creer un compte
+            </Button>
           </Stack>
         </Stack>
       </CardBody>

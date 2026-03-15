@@ -1,13 +1,15 @@
 import { httpClient } from "@/shared/api/httpClient";
-import type { Permission, Role } from "@/features/admin/types/admin.types";
+import type { Permission, Role, RoleSummary } from "@/features/admin/types/admin.types";
 import type { PaginatedUsersResponse } from "@/shared/types/user";
 
-interface ManageableUsersQuery {
+interface UsersQuery {
   page?: number;
   pageSize?: number;
+  keyword?: string;
+  roleIds?: number;
 }
 
-function buildManageableUsersQuery(query: ManageableUsersQuery) {
+function buildUsersQuery(query: UsersQuery) {
   const params = new URLSearchParams();
 
   if (query.page) {
@@ -16,6 +18,14 @@ function buildManageableUsersQuery(query: ManageableUsersQuery) {
 
   if (query.pageSize) {
     params.set("pageSize", String(query.pageSize));
+  }
+
+  if (query.keyword?.trim()) {
+    params.set("keyword", query.keyword.trim());
+  }
+
+  if (query.roleIds) {
+    params.set("roleIds", String(query.roleIds));
   }
 
   const raw = params.toString();
@@ -32,14 +42,20 @@ export const adminService = {
   getPermissions(token: string) {
     return httpClient.get<Permission[]>("/api/permissions", { token });
   },
+  getAssignableRoles(token: string) {
+    return httpClient.get<RoleSummary[]>("/api/roles/assignable", { token });
+  },
   addPermissionToRole(token: string, idRole: number, idPermission: number) {
     return httpClient.post<void>(`/api/roles/${idRole}/permissions/${idPermission}`, undefined, { token });
   },
   removePermissionFromRole(token: string, idRole: number, idPermission: number) {
     return httpClient.delete<void>(`/api/roles/${idRole}/permissions/${idPermission}`, { token });
   },
-  getManageableUsers(token: string, query: ManageableUsersQuery = {}) {
-    return httpClient.get<PaginatedUsersResponse>(`/api/users/manageable${buildManageableUsersQuery(query)}`, { token });
+  getUsers(token: string, query: UsersQuery = {}) {
+    return httpClient.get<PaginatedUsersResponse>(`/api/users${buildUsersQuery(query)}`, { token });
+  },
+  updateUserRole(token: string, idUser: number, idRole: number) {
+    return httpClient.patch<void>(`/api/users/${idUser}`, { idRole }, { token });
   },
   setManageableUserBanStatus(token: string, idUser: number, isBanned: boolean) {
     return httpClient.patch<void>(`/api/users/manageable/${idUser}/ban`, { isBanned }, { token });

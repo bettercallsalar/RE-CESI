@@ -1,12 +1,12 @@
 import { Box } from "@chakra-ui/react";
 import { SiteLayout } from "@/app/layouts/SiteLayout";
-import { ProfileForm } from "@/features/profile/components/ProfileForm";
+import { RegisterForm } from "@/features/auth/components/RegisterForm";
 
-export function ProfilePage() {
+export function RegisterPage() {
   return (
-    <SiteLayout headerVariant="authenticated">
+    <SiteLayout headerVariant="public">
       <Box maxW="960px" mx="auto" w="100%">
-        <ProfileForm />
+        <RegisterForm />
       </Box>
     </SiteLayout>
   );

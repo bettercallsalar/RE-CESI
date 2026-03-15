@@ -19,6 +19,7 @@ import { EventsPage } from "@/features/events/pages/EventsPage";
 import { MyEventsPage } from "@/features/events/pages/MyEventsPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { FollowingFeedPage } from "@/features/follows/pages/FollowingFeedPage";
 import { ReadLaterPage } from "@/features/marks/pages/ReadLaterPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
@@ -38,6 +39,7 @@ function App() {
   const eventDetailMatch = pathname.match(/^\/events\/(\d+)$/);
   const eventEditMatch = pathname.match(/^\/events\/(\d+)\/modifier$/);
   const userProfileMatch = pathname.match(/^\/utilisateurs\/(\d+)$/);
+  const isRegisterPath = pathname === "/register" || pathname === "/inscription";
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
@@ -51,6 +53,10 @@ function App() {
 
   useEffect(() => {
     if (pathname === "/login" && status === "authenticated") {
+      window.history.replaceState({}, "", "/");
+      setPathname("/");
+    }
+    if (isRegisterPath && status === "authenticated") {
       window.history.replaceState({}, "", "/");
       setPathname("/");
     }
@@ -124,7 +130,7 @@ function App() {
       window.history.replaceState({}, "", redirectPath);
       setPathname(redirectPath);
     }
-  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, pathname, status, userProfileMatch]);
+  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, isRegisterPath, pathname, status, userProfileMatch]);
 
   if (pathname === "/admin") {
     if (status === "loading") {
@@ -280,6 +286,14 @@ function App() {
     }
 
     return <LoginPage />;
+  }
+
+  if (isRegisterPath) {
+    if (status === "loading") {
+      return <AppLoader label="Preparation du formulaire d'inscription" />;
+    }
+
+    return <RegisterPage />;
   }
 
   if (pathname === "/articles") {
