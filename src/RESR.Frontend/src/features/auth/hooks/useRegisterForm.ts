@@ -102,7 +102,7 @@ export function useRegisterForm() {
       });
 
       flashMessageStorage.set(
-        createSuccessMessage("Compte cree. Un administrateur doit verifier votre compte avant la premiere connexion.")
+        createSuccessMessage("Compte cree. Vous pouvez maintenant vous connecter.")
       );
       navigateTo("/login", { replace: true });
     } catch (submitError) {

@@ -31,7 +31,7 @@ public sealed class UserFactoryTests
         Assert.Equal("bio", user.Bio);
         Assert.Equal(1, user.Department.IdDepartment);
         Assert.Equal(2, user.IdRole);
-        Assert.False(user.IsVerified);
+        Assert.True(user.IsVerified);
         Assert.False(user.IsBanned);
         Assert.Null(user.DeletedAt);
     }
