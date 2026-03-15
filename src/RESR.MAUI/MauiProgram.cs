@@ -6,6 +6,7 @@ using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Pages.Marks;
+using RESR.MAUI.Pages.Information;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
 
@@ -41,6 +42,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<CreateEventPage>();
 		builder.Services.AddTransient<EditEventPage>();
 		builder.Services.AddTransient<MarkResourcesPage>();
+		builder.Services.AddTransient<InformationPage>();
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
 		builder.Services.AddTransient<IMarkedResourcesService, MarkedResourcesService>();
 

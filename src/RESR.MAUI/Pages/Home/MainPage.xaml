@@ -378,6 +378,29 @@
                                    Margin="0,-2,0,0" />
                 </VerticalStackLayout>
 
+                <Border Margin="0,8,0,0"
+                        Style="{StaticResource SurfaceBorderStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Style="{StaticResource FooterTitleLabelStyle}"
+                               Text="Informations legales et contact" />
+                        <Button Clicked="OnLegalNoticeClicked"
+                                HorizontalOptions="Start"
+                                Style="{StaticResource HeaderLinkButtonStyle}"
+                                Text="Mentions legales" />
+                        <Button Clicked="OnPrivacyCookiesClicked"
+                                HorizontalOptions="Start"
+                                Style="{StaticResource HeaderLinkButtonStyle}"
+                                Text="Donnees personnelles et cookies" />
+                        <Button Clicked="OnTermsOfUseClicked"
+                                HorizontalOptions="Start"
+                                Style="{StaticResource HeaderLinkButtonStyle}"
+                                Text="Conditions generales d'utilisation" />
+                        <Button Clicked="OnContactClicked"
+                                HorizontalOptions="Start"
+                                Style="{StaticResource HeaderLinkButtonStyle}"
+                                Text="Contact" />
+                    </VerticalStackLayout>
+                </Border>
             </VerticalStackLayout>
         </ScrollView>
     </RefreshView>

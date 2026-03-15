@@ -1,6 +1,7 @@
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Events;
+using RESR.MAUI.Pages.Information;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
@@ -106,6 +107,26 @@ public partial class MainPage : ContentPage
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(EventsPage));
+    }
+
+    private async void OnLegalNoticeClicked(object? sender, EventArgs e)
+    {
+        await NavigateToInformationPageAsync("mentions-legales");
+    }
+
+    private async void OnPrivacyCookiesClicked(object? sender, EventArgs e)
+    {
+        await NavigateToInformationPageAsync("donnees-personnelles-cookies");
+    }
+
+    private async void OnTermsOfUseClicked(object? sender, EventArgs e)
+    {
+        await NavigateToInformationPageAsync("conditions-generales-utilisation");
+    }
+
+    private async void OnContactClicked(object? sender, EventArgs e)
+    {
+        await NavigateToInformationPageAsync("contact");
     }
 
     private void OnMenuClicked(object? sender, EventArgs e)
@@ -320,6 +341,11 @@ public partial class MainPage : ContentPage
             StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
+    }
+
+    private Task NavigateToInformationPageAsync(string key)
+    {
+        return NavigateToAsync($"{nameof(InformationPage)}?key={Uri.EscapeDataString(key)}");
     }
 
     private async Task NavigateToRootAsync()
