@@ -57,6 +57,19 @@
             <Setter Property="MinimumWidthRequest" Value="44" />
         </Style>
 
+        <Style x:Key="FooterLinkButtonStyle" TargetType="Button">
+            <Setter Property="TextColor" Value="#2E2AA5" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="FontFamily" Value="OpenSansRegular" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="BorderWidth" Value="0" />
+            <Setter Property="Padding" Value="0,6" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="MinimumHeightRequest" Value="44" />
+            <Setter Property="MinimumWidthRequest" Value="44" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+        </Style>
+
     </ContentPage.Resources>
 
     <RefreshView x:Name="RefreshContainer"
@@ -475,18 +488,22 @@
 
                         <VerticalStackLayout Grid.Column="1"
                                              Spacing="6">
-                            <Label Text="Legal &amp; Contact"
+                            <Label Text="Informations legales et contact"
                                    FontAttributes="Bold"
                                    FontSize="13"
                                    TextColor="#2E2AA5" />
-                            <Label Text="Mentions legales"
-                                   Style="{StaticResource SectionCaptionStyle}" />
-                            <Label Text="Donnees personnelles et cookies"
-                                   Style="{StaticResource SectionCaptionStyle}" />
-                            <Label Text="Conditions generales d'utilisation"
-                                   Style="{StaticResource SectionCaptionStyle}" />
-                            <Label Text="Contacts"
-                                   Style="{StaticResource SectionCaptionStyle}" />
+                            <Button Clicked="OnLegalNoticeClicked"
+                                    Style="{StaticResource FooterLinkButtonStyle}"
+                                    Text="Mentions legales" />
+                            <Button Clicked="OnPrivacyCookiesClicked"
+                                    Style="{StaticResource FooterLinkButtonStyle}"
+                                    Text="Donnees personnelles et cookies" />
+                            <Button Clicked="OnTermsOfUseClicked"
+                                    Style="{StaticResource FooterLinkButtonStyle}"
+                                    Text="Conditions generales d'utilisation" />
+                            <Button Clicked="OnContactClicked"
+                                    Style="{StaticResource FooterLinkButtonStyle}"
+                                    Text="Contact" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
