@@ -1,3 +1,4 @@
+-- Keep this demo seed at the end of the migration chain to avoid version conflicts.
 -- Seed data for article detail comment threads.
 -- This migration creates:
 -- - demo users dedicated to article discussions
