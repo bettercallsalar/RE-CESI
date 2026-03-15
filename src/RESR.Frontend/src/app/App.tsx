@@ -19,7 +19,10 @@ import { EventsPage } from "@/features/events/pages/EventsPage";
 import { MyEventsPage } from "@/features/events/pages/MyEventsPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { FollowingFeedPage } from "@/features/follows/pages/FollowingFeedPage";
+import { ReadLaterPage } from "@/features/marks/pages/ReadLaterPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { UserProfilePage } from "@/features/profile/pages/UserProfilePage";
 import { HomePage } from "@/pages/HomePage";
 import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { AppLoader } from "@/shared/ui/AppLoader";
@@ -34,6 +37,7 @@ function App() {
   const articleEditMatch = pathname.match(/^\/articles\/(\d+)\/modifier$/);
   const eventDetailMatch = pathname.match(/^\/events\/(\d+)$/);
   const eventEditMatch = pathname.match(/^\/events\/(\d+)\/modifier$/);
+  const userProfileMatch = pathname.match(/^\/utilisateurs\/(\d+)$/);
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
@@ -51,6 +55,18 @@ function App() {
       setPathname("/");
     }
     if (pathname === "/mon-compte" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/suivis" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (pathname === "/marques" && status === "unauthenticated") {
+      window.history.replaceState({}, "", "/login");
+      setPathname("/login");
+    }
+    if (userProfileMatch && status === "unauthenticated") {
       window.history.replaceState({}, "", "/login");
       setPathname("/login");
     }
@@ -108,7 +124,7 @@ function App() {
       window.history.replaceState({}, "", redirectPath);
       setPathname(redirectPath);
     }
-  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, pathname, status]);
+  }, [adminRoleDetailMatch, articleEditMatch, canApproveArticles, canApproveEvents, eventEditMatch, pathname, status, userProfileMatch]);
 
   if (pathname === "/admin") {
     if (status === "loading") {
@@ -217,6 +233,42 @@ function App() {
 
     if (status === "authenticated") {
       return <ProfilePage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/suivis") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de vos suivis" />;
+    }
+
+    if (status === "authenticated") {
+      return <FollowingFeedPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (pathname === "/marques") {
+    if (status === "loading") {
+      return <AppLoader label="Chargement de vos articles et events enregistres" />;
+    }
+
+    if (status === "authenticated") {
+      return <ReadLaterPage />;
+    }
+
+    return <AppLoader label="Redirection vers la connexion" />;
+  }
+
+  if (userProfileMatch) {
+    if (status === "loading") {
+      return <AppLoader label="Chargement du profil utilisateur" />;
+    }
+
+    if (status === "authenticated") {
+      return <UserProfilePage idUser={Number(userProfileMatch[1])} />;
     }
 
     return <AppLoader label="Redirection vers la connexion" />;

@@ -52,6 +52,15 @@ public sealed record UserResponse(
     int IdRole
 );
 
+public sealed record PublicUserProfileResponse(
+    int IdUser,
+    string Username,
+    string FirstName,
+    string? Bio,
+    bool IsVerified,
+    Department Department
+);
+
 public sealed record PaginatedUsersResponse(
     IReadOnlyList<UserResponse> Items,
     int Page,

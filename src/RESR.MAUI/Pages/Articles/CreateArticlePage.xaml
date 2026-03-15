@@ -2,59 +2,95 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.CreateArticlePage"
-             Title="Nouvel article">
+             Title="Nouvel article"
+             BackgroundColor="{StaticResource White}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="12">
-            <Label Text="Créer un article"
-                   Style="{StaticResource Headline}"/>
+        <VerticalStackLayout Padding="{OnIdiom Phone='20,24,20,30', Default='32,32,32,40'}"
+                             Spacing="20"
+                             HorizontalOptions="Center"
+                             MaximumWidthRequest="820">
 
-            <Label Text="Titre (max 50 caractères)"/>
-            <Entry x:Name="TitleEntry"
-                   Placeholder="Titre de l'article"
-                   MaxLength="50"
-                   TextChanged="OnTitleChanged"/>
-            <Label x:Name="TitleCounterLabel"
-                   Text="0/50"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Creer un article"
+                       Style="{StaticResource Headline}" />
+                <Label Text="Redige une ressource publique ou privee dans le meme langage visuel que le site web."
+                       Style="{StaticResource PageCaptionStyle}"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
 
-            <Label Text="Visibilité"/>
-            <Picker x:Name="VisibilityPicker"
-                    Title="Choisir une visibilité"/>
+            <Border Style="{StaticResource PageCardStyle}">
+                <VerticalStackLayout Spacing="14">
+                    <Label Text="Titre"
+                           Style="{StaticResource PageCaptionStyle}" />
+                    <Border Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,4">
+                        <Entry x:Name="TitleEntry"
+                               Placeholder="Titre de l'article"
+                               MaxLength="50"
+                               TextChanged="OnTitleChanged" />
+                    </Border>
+                    <Label x:Name="TitleCounterLabel"
+                           Text="0/50"
+                           Style="{StaticResource PageCaptionStyle}" />
 
-            <Label Text="Catégorie"/>
-            <Picker x:Name="CategoryPicker"
-                    Title="Choisir une catégorie"
-                    ItemsSource="{Binding Categories}"
-                    ItemDisplayBinding="{Binding Name}"/>
+                    <Label Text="Visibilite"
+                           Style="{StaticResource PageCaptionStyle}" />
+                    <Border Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,2">
+                        <Picker x:Name="VisibilityPicker"
+                                Title="Choisir une visibilite" />
+                    </Border>
 
-            <Label Text="Description (max 5000 caractères)"/>
-            <Editor x:Name="DescriptionEditor"
-                    Placeholder="Résumé de l'article"
-                    AutoSize="TextChanges"
-                    MaxLength="5000"
-                    HeightRequest="160"/>
-            <Label Text="Limite: 5000 caractères"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+                    <Label Text="Categorie"
+                           Style="{StaticResource PageCaptionStyle}" />
+                    <Border Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,2">
+                        <Picker x:Name="CategoryPicker"
+                                Title="Choisir une categorie"
+                                ItemsSource="{Binding Categories}"
+                                ItemDisplayBinding="{Binding Name}" />
+                    </Border>
 
-            <Label Text="Contenu"/>
-            <Editor x:Name="ContentEditor"
-                    Placeholder="Écris ton article ici..."
-                    AutoSize="TextChanges"
-                    HeightRequest="260"/>
-            <Label Text="Contenu obligatoire"
-                   FontSize="12"
-                   TextColor="{StaticResource Gray500}"/>
+                    <Label Text="Description"
+                           Style="{StaticResource PageCaptionStyle}" />
+                    <Border Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,8">
+                        <Editor x:Name="DescriptionEditor"
+                                Placeholder="Resume de l'article"
+                                AutoSize="TextChanges"
+                                MaxLength="5000"
+                                HeightRequest="160" />
+                    </Border>
+                    <Label Text="Limite : 5000 caracteres"
+                           Style="{StaticResource PageCaptionStyle}" />
 
-            <Button Text="Créer l'article"
-                    Clicked="OnCreateClicked"
-                    x:Name="CreateButton"/>
+                    <Label Text="Contenu"
+                           Style="{StaticResource PageCaptionStyle}" />
+                    <Border Stroke="{StaticResource Gray200}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="12,8">
+                        <Editor x:Name="ContentEditor"
+                                Placeholder="Ecris ton article ici..."
+                                AutoSize="TextChanges"
+                                HeightRequest="280" />
+                    </Border>
+                    <Label Text="Le contenu est obligatoire"
+                           Style="{StaticResource PageCaptionStyle}" />
 
-            <Label x:Name="StatusLabel"
-                   Text="Renseigne les champs obligatoires."
-                   LineBreakMode="WordWrap"/>
+                    <Button x:Name="CreateButton"
+                            Text="Creer l'article"
+                            Clicked="OnCreateClicked" />
+
+                    <Label x:Name="StatusLabel"
+                           Text="Renseigne les champs obligatoires."
+                           Style="{StaticResource PageBodyTextStyle}" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </ScrollView>
 

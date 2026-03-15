@@ -10,6 +10,12 @@ public sealed record FollowResponse(
     int IdFollowing
 );
 
+public sealed record FollowStateResponse(
+    int IdFollower,
+    int IdFollowing,
+    bool IsFollowing
+);
+
 public sealed record FollowUserResponse(
     int IdUser,
     string Username,

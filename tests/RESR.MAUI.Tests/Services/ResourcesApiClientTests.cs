@@ -172,6 +172,7 @@ public sealed class ResourcesApiClientTests
         {
             Assert.Equal(HttpMethod.Get, request.Method);
             Assert.Equal("/api/articles/12", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -209,6 +210,7 @@ public sealed class ResourcesApiClientTests
 
         Assert.NotNull(article);
         Assert.Equal("Article detail", article!.Title);
+        Assert.Equal(12, article!.IdResource);
     }
 
     [Fact]
@@ -219,6 +221,7 @@ public sealed class ResourcesApiClientTests
         {
             Assert.Equal(HttpMethod.Get, request.Method);
             Assert.Equal("/api/events/14", request.RequestUri?.PathAndQuery);
+            Assert.Null(request.Headers.Authorization);
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {

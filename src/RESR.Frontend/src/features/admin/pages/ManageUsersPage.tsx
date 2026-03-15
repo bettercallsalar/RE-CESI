@@ -2,6 +2,7 @@ import { Box, Button, HStack, SimpleGrid, Skeleton, Stack, Text } from "@chakra-
 import { SiteLayout } from "@/app/layouts/SiteLayout";
 import { useManageUsersPage } from "@/features/admin/hooks/useManageUsersPage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getUserProfileHref } from "@/features/profile/lib/getUserProfileHref";
 import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 
@@ -86,22 +87,28 @@ export function ManageUsersPage() {
                     </Text>
                   </Stack>
 
-                  {canBanUsers ? (
-                    <Button
-                      _hover={user.isBanned ? { bg: "#276749" } : { bg: "#9B2C2C" }}
-                      bg={user.isBanned ? "#2F855A" : "#C53030"}
-                      color="white"
-                      fontSize={{ base: "14px", md: "15px" }}
-                      h="40px"
-                      isDisabled={isSubmitting}
-                      onClick={() => {
-                        void setUserBanStatus(user, !user.isBanned);
-                      }}
-                      px={4}
-                    >
-                      {user.isBanned ? "Debannir" : "Bannir"}
+                  <HStack spacing={3} wrap="wrap">
+                    <Button as="a" href={getUserProfileHref(user.idUser)} variant="outline">
+                      Voir le profil
                     </Button>
-                  ) : null}
+
+                    {canBanUsers ? (
+                      <Button
+                        _hover={user.isBanned ? { bg: "#276749" } : { bg: "#9B2C2C" }}
+                        bg={user.isBanned ? "#2F855A" : "#C53030"}
+                        color="white"
+                        fontSize={{ base: "14px", md: "15px" }}
+                        h="40px"
+                        isDisabled={isSubmitting}
+                        onClick={() => {
+                          void setUserBanStatus(user, !user.isBanned);
+                        }}
+                        px={4}
+                      >
+                        {user.isBanned ? "Debannir" : "Bannir"}
+                      </Button>
+                    ) : null}
+                  </HStack>
                 </HStack>
               </Stack>
             ))}

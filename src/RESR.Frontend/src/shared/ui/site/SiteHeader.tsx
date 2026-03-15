@@ -16,7 +16,7 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import type { IconType } from "react-icons";
-import { FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiShield, FiUser } from "react-icons/fi";
+import { FiBookmark, FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome, FiMenu, FiShield, FiUser, FiUsers } from "react-icons/fi";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppIcon } from "@/shared/ui/icons/AppIcon";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
@@ -72,14 +72,18 @@ function getUserLabel(firstName?: string, username?: string) {
 
 function UserMenu({ canAccessAdminDashboard, label }: { canAccessAdminDashboard: boolean; label: string }) {
   const items: NavLinkItem[] = canAccessAdminDashboard
-    ? [
+      ? [
         { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Marques", icon: FiBookmark, href: "/marques" },
+        { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
       ]
     : [
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Marques", icon: FiBookmark, href: "/marques" },
+        { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
       ];
@@ -157,18 +161,24 @@ function MobileNavigation({
     ? [
         { label: "Administration", icon: FiShield, href: "/admin" },
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Marques", icon: FiBookmark, href: "/marques" },
+        { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
       ]
     : [
         { label: "Mon compte", icon: FiUser, href: "/mon-compte" },
+        { label: "Marques", icon: FiBookmark, href: "/marques" },
+        { label: "Suivis", icon: FiUsers, href: "/suivis" },
         { label: "Mes articles", icon: FiFileText, href: "/mes-articles" },
         { label: "Mes events", icon: FiCalendar, href: "/mes-events" }
       ];
   const authenticatedItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
     { label: "Articles", icon: FiFileText, href: "/articles" },
-    { label: "Events", icon: FiCalendar, href: "/events" }
+    { label: "Events", icon: FiCalendar, href: "/events" },
+    { label: "Marques", icon: FiBookmark, href: "/marques" },
+    { label: "Suivis", icon: FiUsers, href: "/suivis" }
   ];
   const topLevelItems: NavLinkItem[] = variant === "authenticated"
     ? authenticatedItems
@@ -242,7 +252,9 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
   const authenticatedItems: NavLinkItem[] = [
     { label: "Accueil", icon: FiHome, href: "/" },
     { label: "Articles", icon: FiFileText, href: "/articles" },
-    { label: "Events", icon: FiCalendar, href: "/events" }
+    { label: "Events", icon: FiCalendar, href: "/events" },
+    { label: "Marques", icon: FiBookmark, href: "/marques" },
+    { label: "Suivis", icon: FiUsers, href: "/suivis" }
   ];
 
   return (

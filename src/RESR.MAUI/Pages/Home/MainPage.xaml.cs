@@ -1,5 +1,5 @@
-using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Profile;
 using RESR.MAUI.Services;
@@ -90,7 +90,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleCardTapped(object? sender, TappedEventArgs e)
     {
-        await NavigateToArticleAsync(TryGetHomeResourceCard(sender));
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventCardTapped(object? sender, TappedEventArgs e)
@@ -100,7 +103,10 @@ public partial class MainPage : ContentPage
 
     private async void OnArticleSeeMoreClicked(object? sender, EventArgs e)
     {
-        await NavigateToArticleAsync(TryGetHomeResourceCard(sender));
+        if (TryGetBoundItem<HomeResourceCard>(sender, out var card))
+            await NavigateToArticleDetailAsync(card.IdResource);
+        else
+            await NavigateToAsync(nameof(ArticlesPage));
     }
 
     private async void OnEventSeeMoreClicked(object? sender, EventArgs e)
@@ -277,6 +283,11 @@ public partial class MainPage : ContentPage
         return ToExcerpt(message, 180);
     }
 
+    private async Task NavigateToArticleDetailAsync(int idResource)
+    {
+        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
+    }
+
     private async Task NavigateToAsync(string route)
     {
         if (Shell.Current is null)
@@ -290,17 +301,6 @@ public partial class MainPage : ContentPage
         {
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
-    }
-
-    private async Task NavigateToArticleAsync(HomeResourceCard? card)
-    {
-        if (card is null)
-        {
-            await NavigateToAsync(nameof(ArticlesPage));
-            return;
-        }
-
-        await NavigateToAsync($"{nameof(ArticleDetailPage)}?idResource={card.IdResource}");
     }
 
     private async Task NavigateToRootAsync()
@@ -318,11 +318,16 @@ public partial class MainPage : ContentPage
         }
     }
 
-    private static HomeResourceCard? TryGetHomeResourceCard(object? sender)
+    private static bool TryGetBoundItem<TItem>(object? sender, out TItem item)
     {
-        return sender is BindableObject bindable
-            ? bindable.BindingContext as HomeResourceCard
-            : null;
+        if (sender is BindableObject bindable && bindable.BindingContext is TItem typedItem)
+        {
+            item = typedItem;
+            return true;
+        }
+
+        item = default!;
+        return false;
     }
 
     private sealed record HomeResourceCard(
