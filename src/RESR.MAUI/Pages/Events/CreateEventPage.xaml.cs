@@ -1,37 +1,49 @@
-using RESR.MAUI.Services;
-using RESR.Models.Categories;
-using RESR.Models.Resources;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.IO;
+using RESR.MAUI.Services;
+using RESR.Models.Categories;
+using RESR.Models.Resources;
 
-namespace RESR.MAUI.Pages.Articles;
+namespace RESR.MAUI.Pages.Events;
 
-public partial class CreateArticlePage : ContentPage
+public partial class CreateEventPage : ContentPage
 {
     private const int TitleMaxLength = 50;
     private const int DescriptionMaxLength = 5000;
+    private const int SubtitleMaxLength = 255;
+    private const int AddressMaxLength = 255;
     private const int MaxImages = 6;
     private const long MaxImageSizeBytes = 5 * 1024 * 1024;
 
-    private readonly IArticlesApiClient _articlesApiClient;
+    private readonly IEventsApiClient _eventsApiClient;
     private readonly ICategoriesApiClient _categoriesApiClient;
+    private readonly IDepartmentsApiClient _departmentsApiClient;
 
     public ObservableCollection<CategoryResponse> Categories { get; } = new();
+    public ObservableCollection<DepartmentOption> Departments { get; } = new();
     public ObservableCollection<ImageItem> SelectedImages { get; } = new();
     public ObservableCollection<ImageOption> DefaultImageOptions { get; } = new();
     private int? _defaultImageIndex;
 
-    public CreateArticlePage(IArticlesApiClient articlesApiClient, ICategoriesApiClient categoriesApiClient)
+    public CreateEventPage(
+        IEventsApiClient eventsApiClient,
+        ICategoriesApiClient categoriesApiClient,
+        IDepartmentsApiClient departmentsApiClient)
     {
-        _articlesApiClient = articlesApiClient;
+        _eventsApiClient = eventsApiClient;
         _categoriesApiClient = categoriesApiClient;
+        _departmentsApiClient = departmentsApiClient;
+
         InitializeComponent();
         BindingContext = this;
         SelectedImagesView.ItemsSource = SelectedImages;
 
         VisibilityPicker.ItemsSource = new[] { "PUBLIC", "PRIVATE" };
         VisibilityPicker.SelectedIndex = 0;
+        StartDatePicker.Date = DateTime.Today;
+        EndDatePicker.Date = DateTime.Today.AddDays(1);
+        EndDatePicker.IsEnabled = false;
         UpdateTitleCounter();
     }
 
@@ -39,15 +51,27 @@ public partial class CreateArticlePage : ContentPage
     {
         base.OnAppearing();
 
-        if (Categories.Count == 0)
+        if (Categories.Count == 0 || Departments.Count == 0)
         {
-            await LoadCategoriesAsync();
+            await LoadOptionsAsync();
         }
     }
 
     private void OnTitleChanged(object? sender, TextChangedEventArgs e)
     {
         UpdateTitleCounter();
+    }
+
+    private void OnHasEndDateChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        EndDatePicker.IsEnabled = e.Value;
+        var startDate = StartDatePicker.Date ?? DateTime.Today;
+        var endDate = EndDatePicker.Date ?? startDate;
+
+        if (e.Value && endDate <= startDate)
+        {
+            EndDatePicker.Date = startDate.AddDays(1);
+        }
     }
 
     private void UpdateTitleCounter()
@@ -67,9 +91,13 @@ public partial class CreateArticlePage : ContentPage
             StatusLabel.Text = "Validation en cours...";
 
             var title = TitleEntry.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(title))
+            var subtitle = SubtitleEntry.Text?.Trim() ?? string.Empty;
+            var address = AddressEntry.Text?.Trim() ?? string.Empty;
+            var description = DescriptionEditor.Text?.Trim() ?? string.Empty;
+
+            if (title.Length < 3)
             {
-                StatusLabel.Text = "Le titre est obligatoire.";
+                StatusLabel.Text = "Le titre doit contenir au moins 3 caracteres.";
                 return;
             }
 
@@ -79,19 +107,21 @@ public partial class CreateArticlePage : ContentPage
                 return;
             }
 
-            var descriptionHtml = DescriptionEditor.Text?.Trim() ?? string.Empty;
-            var descriptionLength = descriptionHtml.Length;
-            if (descriptionLength > DescriptionMaxLength)
+            if (subtitle.Length > SubtitleMaxLength)
             {
-                StatusLabel.Text = $"La description ne doit pas depasser {DescriptionMaxLength} caracteres.";
+                StatusLabel.Text = $"Le sous-titre ne doit pas depasser {SubtitleMaxLength} caracteres.";
                 return;
             }
 
-            var contentHtml = ContentEditor.Text?.Trim() ?? string.Empty;
-            var contentLength = contentHtml.Length;
-            if (contentLength == 0)
+            if (address.Length > AddressMaxLength)
             {
-                StatusLabel.Text = "Le contenu est obligatoire.";
+                StatusLabel.Text = $"L'adresse ne doit pas depasser {AddressMaxLength} caracteres.";
+                return;
+            }
+
+            if (description.Length > DescriptionMaxLength)
+            {
+                StatusLabel.Text = $"La description ne doit pas depasser {DescriptionMaxLength} caracteres.";
                 return;
             }
 
@@ -101,26 +131,48 @@ public partial class CreateArticlePage : ContentPage
                 return;
             }
 
-            var visibility = VisibilityPicker.SelectedItem?.ToString() ?? "PUBLIC";
+            var startDate = StartDatePicker.Date ?? DateTime.Today;
+            DateTime? endDate = HasEndDateCheckBox.IsChecked
+                ? EndDatePicker.Date ?? startDate.AddDays(1)
+                : null;
 
-            await _articlesApiClient.CreateAsync(
-                new CreateArticleRequest(
+            if (endDate is not null && endDate <= startDate)
+            {
+                StatusLabel.Text = "La date de fin doit etre strictement apres la date de debut.";
+                return;
+            }
+
+            var visibility = VisibilityPicker.SelectedItem?.ToString() ?? "PUBLIC";
+            var selectedDepartment = DepartmentPicker.SelectedItem as DepartmentOption;
+
+            await _eventsApiClient.CreateAsync(
+                new CreateEventRequest(
                     title,
-                    string.IsNullOrWhiteSpace(descriptionHtml) ? null : descriptionHtml,
+                    string.IsNullOrWhiteSpace(description) ? null : description,
                     visibility,
                     selectedCategory.IdCategory,
-                    contentHtml),
+                    string.IsNullOrWhiteSpace(subtitle) ? null : subtitle,
+                    startDate,
+                    endDate,
+                    string.IsNullOrWhiteSpace(address) ? null : address,
+                    selectedDepartment?.IdDepartment),
                 SelectedImages.Select(image => image.Upload).ToList(),
                 _defaultImageIndex,
                 CancellationToken.None);
 
             StatusLabel.TextColor = Colors.Green;
-            StatusLabel.Text = "Article cree avec succes.";
+            StatusLabel.Text = "Evenement cree avec succes.";
 
             TitleEntry.Text = string.Empty;
-            CategoryPicker.SelectedItem = null;
+            SubtitleEntry.Text = string.Empty;
+            AddressEntry.Text = string.Empty;
             DescriptionEditor.Text = string.Empty;
-            ContentEditor.Text = string.Empty;
+            CategoryPicker.SelectedItem = null;
+            DepartmentPicker.SelectedItem = null;
+            VisibilityPicker.SelectedIndex = 0;
+            StartDatePicker.Date = DateTime.Today;
+            HasEndDateCheckBox.IsChecked = false;
+            EndDatePicker.Date = DateTime.Today.AddDays(1);
             SelectedImages.Clear();
             DefaultImageOptions.Clear();
             DefaultImageContainer.IsVisible = false;
@@ -142,7 +194,7 @@ public partial class CreateArticlePage : ContentPage
         {
             StatusLabel.TextColor = Colors.Red;
             StatusLabel.Text = "Une erreur est survenue lors de la creation.";
-            System.Diagnostics.Debug.WriteLine($"Create article failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"Create event failed: {ex}");
         }
         finally
         {
@@ -219,22 +271,37 @@ public partial class CreateArticlePage : ContentPage
         _defaultImageIndex = DefaultImagePicker.SelectedIndex >= 0 ? DefaultImagePicker.SelectedIndex : null;
     }
 
-    private async Task LoadCategoriesAsync()
+    private async Task LoadOptionsAsync()
     {
         try
         {
-            var categories = await _categoriesApiClient.GetCategoriesAsync(CancellationToken.None);
-            Categories.Clear();
+            StatusLabel.TextColor = Colors.Black;
+            StatusLabel.Text = "Chargement des options...";
 
-            foreach (var category in categories.OrderBy(c => c.Name))
+            var categoriesTask = LoadCategoriesAsync();
+            var departmentsTask = LoadDepartmentsAsync();
+
+            await Task.WhenAll(categoriesTask, departmentsTask);
+
+            Categories.Clear();
+            foreach (var category in categoriesTask.Result.OrderBy(c => c.Name))
             {
                 Categories.Add(category);
             }
+
+            Departments.Clear();
+            foreach (var department in departmentsTask.Result.OrderBy(d => d.Code))
+            {
+                Departments.Add(new DepartmentOption(department.IdDepartment, department.Name, department.Code));
+            }
+
+            StatusLabel.TextColor = Colors.Black;
+            StatusLabel.Text = "Renseigne les champs obligatoires.";
         }
         catch (ApiException ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Erreur categories ({(int)ex.StatusCode}): {ex.Message}";
+            StatusLabel.Text = $"Erreur options ({(int)ex.StatusCode}): {ex.Message}";
         }
         catch (TimeoutException ex)
         {
@@ -246,6 +313,24 @@ public partial class CreateArticlePage : ContentPage
             StatusLabel.TextColor = Colors.Red;
             StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
         }
+    }
+
+    private Task<IReadOnlyList<CategoryResponse>> LoadCategoriesAsync()
+    {
+        return _categoriesApiClient.GetCategoriesAsync(CancellationToken.None);
+    }
+
+    private async Task<IReadOnlyList<DepartmentOption>> LoadDepartmentsAsync()
+    {
+        var departments = await _departmentsApiClient.GetDepartmentsAsync(CancellationToken.None);
+        return departments
+            .Select(department => new DepartmentOption(department.IdDepartment, department.Name, department.Code))
+            .ToList();
+    }
+
+    public sealed record DepartmentOption(int IdDepartment, string Name, int Code)
+    {
+        public string DisplayLabel => $"{Code} - {Name}";
     }
 
     private static async Task<ImageItem> LoadImageAsync(FileResult pick)
