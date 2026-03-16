@@ -28,6 +28,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     private CancellationTokenSource? _commentActionCts;
     private CancellationTokenSource? _reactionActionCts;
     private CancellationTokenSource? _markActionCts;
+    private CancellationTokenSource? _deleteActionCts;
     private int? _idResource;
     private bool _useOwnAccess;
     private bool _shouldLoad;
@@ -111,6 +112,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         _commentActionCts?.Cancel();
         _reactionActionCts?.Cancel();
         _markActionCts?.Cancel();
+        _deleteActionCts?.Cancel();
         base.OnDisappearing();
     }
 
@@ -127,6 +129,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         MarksCard.IsVisible = false;
         ReactionsCard.IsVisible = false;
         CommentsCard.IsVisible = false;
+        DeleteArticleButton.IsVisible = false;
         _currentUserId = null;
         _currentUserReaction = null;
 
@@ -209,6 +212,11 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         ContentLabel.Text = Normalize(article.Content);
         AuthorButton.Text = BuildAuthorLabel(article);
         MetaLabel.Text = BuildMetaLabel(article);
+        DeleteArticleButton.IsVisible =
+            _session.IsAuthenticated &&
+            !article.DeletedAt.HasValue &&
+            _currentUserId.HasValue &&
+            _currentUserId.Value == article.IdUser;
     }
 
     private static string BuildAuthorLabel(ArticleResponse article)
@@ -246,6 +254,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     {
         LoadingIndicator.IsVisible = isLoading;
         LoadingIndicator.IsRunning = isLoading;
+        DeleteArticleButton.IsEnabled = !isLoading && _deleteActionCts is null;
     }
 
     private async Task<int?> TryResolveCurrentUserIdAsync(CancellationToken ct)
@@ -1036,6 +1045,62 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _markActionCts?.Dispose();
             _markActionCts = null;
             SetMarkActionState(false);
+        }
+    }
+
+    private async void OnDeleteArticleClicked(object? sender, EventArgs e)
+    {
+        if (_article is null || _deleteActionCts is not null)
+            return;
+
+        if (!_session.IsAuthenticated || !_currentUserId.HasValue || _currentUserId.Value != _article.IdUser)
+        {
+            StatusLabel.Text = "Seul l'auteur peut supprimer cet article.";
+            return;
+        }
+
+        var shouldDelete = await DisplayAlert(
+            "Supprimer l'article",
+            "Voulez-vous vraiment supprimer cet article ? Cette action est irreversible.",
+            "Supprimer",
+            "Annuler");
+
+        if (!shouldDelete)
+            return;
+
+        _deleteActionCts = new CancellationTokenSource();
+        DeleteArticleButton.IsEnabled = false;
+        StatusLabel.Text = "Suppression de l'article en cours...";
+
+        try
+        {
+            await _resourcesApiClient.DeleteArticleAsync(_article.IdResource, _deleteActionCts.Token);
+            StatusLabel.Text = "Article supprime.";
+
+            if (Shell.Current is not null)
+                await Shell.Current.GoToAsync("..");
+        }
+        catch (ApiException ex)
+        {
+            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+        }
+        catch (TimeoutException ex)
+        {
+            StatusLabel.Text = ex.Message;
+        }
+        catch (OperationCanceledException)
+        {
+            StatusLabel.Text = "Suppression annulee.";
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Impossible de supprimer l'article : {TrimMessage(ex.Message)}";
+        }
+        finally
+        {
+            _deleteActionCts?.Dispose();
+            _deleteActionCts = null;
+            DeleteArticleButton.IsEnabled = _article is not null;
         }
     }
 

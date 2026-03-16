@@ -408,6 +408,64 @@ public sealed class ResourcesApiClientTests
         Assert.Equal("PRIVATE", article!.Visibility);
     }
 
+    [Fact]
+    public async Task DeleteArticleAsync_SendsDeleteRequest_WithBearerHeader()
+    {
+        var session = new StubApiSession
+        {
+            Token = "jwt-token-for-delete-article"
+        };
+
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Delete, request.Method);
+            Assert.Equal("/api/articles/12", request.RequestUri?.PathAndQuery);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("jwt-token-for-delete-article", request.Headers.Authorization.Parameter);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        await sut.DeleteArticleAsync(12, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task DeleteEventAsync_SendsDeleteRequest_WithBearerHeader()
+    {
+        var session = new StubApiSession
+        {
+            Token = "jwt-token-for-delete-event"
+        };
+
+        var handler = new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Delete, request.Method);
+            Assert.Equal("/api/events/14", request.RequestUri?.PathAndQuery);
+            Assert.NotNull(request.Headers.Authorization);
+            Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
+            Assert.Equal("jwt-token-for-delete-event", request.Headers.Authorization.Parameter);
+
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+        });
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("http://localhost:8080/")
+        };
+
+        var sut = new ResourcesApiClient(httpClient, session);
+
+        await sut.DeleteEventAsync(14, CancellationToken.None);
+    }
+
     private sealed class StubHttpMessageHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _handler;

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Events.EventDetailPage"
+             Title="Evenement"
+             BackgroundColor="{StaticResource White}">
+
+    <ContentPage.Resources>
+        <Style x:Key="FormHeroTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+        </Style>
+
+        <Style x:Key="FormHeroSubtitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="HorizontalTextAlignment" Value="Center" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+        </Style>
+
+        <Style x:Key="FormCardStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="{StaticResource Gray200}" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 26" />
+            <Setter Property="Padding" Value="22" />
+        </Style>
+
+        <Style x:Key="FormSectionTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+
+        <Style x:Key="FormCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="FormStatusLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource Gray900}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+
+        <Style x:Key="AuthorButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="{StaticResource Primary}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalOptions" Value="Start" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="920"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='28,22,28,32', Default='34,24,34,36'}"
+                             Spacing="20">
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Detail de l'evenement"
+                       Style="{StaticResource FormHeroTitleStyle}" />
+                <Label x:Name="HeaderCaptionLabel"
+                       Text="Chargement du contenu..."
+                       Style="{StaticResource FormHeroSubtitleStyle}" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource FormCardStyle}">
+                <VerticalStackLayout Spacing="18">
+                    <ActivityIndicator x:Name="LoadingIndicator"
+                                       IsVisible="False"
+                                       IsRunning="False"
+                                       HorizontalOptions="Center" />
+
+                    <VerticalStackLayout x:Name="EventContentLayout"
+                                         Spacing="16"
+                                         IsVisible="False">
+                        <Border BackgroundColor="{StaticResource Primary}"
+                                HorizontalOptions="Start"
+                                Padding="10,4"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12">
+                            <Label Text="Evenement public"
+                                   FontSize="12"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
+                        </Border>
+
+                        <Label x:Name="TitleLabel"
+                               Style="{StaticResource FormSectionTitleStyle}"
+                               FontSize="30" />
+
+                        <Label x:Name="SubtitleLabel"
+                               Style="{StaticResource FormStatusLabelStyle}"
+                               FontAttributes="Bold"
+                               IsVisible="False" />
+
+                        <HorizontalStackLayout Spacing="6"
+                                               VerticalOptions="Center">
+                            <Label Text="Par"
+                                   Style="{StaticResource FormCaptionStyle}"
+                                   VerticalOptions="Center" />
+                            <Button x:Name="AuthorButton"
+                                    Style="{StaticResource AuthorButtonStyle}"
+                                    Clicked="OnAuthorClicked" />
+                        </HorizontalStackLayout>
+
+                        <Label x:Name="MetaLabel"
+                               Style="{StaticResource FormCaptionStyle}" />
+
+                        <Label x:Name="DateRangeLabel"
+                               Style="{StaticResource FormStatusLabelStyle}" />
+
+                        <Label x:Name="AddressLabel"
+                               Style="{StaticResource FormStatusLabelStyle}" />
+
+                        <Label x:Name="DescriptionLabel"
+                               Style="{StaticResource FormStatusLabelStyle}"
+                               IsVisible="False" />
+
+                        <Button x:Name="DeleteEventButton"
+                                Text="Supprimer l'evenement"
+                                Clicked="OnDeleteEventClicked"
+                                BackgroundColor="#C53030"
+                                TextColor="White"
+                                CornerRadius="18"
+                                Padding="16,10"
+                                HorizontalOptions="Start"
+                                IsVisible="False" />
+                    </VerticalStackLayout>
+
+                    <Label x:Name="StatusLabel"
+                           Text="Chargement de l'evenement..."
+                           Style="{StaticResource FormStatusLabelStyle}" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

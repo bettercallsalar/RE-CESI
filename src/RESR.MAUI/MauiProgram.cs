@@ -39,6 +39,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<ArticlesPage>();
 		builder.Services.AddTransient<UserArticlesPage>();
 		builder.Services.AddTransient<EventsPage>();
+		builder.Services.AddTransient<EventDetailPage>();
 		builder.Services.AddTransient<CreateEventPage>();
 		builder.Services.AddTransient<EditEventPage>();
 		builder.Services.AddTransient<MarkResourcesPage>();

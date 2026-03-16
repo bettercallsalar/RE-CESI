@@ -157,6 +157,16 @@
                                Style="{StaticResource FormStatusLabelStyle}"
                                IsVisible="False" />
 
+                        <Button x:Name="DeleteArticleButton"
+                                Text="Supprimer l'article"
+                                Clicked="OnDeleteArticleClicked"
+                                BackgroundColor="#C53030"
+                                TextColor="White"
+                                CornerRadius="18"
+                                Padding="16,10"
+                                HorizontalOptions="Start"
+                                IsVisible="False" />
+
                         <BoxView HeightRequest="1"
                                  Color="{StaticResource Gray200}" />
 
