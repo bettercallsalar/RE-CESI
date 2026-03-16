@@ -81,6 +81,9 @@
                         <DataTemplate>
                             <Border SemanticProperties.Description="{Binding AccessibilityText}"
                                     Style="{StaticResource CardSurfaceBorderStyle}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnEventTapped" />
+                                </Border.GestureRecognizers>
                                 <Grid RowDefinitions="150,*">
                                     <Grid BackgroundColor="{StaticResource CanvasSubtle}"
                                           Padding="18">
@@ -125,6 +128,10 @@
                                                MaxLines="5"
                                                Style="{StaticResource BodyLabelStyle}"
                                                Text="{Binding Summary}" />
+                                        <Button Text="Ouvrir"
+                                                Clicked="OnEventOpenClicked"
+                                                HorizontalOptions="Start"
+                                                Style="{StaticResource SmallSecondaryButtonStyle}" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </Border>

@@ -18,6 +18,7 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
     private readonly ICategoriesApiClient _categoriesApiClient;
     private int _idResource;
     private bool _isLoaded;
+    private bool _useOwnAccess;
 
     public ObservableCollection<CategoryResponse> Categories { get; } = new();
     public ObservableCollection<ImageItem> SelectedImages { get; } = new();
@@ -41,6 +42,16 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
             _idResource = id;
             _isLoaded = false;
         }
+
+        if (query.TryGetValue("useOwnAccess", out var rawOwnAccess) &&
+            bool.TryParse(rawOwnAccess?.ToString(), out var useOwnAccess))
+        {
+            _useOwnAccess = useOwnAccess;
+        }
+        else
+        {
+            _useOwnAccess = false;
+        }
     }
 
     protected override async void OnAppearing()
@@ -60,7 +71,9 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
         {
             StatusLabel.Text = "Chargement de l'article...";
             var categoriesTask = _categoriesApiClient.GetCategoriesAsync(CancellationToken.None);
-            var articleTask = _articlesApiClient.GetByIdAsync(_idResource, CancellationToken.None);
+            var articleTask = _useOwnAccess
+                ? _articlesApiClient.GetOwnByIdAsync(_idResource, CancellationToken.None)
+                : _articlesApiClient.GetByIdAsync(_idResource, CancellationToken.None);
             await Task.WhenAll(categoriesTask, articleTask);
 
             Categories.Clear();

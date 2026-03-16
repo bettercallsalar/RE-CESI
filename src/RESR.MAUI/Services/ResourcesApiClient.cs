@@ -48,6 +48,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync($"api/articles/me/{idResource}", fallback: (ArticleResponse?)null, ct);
     }
 
+    public async Task DeleteArticleAsync(int idResource, CancellationToken ct)
+    {
+        await DeleteAsync($"api/articles/{idResource}", ct);
+    }
+
     public async Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct)
     {
         return await GetEventsAsync(page, pageSize, keyword: null, ct);
@@ -62,6 +67,16 @@ public sealed class ResourcesApiClient : IResourcesApiClient
     public async Task<EventResponse?> GetEventByIdAsync(int idResource, CancellationToken ct)
     {
         return await GetAsync<EventResponse?>($"api/events/{idResource}", fallback: null, ct);
+    }
+
+    public async Task<EventResponse?> GetOwnEventByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<EventResponse?>($"api/events/me/{idResource}", fallback: null, ct);
+    }
+
+    public async Task DeleteEventAsync(int idResource, CancellationToken ct)
+    {
+        await DeleteAsync($"api/events/{idResource}", ct);
     }
 
     private async Task<TResponse> GetAsync<TResponse>(string uri, TResponse fallback, CancellationToken ct)
@@ -83,6 +98,29 @@ public sealed class ResourcesApiClient : IResourcesApiClient
 
             var payload = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: ct);
             return payload ?? fallback;
+        }
+        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException("API call timed out.");
+        }
+    }
+
+    private async Task DeleteAsync(string uri, CancellationToken ct)
+    {
+        try
+        {
+            ApplyAuthorizationHeader();
+            using var response = await _httpClient.DeleteAsync(uri, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync(ct);
+                var message = string.IsNullOrWhiteSpace(content)
+                    ? $"API call failed with status {(int)response.StatusCode}."
+                    : content;
+
+                throw new ApiException(response.StatusCode, message);
+            }
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {

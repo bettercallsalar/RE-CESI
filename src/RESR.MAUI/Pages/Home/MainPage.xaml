@@ -90,6 +90,11 @@
                                     IsVisible="False"
                                     Style="{StaticResource HeaderLinkButtonStyle}"
                                     Text="Publier" />
+                            <Button x:Name="HeaderCreateEventButton"
+                                    Clicked="OnCreateEventNavigationClicked"
+                                    IsVisible="False"
+                                    Style="{StaticResource HeaderLinkButtonStyle}"
+                                    Text="Creer un evenement" />
                             <Button x:Name="HeaderLogoutButton"
                                     Clicked="OnLogoutNavigationClicked"
                                     IsVisible="False"
@@ -126,6 +131,12 @@
                                         IsVisible="False"
                                         Style="{StaticResource SecondaryButtonStyle}"
                                         Text="Publier un article" />
+                                <Button x:Name="MobileCreateEventButton"
+                                        Clicked="OnCreateEventNavigationClicked"
+                                        HorizontalOptions="Fill"
+                                        IsVisible="False"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Text="Creer un evenement" />
                                 <Button x:Name="MobileLogoutButton"
                                         Clicked="OnLogoutNavigationClicked"
                                         HorizontalOptions="Fill"

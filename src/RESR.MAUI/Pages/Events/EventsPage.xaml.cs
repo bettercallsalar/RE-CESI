@@ -84,6 +84,16 @@ public partial class EventsPage : ContentPage
         await LoadPageAsync(_currentPage + 1, append: true, triggeredByRefresh: false);
     }
 
+    private async void OnEventTapped(object? sender, TappedEventArgs e)
+    {
+        await OpenEventAsync(sender);
+    }
+
+    private async void OnEventOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenEventAsync(sender);
+    }
+
     private async void OnCreateEventClicked(object? sender, EventArgs e)
     {
         if (Shell.Current is null)
@@ -206,6 +216,7 @@ public partial class EventsPage : ContentPage
         var summary = DisplayText.FirstNonEmpty(@event.Description, @event.Subtitle, "Aucune description disponible.");
 
         return new EventListItem(
+            IdResource: @event.IdResource,
             Badge: @event.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Evenement public" : "Evenement prive",
             DateLabel: @event.StartDate.ToString("dd/MM/yyyy"),
             Eyebrow: "EVENT",
@@ -274,7 +285,30 @@ public partial class EventsPage : ContentPage
         }
     }
 
+    private async Task OpenEventAsync(object? sender)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not EventListItem @event)
+        {
+            return;
+        }
+
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            await Shell.Current.GoToAsync($"{nameof(EventDetailPage)}?idResource={@event.IdResource}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+        }
+    }
+
     private sealed record EventListItem(
+        int IdResource,
         string Badge,
         string DateLabel,
         string Eyebrow,

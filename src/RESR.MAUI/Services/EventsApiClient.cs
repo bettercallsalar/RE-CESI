@@ -18,10 +18,20 @@ public sealed class EventsApiClient : IEventsApiClient
 
     public async Task<EventResponse> GetByIdAsync(int idResource, CancellationToken ct)
     {
+        return await GetAsync($"api/events/{idResource}", "Event response was empty.", ct);
+    }
+
+    public async Task<EventResponse> GetOwnByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync($"api/events/me/{idResource}", "Own event response was empty.", ct);
+    }
+
+    private async Task<EventResponse> GetAsync(string uri, string emptyMessage, CancellationToken ct)
+    {
         try
         {
             ApplyAuthorizationHeader();
-            using var response = await _httpClient.GetAsync($"api/events/{idResource}", ct);
+            using var response = await _httpClient.GetAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -38,7 +48,7 @@ public sealed class EventsApiClient : IEventsApiClient
                 responseStream,
                 new JsonSerializerOptions(JsonSerializerDefaults.Web),
                 ct);
-            return @event ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "Event response was empty.");
+            return @event ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
