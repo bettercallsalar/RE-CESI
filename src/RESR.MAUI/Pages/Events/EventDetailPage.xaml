@@ -123,6 +123,16 @@
                                Style="{StaticResource FormStatusLabelStyle}"
                                IsVisible="False" />
 
+                        <Button x:Name="EditEventButton"
+                                Text="Modifier l'evenement"
+                                Clicked="OnEditEventClicked"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="White"
+                                CornerRadius="18"
+                                Padding="16,10"
+                                HorizontalOptions="Start"
+                                IsVisible="False" />
+
                         <Button x:Name="DeleteEventButton"
                                 Text="Supprimer l'evenement"
                                 Clicked="OnDeleteEventClicked"

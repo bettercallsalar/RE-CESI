@@ -21,6 +21,7 @@ public partial class EditEventPage : ContentPage, IQueryAttributable
     private readonly IDepartmentsApiClient _departmentsApiClient;
     private int _idResource;
     private bool _isLoaded;
+    private bool _useOwnAccess;
 
     public ObservableCollection<CategoryResponse> Categories { get; } = new();
     public ObservableCollection<DepartmentOption> Departments { get; } = new();
@@ -46,6 +47,16 @@ public partial class EditEventPage : ContentPage, IQueryAttributable
             _idResource = id;
             _isLoaded = false;
         }
+
+        if (query.TryGetValue("useOwnAccess", out var rawOwnAccess) &&
+            bool.TryParse(rawOwnAccess?.ToString(), out var useOwnAccess))
+        {
+            _useOwnAccess = useOwnAccess;
+        }
+        else
+        {
+            _useOwnAccess = false;
+        }
     }
 
     protected override async void OnAppearing()
@@ -63,7 +74,9 @@ public partial class EditEventPage : ContentPage, IQueryAttributable
             StatusLabel.Text = "Chargement de l'evenement...";
             var categoriesTask = _categoriesApiClient.GetCategoriesAsync(CancellationToken.None);
             var departmentsTask = _departmentsApiClient.GetDepartmentsAsync(CancellationToken.None);
-            var eventTask = _eventsApiClient.GetByIdAsync(_idResource, CancellationToken.None);
+            var eventTask = _useOwnAccess
+                ? _eventsApiClient.GetOwnByIdAsync(_idResource, CancellationToken.None)
+                : _eventsApiClient.GetByIdAsync(_idResource, CancellationToken.None);
             await Task.WhenAll(categoriesTask, departmentsTask, eventTask);
 
             Categories.Clear();

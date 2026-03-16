@@ -5,6 +5,7 @@ namespace RESR.MAUI.Services;
 public interface IEventsApiClient
 {
     Task<EventResponse> GetByIdAsync(int idResource, CancellationToken ct);
+    Task<EventResponse> GetOwnByIdAsync(int idResource, CancellationToken ct);
     Task CreateAsync(
         CreateEventRequest request,
         IReadOnlyList<SelectedImageUpload> images,

@@ -18,10 +18,20 @@ public sealed class ArticlesApiClient : IArticlesApiClient
 
     public async Task<ArticleResponse> GetByIdAsync(int idResource, CancellationToken ct)
     {
+        return await GetAsync($"api/articles/{idResource}", "Article response was empty.", ct);
+    }
+
+    public async Task<ArticleResponse> GetOwnByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync($"api/articles/me/{idResource}", "Own article response was empty.", ct);
+    }
+
+    private async Task<ArticleResponse> GetAsync(string uri, string emptyMessage, CancellationToken ct)
+    {
         try
         {
             ApplyAuthorizationHeader();
-            using var response = await _httpClient.GetAsync($"api/articles/{idResource}", ct);
+            using var response = await _httpClient.GetAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -38,7 +48,7 @@ public sealed class ArticlesApiClient : IArticlesApiClient
                 responseStream,
                 new JsonSerializerOptions(JsonSerializerDefaults.Web),
                 ct);
-            return article ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "Article response was empty.");
+            return article ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {

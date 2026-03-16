@@ -12,6 +12,7 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
     private CancellationTokenSource? _loadCts;
     private CancellationTokenSource? _deleteActionCts;
     private int? _idResource;
+    private bool _useOwnAccess;
     private bool _shouldLoad;
     private int? _currentUserId;
     private EventResponse? _event;
@@ -38,6 +39,16 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
             _shouldLoad = true;
             _event = null;
             _currentUserId = null;
+        }
+
+        if (query.TryGetValue("useOwnAccess", out var rawOwnAccess) &&
+            bool.TryParse(rawOwnAccess?.ToString(), out var useOwnAccess))
+        {
+            _useOwnAccess = useOwnAccess;
+        }
+        else
+        {
+            _useOwnAccess = false;
         }
     }
 
@@ -69,12 +80,13 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         StatusLabel.Text = "Chargement de l'evenement...";
         HeaderCaptionLabel.Text = "Chargement du contenu...";
         EventContentLayout.IsVisible = false;
+        EditEventButton.IsVisible = false;
         DeleteEventButton.IsVisible = false;
         _currentUserId = null;
 
         try
         {
-            var @event = await _resourcesApiClient.GetEventByIdAsync(idResource, _loadCts.Token);
+            var @event = await ResolveEventAsync(idResource, _loadCts.Token);
             if (@event is null)
             {
                 HeaderCaptionLabel.Text = "Evenement introuvable";
@@ -115,6 +127,24 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         }
     }
 
+    private async Task<EventResponse?> ResolveEventAsync(int idResource, CancellationToken ct)
+    {
+        if (_useOwnAccess && _session.IsAuthenticated)
+        {
+            try
+            {
+                var ownEvent = await _resourcesApiClient.GetOwnEventByIdAsync(idResource, ct);
+                if (ownEvent is not null)
+                    return ownEvent;
+            }
+            catch (ApiException)
+            {
+            }
+        }
+
+        return await _resourcesApiClient.GetEventByIdAsync(idResource, ct);
+    }
+
     private void BindEvent(EventResponse @event)
     {
         Title = @event.Title;
@@ -128,11 +158,13 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         AddressLabel.Text = BuildAddressLabel(@event);
         DescriptionLabel.Text = Normalize(@event.Description);
         DescriptionLabel.IsVisible = !string.IsNullOrWhiteSpace(DescriptionLabel.Text);
-        DeleteEventButton.IsVisible =
+        var canManageEvent =
             _session.IsAuthenticated &&
             !@event.DeletedAt.HasValue &&
             _currentUserId.HasValue &&
             _currentUserId.Value == @event.IdUser;
+        EditEventButton.IsVisible = canManageEvent;
+        DeleteEventButton.IsVisible = canManageEvent;
     }
 
     private static string BuildAuthorLabel(EventResponse @event)
@@ -194,6 +226,7 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
     {
         LoadingIndicator.IsVisible = isLoading;
         LoadingIndicator.IsRunning = isLoading;
+        EditEventButton.IsEnabled = !isLoading;
         DeleteEventButton.IsEnabled = !isLoading && _deleteActionCts is null;
     }
 
@@ -286,6 +319,28 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
             _deleteActionCts?.Dispose();
             _deleteActionCts = null;
             DeleteEventButton.IsEnabled = _event is not null;
+        }
+    }
+
+    private async void OnEditEventClicked(object? sender, EventArgs e)
+    {
+        if (_event is null || Shell.Current is null)
+            return;
+
+        if (!_session.IsAuthenticated || !_currentUserId.HasValue || _currentUserId.Value != _event.IdUser)
+        {
+            StatusLabel.Text = "Seul l'auteur peut modifier cet evenement.";
+            return;
+        }
+
+        try
+        {
+            await Shell.Current.GoToAsync(
+                $"{nameof(EditEventPage)}?idResource={_event.IdResource}&useOwnAccess={_useOwnAccess.ToString().ToLowerInvariant()}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
 

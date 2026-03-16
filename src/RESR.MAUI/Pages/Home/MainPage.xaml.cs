@@ -84,6 +84,11 @@ public partial class MainPage : ContentPage
         await NavigateToAsync(nameof(CreateArticlePage));
     }
 
+    private async void OnCreateEventNavigationClicked(object? sender, EventArgs e)
+    {
+        await NavigateToAsync(nameof(CreateEventPage));
+    }
+
     private async void OnRegisterNavigationClicked(object? sender, EventArgs e)
     {
         await NavigateToAsync(nameof(RegisterPage));
@@ -235,7 +240,9 @@ public partial class MainPage : ContentPage
         MobileRegisterButton.IsVisible = !isAuthenticated;
 
         HeaderCreateArticleButton.IsVisible = isAuthenticated;
+        HeaderCreateEventButton.IsVisible = isAuthenticated;
         MobileCreateArticleButton.IsVisible = isAuthenticated;
+        MobileCreateEventButton.IsVisible = isAuthenticated;
 
         HeaderLogoutButton.IsVisible = isAuthenticated;
         MobileLogoutButton.IsVisible = isAuthenticated;

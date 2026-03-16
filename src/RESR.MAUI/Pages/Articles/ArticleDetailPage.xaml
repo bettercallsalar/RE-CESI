@@ -157,6 +157,16 @@
                                Style="{StaticResource FormStatusLabelStyle}"
                                IsVisible="False" />
 
+                        <Button x:Name="EditArticleButton"
+                                Text="Modifier l'article"
+                                Clicked="OnEditArticleClicked"
+                                BackgroundColor="{StaticResource Primary}"
+                                TextColor="White"
+                                CornerRadius="18"
+                                Padding="16,10"
+                                HorizontalOptions="Start"
+                                IsVisible="False" />
+
                         <Button x:Name="DeleteArticleButton"
                                 Text="Supprimer l'article"
                                 Clicked="OnDeleteArticleClicked"

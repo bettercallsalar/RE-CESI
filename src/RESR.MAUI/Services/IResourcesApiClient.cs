@@ -14,5 +14,6 @@ public interface IResourcesApiClient
     Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, CancellationToken ct);
     Task<PaginatedEventsResponse> GetEventsAsync(int page, int pageSize, string? keyword, CancellationToken ct);
     Task<EventResponse?> GetEventByIdAsync(int idResource, CancellationToken ct);
+    Task<EventResponse?> GetOwnEventByIdAsync(int idResource, CancellationToken ct);
     Task DeleteEventAsync(int idResource, CancellationToken ct);
 }

@@ -129,6 +129,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         MarksCard.IsVisible = false;
         ReactionsCard.IsVisible = false;
         CommentsCard.IsVisible = false;
+        EditArticleButton.IsVisible = false;
         DeleteArticleButton.IsVisible = false;
         _currentUserId = null;
         _currentUserReaction = null;
@@ -212,11 +213,13 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         ContentLabel.Text = Normalize(article.Content);
         AuthorButton.Text = BuildAuthorLabel(article);
         MetaLabel.Text = BuildMetaLabel(article);
-        DeleteArticleButton.IsVisible =
+        var canManageArticle =
             _session.IsAuthenticated &&
             !article.DeletedAt.HasValue &&
             _currentUserId.HasValue &&
             _currentUserId.Value == article.IdUser;
+        EditArticleButton.IsVisible = canManageArticle;
+        DeleteArticleButton.IsVisible = canManageArticle;
     }
 
     private static string BuildAuthorLabel(ArticleResponse article)
@@ -254,6 +257,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     {
         LoadingIndicator.IsVisible = isLoading;
         LoadingIndicator.IsRunning = isLoading;
+        EditArticleButton.IsEnabled = !isLoading;
         DeleteArticleButton.IsEnabled = !isLoading && _deleteActionCts is null;
     }
 
@@ -1101,6 +1105,28 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _deleteActionCts?.Dispose();
             _deleteActionCts = null;
             DeleteArticleButton.IsEnabled = _article is not null;
+        }
+    }
+
+    private async void OnEditArticleClicked(object? sender, EventArgs e)
+    {
+        if (_article is null || Shell.Current is null)
+            return;
+
+        if (!_session.IsAuthenticated || !_currentUserId.HasValue || _currentUserId.Value != _article.IdUser)
+        {
+            StatusLabel.Text = "Seul l'auteur peut modifier cet article.";
+            return;
+        }
+
+        try
+        {
+            await Shell.Current.GoToAsync(
+                $"{nameof(EditArticlePage)}?idResource={_article.IdResource}&useOwnAccess={_useOwnAccess.ToString().ToLowerInvariant()}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
 

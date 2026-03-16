@@ -5,6 +5,7 @@ namespace RESR.MAUI.Services;
 public interface IArticlesApiClient
 {
     Task<ArticleResponse> GetByIdAsync(int idResource, CancellationToken ct);
+    Task<ArticleResponse> GetOwnByIdAsync(int idResource, CancellationToken ct);
     Task CreateAsync(
         CreateArticleRequest request,
         IReadOnlyList<SelectedImageUpload> images,

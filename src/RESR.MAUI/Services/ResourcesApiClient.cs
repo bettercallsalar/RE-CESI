@@ -69,6 +69,11 @@ public sealed class ResourcesApiClient : IResourcesApiClient
         return await GetAsync<EventResponse?>($"api/events/{idResource}", fallback: null, ct);
     }
 
+    public async Task<EventResponse?> GetOwnEventByIdAsync(int idResource, CancellationToken ct)
+    {
+        return await GetAsync<EventResponse?>($"api/events/me/{idResource}", fallback: null, ct);
+    }
+
     public async Task DeleteEventAsync(int idResource, CancellationToken ct)
     {
         await DeleteAsync($"api/events/{idResource}", ct);
