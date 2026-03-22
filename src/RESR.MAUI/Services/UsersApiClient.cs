@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net;
 using RESR.Models.Users;
 
 namespace RESR.MAUI.Services;
@@ -22,18 +23,11 @@ public sealed class UsersApiClient : IUsersApiClient
             using var response = await _httpClient.PostAsJsonAsync("api/users/register", request, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -44,24 +38,17 @@ public sealed class UsersApiClient : IUsersApiClient
             using var response = await _httpClient.PostAsJsonAsync("api/login", login, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: ct);
             if (string.IsNullOrWhiteSpace(payload?.Token))
-                throw new ApiException(System.Net.HttpStatusCode.Unauthorized, "Token missing from login response.");
+                throw ApiClientErrors.InvalidResponse(HttpStatusCode.Unauthorized, "La reponse de connexion du serveur est invalide.");
 
             _session.Token = payload.Token;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -73,21 +60,14 @@ public sealed class UsersApiClient : IUsersApiClient
             using var response = await _httpClient.GetAsync("api/users", ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var users = await response.Content.ReadFromJsonAsync<PaginatedUsersResponse>(cancellationToken: ct);
             return users ?? new PaginatedUsersResponse([], 1, 20, 0, 0);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -99,20 +79,13 @@ public sealed class UsersApiClient : IUsersApiClient
             using var response = await _httpClient.GetAsync("api/users/me", ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             return await response.Content.ReadFromJsonAsync<UserResponse>(cancellationToken: ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

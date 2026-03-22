@@ -166,7 +166,7 @@ public partial class UserArticlesPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les articles pour le moment.");
             if (!append)
             {
                 _items = Array.Empty<ArticleListItem>();
@@ -178,15 +178,15 @@ public partial class UserArticlesPage : ContentPage, IQueryAttributable
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Erreur inattendue : {ex.Message}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les articles pour le moment.");
         }
         finally
         {
@@ -201,7 +201,7 @@ public partial class UserArticlesPage : ContentPage, IQueryAttributable
         if (_isOwnProfile)
         {
             PageTitleLabel.Text = "Mes articles";
-            PageCaptionLabel.Text = "Retrouve ici les articles que tu as crees.";
+            PageCaptionLabel.Text = "Retrouvez ici les articles que vous avez crees.";
             return;
         }
 
@@ -254,9 +254,9 @@ public partial class UserArticlesPage : ContentPage, IQueryAttributable
             var route = $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}";
             await Shell.Current.GoToAsync(route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 

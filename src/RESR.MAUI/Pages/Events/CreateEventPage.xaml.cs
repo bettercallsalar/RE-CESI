@@ -127,7 +127,7 @@ public partial class CreateEventPage : ContentPage
 
             if (CategoryPicker.SelectedItem is not CategoryResponse selectedCategory)
             {
-                StatusLabel.Text = "Selectionne une categorie.";
+                StatusLabel.Text = "Selectionnez une categorie.";
                 return;
             }
 
@@ -183,18 +183,17 @@ public partial class CreateEventPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "La publication de l'evenement a echoue.");
         }
         catch (TimeoutException)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = "Le serveur ne repond pas. Reessaie plus tard.";
+            StatusLabel.Text = UserFeedback.TimeoutError;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = "Une erreur est survenue lors de la creation.";
-            System.Diagnostics.Debug.WriteLine($"Create event failed: {ex}");
+            StatusLabel.Text = "La publication de l'evenement a echoue.";
         }
         finally
         {
@@ -262,7 +261,7 @@ public partial class CreateEventPage : ContentPage
         catch (Exception ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Selection des images impossible: {ex.Message}";
+            StatusLabel.Text = DisplayText.FirstNonEmpty(DisplayText.ToExcerpt(ex.Message, 180), "Impossible de selectionner les images.");
         }
     }
 
@@ -301,17 +300,17 @@ public partial class CreateEventPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Erreur options ({(int)ex.StatusCode}): {ex.Message}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les options du formulaire.");
         }
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Erreur inattendue: {ex.Message}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les options du formulaire.");
         }
     }
 

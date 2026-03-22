@@ -177,22 +177,22 @@ public partial class MainPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les ressources pour le moment.");
         }
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
             StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les ressources pour le moment.");
         }
         finally
         {
@@ -262,6 +262,7 @@ public partial class MainPage : ContentPage
             ? string.Empty
             : DisplayText.ToExcerpt(article.Description, 82);
         var summary = DisplayText.FirstNonEmpty(article.Content, article.Description, "Aucune description disponible.");
+        var imageSource = ApiEndpoints.CreateCachedImageSource(article.Files, article.DefaultImageId);
 
         return new HomeResourceCard(
             Badge: article.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Article public" : "Article prive",
@@ -272,7 +273,8 @@ public partial class MainPage : ContentPage
             Summary: DisplayText.ToExcerpt(summary, 180),
             Meta: $"Par {author}",
             ActionLabel: "Voir les articles",
-            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 140)}");
+            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 140)}",
+            ImageSource: imageSource);
     }
 
     private static HomeResourceCard ToEventCard(EventResponse @event)
@@ -290,7 +292,8 @@ public partial class MainPage : ContentPage
             Summary: DisplayText.ToExcerpt(summary, 180),
             Meta: $"Par {author} | {location}",
             ActionLabel: "Voir les evenements",
-            AccessibilityText: $"Evenement {DisplayText.Normalize(@event.Title)}, prevu {BuildEventSubtitle(@event, location)}. {DisplayText.ToExcerpt(summary, 140)}");
+            AccessibilityText: $"Evenement {DisplayText.Normalize(@event.Title)}, prevu {BuildEventSubtitle(@event, location)}. {DisplayText.ToExcerpt(summary, 140)}",
+            ImageSource: null);
     }
 
     private static string BuildStatusMessage(int totalArticles, int totalEvents)
@@ -343,10 +346,10 @@ public partial class MainPage : ContentPage
         {
             await Shell.Current.GoToAsync(route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -364,10 +367,10 @@ public partial class MainPage : ContentPage
         {
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 
@@ -380,8 +383,11 @@ public partial class MainPage : ContentPage
         string Summary,
         string Meta,
         string ActionLabel,
-        string AccessibilityText)
+        string AccessibilityText,
+        ImageSource? ImageSource)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+        public bool HasImage => ImageSource is not null;
+        public bool ShowImagePlaceholder => !HasImage;
     }
 }

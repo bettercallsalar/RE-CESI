@@ -146,18 +146,17 @@ public partial class CreateArticlePage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = DisplayText.ToExcerpt(ex.Message, 180);
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "La publication de l'article a echoue.");
         }
         catch (TimeoutException)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = "Le serveur ne repond pas. Reessayez plus tard.";
+            StatusLabel.Text = UserFeedback.TimeoutError;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = "Une erreur est survenue lors de la creation.";
-            System.Diagnostics.Debug.WriteLine($"Create article failed: {ex}");
+            StatusLabel.Text = "La publication de l'article a echoue.";
         }
         finally
         {
@@ -225,7 +224,7 @@ public partial class CreateArticlePage : ContentPage
         catch (Exception ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Selection des images impossible: {ex.Message}";
+            StatusLabel.Text = DisplayText.FirstNonEmpty(DisplayText.ToExcerpt(ex.Message, 180), "Impossible de selectionner les images.");
         }
     }
 
@@ -249,17 +248,17 @@ public partial class CreateArticlePage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur categories ({(int)ex.StatusCode}) : {DisplayText.ToExcerpt(ex.Message, 180)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les categories pour le moment.");
         }
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {DisplayText.ToExcerpt(ex.Message, 180)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les categories pour le moment.");
         }
     }
 
@@ -278,10 +277,10 @@ public partial class CreateArticlePage : ContentPage
 
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 

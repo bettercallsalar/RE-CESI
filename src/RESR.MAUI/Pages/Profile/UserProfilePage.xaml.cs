@@ -117,21 +117,21 @@ public partial class UserProfilePage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger ce profil pour le moment.");
             _articleCards = Array.Empty<UserArticleCard>();
             ApplyArticleState();
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger ce profil pour le moment.");
         }
         finally
         {
@@ -231,32 +231,32 @@ public partial class UserProfilePage : ContentPage, IQueryAttributable
             {
                 await _followsApiClient.UnfollowAsync(_currentUserId.Value, _idUser.Value, _followActionCts.Token);
                 _isFollowing = false;
-                StatusLabel.Text = "Abonnement retire.";
+                StatusLabel.Text = "Vous ne suivez plus ce profil.";
             }
             else
             {
                 await _followsApiClient.FollowAsync(_currentUserId.Value, _idUser.Value, _followActionCts.Token);
                 _isFollowing = true;
-                StatusLabel.Text = "Vous suivez maintenant cette personne.";
+                StatusLabel.Text = "Vous suivez maintenant ce profil.";
             }
 
             UpdateFollowUi();
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de mettre a jour l'abonnement pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Action annulee.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Impossible de mettre a jour le suivi : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de mettre a jour l'abonnement pour le moment.");
         }
         finally
         {

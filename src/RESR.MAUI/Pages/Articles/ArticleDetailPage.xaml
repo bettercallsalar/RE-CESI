@@ -157,6 +157,18 @@
                                Style="{StaticResource FormStatusLabelStyle}"
                                IsVisible="False" />
 
+                        <Border x:Name="ArticleImageContainer"
+                                IsVisible="False"
+                                Padding="0"
+                                BackgroundColor="{StaticResource Gray100}"
+                                Stroke="{StaticResource Gray200}"
+                                StrokeShape="RoundRectangle 22">
+                            <Grid HeightRequest="{OnIdiom Phone='220', Tablet='280', Default='320'}">
+                                <Image x:Name="ArticleImage"
+                                       Aspect="AspectFill" />
+                            </Grid>
+                        </Border>
+
                         <Button x:Name="EditArticleButton"
                                 Text="Modifier l'article"
                                 Clicked="OnEditArticleClicked"

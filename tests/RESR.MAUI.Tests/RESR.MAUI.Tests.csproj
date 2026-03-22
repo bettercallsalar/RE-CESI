@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiException.cs" Link="Services\ApiException.cs" />
+    <Compile Include="..\..\src\RESR.MAUI\Services\ApiClientErrors.cs" Link="Services\ApiClientErrors.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ApiSession.cs" Link="Services\ApiSession.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\CommentsApiClient.cs" Link="Services\CommentsApiClient.cs" />
     <Compile Include="..\..\src\RESR.MAUI\Services\ArticlesApiClient.cs" Link="Services\ArticlesApiClient.cs" />
