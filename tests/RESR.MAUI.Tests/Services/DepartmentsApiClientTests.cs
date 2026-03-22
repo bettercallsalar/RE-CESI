@@ -88,7 +88,7 @@ public sealed class DepartmentsApiClientTests
 
         var exception = await Assert.ThrowsAsync<TimeoutException>(() => sut.GetDepartmentsAsync(CancellationToken.None));
 
-        Assert.Equal("API call timed out.", exception.Message);
+        Assert.Equal("Le serveur ne repond pas. Reessayez plus tard.", exception.Message);
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

@@ -133,10 +133,16 @@ public partial class RichTextEditor : ContentView
 
             await ExecuteCommandSafeAsync("createLink", url);
         }
+ #if DEBUG
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"RichTextEditor link command failed: {ex}");
         }
+ #else
+        catch (Exception)
+        {
+        }
+ #endif
     }
 
     private async Task ExecuteCommandSafeAsync(string command)
@@ -157,11 +163,18 @@ public partial class RichTextEditor : ContentView
             await _readyTcs.Task;
             return await EditorWebView.EvaluateJavaScriptAsync(script);
         }
+ #if DEBUG
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"RichTextEditor JS execution failed: {ex}");
             return null;
         }
+ #else
+        catch (Exception)
+        {
+            return null;
+        }
+ #endif
     }
 
     private static string? DeserializeJsString(string? jsResult)

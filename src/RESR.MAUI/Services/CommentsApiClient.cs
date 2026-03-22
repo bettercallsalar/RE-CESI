@@ -31,21 +31,14 @@ public sealed class CommentsApiClient : ICommentsApiClient
         {
             using var response = await _httpClient.PostAsJsonAsync($"api/comments/resources/{idResource}", request, ct);
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<CommentResponse>(cancellationToken: ct);
-            return payload ?? throw new ApiException(response.StatusCode, "Commentaire cree mais reponse vide.");
+            return payload ?? throw ApiClientErrors.InvalidResponse(response.StatusCode, "Le commentaire a ete cree, mais la reponse du serveur est invalide.");
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -60,21 +53,14 @@ public sealed class CommentsApiClient : ICommentsApiClient
             using var response = await action();
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: ct);
             return payload ?? fallback;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

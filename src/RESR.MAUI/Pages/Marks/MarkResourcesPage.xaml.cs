@@ -45,7 +45,7 @@ public partial class MarkResourcesPage : ContentPage, IQueryAttributable
 
         if (!_session.IsAuthenticated)
         {
-            StatusLabel.Text = "Connecte-toi pour consulter tes marques.";
+            StatusLabel.Text = "Connectez-vous pour consulter vos enregistrements.";
             await Shell.Current.GoToAsync(nameof(LoginPage));
             return;
         }
@@ -119,22 +119,22 @@ public partial class MarkResourcesPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger cette liste pour le moment.");
             _allItems = Array.Empty<MarkedResourceItem>();
             _filteredItems = Array.Empty<MarkedResourceItem>();
             ApplyState();
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger cette liste pour le moment.");
         }
         finally
         {
@@ -164,8 +164,8 @@ public partial class MarkResourcesPage : ContentPage, IQueryAttributable
             : "Ma liste lire plus tard";
 
         var subtitle = _mode == MarkResourcesMode.Favorite
-            ? "Recherche parmi les ressources que tu as mises en favori."
-            : "Recherche parmi les ressources que tu veux relire plus tard.";
+            ? "Recherchez parmi les ressources que vous avez mises en favori."
+            : "Recherchez parmi les ressources que vous souhaitez relire plus tard.";
 
         var emptyState = _mode == MarkResourcesMode.Favorite
             ? "Aucune ressource en favori."
@@ -207,9 +207,9 @@ public partial class MarkResourcesPage : ContentPage, IQueryAttributable
         {
             await Shell.Current.GoToAsync(item.Route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 

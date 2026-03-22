@@ -103,21 +103,21 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         catch (ApiException ex)
         {
             HeaderCaptionLabel.Text = "Erreur de chargement";
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible d'afficher l'evenement pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            HeaderCaptionLabel.Text = "Temps depasse";
-            StatusLabel.Text = ex.Message;
+            HeaderCaptionLabel.Text = "Service indisponible";
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             HeaderCaptionLabel.Text = "Erreur inattendue";
-            StatusLabel.Text = $"Impossible d'afficher l'evenement : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible d'afficher l'evenement pour le moment.");
         }
         finally
         {
@@ -260,9 +260,9 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         {
             await Shell.Current.GoToAsync(route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -277,7 +277,7 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
             return;
         }
 
-        var shouldDelete = await DisplayAlert(
+        var shouldDelete = await DisplayAlertAsync(
             "Supprimer l'evenement",
             "Voulez-vous vraiment supprimer cet evenement ? Cette action est irreversible.",
             "Supprimer",
@@ -300,19 +300,19 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de supprimer l'evenement pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Suppression annulee.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Impossible de supprimer l'evenement : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de supprimer l'evenement pour le moment.");
         }
         finally
         {
@@ -338,9 +338,9 @@ public partial class EventDetailPage : ContentPage, IQueryAttributable
             await Shell.Current.GoToAsync(
                 $"{nameof(EditEventPage)}?idResource={_event.IdResource}&useOwnAccess={_useOwnAccess.ToString().ToLowerInvariant()}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 

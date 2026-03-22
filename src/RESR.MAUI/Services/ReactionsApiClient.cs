@@ -28,7 +28,7 @@ public sealed class ReactionsApiClient : IReactionsApiClient
     {
         return await SendForPayloadAsync(
             () => _httpClient.PostAsJsonAsync($"resources/{idResource}/reactions", request, ct),
-            "Reaction creee mais reponse vide.",
+            "La reaction a ete creee, mais la reponse du serveur est invalide.",
             ct);
     }
 
@@ -36,7 +36,7 @@ public sealed class ReactionsApiClient : IReactionsApiClient
     {
         return await SendForPayloadAsync(
             () => _httpClient.PatchAsJsonAsync($"api/reactions/{idReaction}", request, ct),
-            "Reaction modifiee mais reponse vide.",
+            "La reaction a ete mise a jour, mais la reponse du serveur est invalide.",
             ct);
     }
 
@@ -48,18 +48,11 @@ public sealed class ReactionsApiClient : IReactionsApiClient
             using var response = await _httpClient.DeleteAsync($"api/reactions/{idReaction}", ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -79,21 +72,14 @@ public sealed class ReactionsApiClient : IReactionsApiClient
             using var response = await action();
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: ct);
             return payload ?? fallback;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -108,21 +94,14 @@ public sealed class ReactionsApiClient : IReactionsApiClient
             using var response = await action();
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<ReactionResponse>(cancellationToken: ct);
-            return payload ?? throw new ApiException(response.StatusCode, emptyPayloadMessage);
+            return payload ?? throw ApiClientErrors.InvalidResponse(response.StatusCode, emptyPayloadMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

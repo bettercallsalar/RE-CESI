@@ -72,8 +72,6 @@ public partial class ProfilePage : ContentPage
     {
         if (_loadCts is not null)
         {
-            StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Chargement deja en cours...";
             return;
         }
 
@@ -82,7 +80,7 @@ public partial class ProfilePage : ContentPage
         LoadingIndicator.IsRunning = true;
         LogoutButton.IsEnabled = false;
         StatusLabel.TextColor = MutedStatusColor;
-        StatusLabel.Text = "Chargement du profil, des marques et des articles...";
+        StatusLabel.Text = string.Empty;
 
         try
         {
@@ -123,31 +121,31 @@ public partial class ProfilePage : ContentPage
             ApplyArticlesState();
 
             MyArticlesSummaryLabel.Text = _articleCards.Count == 0
-                ? "Aucun article charge pour le moment."
+                ? "Aucun article disponible pour le moment."
                 : $"{articles.TotalCount} article(s) trouves.";
 
-            StatusLabel.TextColor = SuccessStatusColor;
-            StatusLabel.Text = "Profil charge.";
+            StatusLabel.TextColor = MutedStatusColor;
+            StatusLabel.Text = string.Empty;
         }
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur profil ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger votre profil pour le moment.");
         }
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
             StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Requete annulee.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger votre profil pour le moment.");
         }
         finally
         {
@@ -217,10 +215,10 @@ public partial class ProfilePage : ContentPage
         {
             await Shell.Current.GoToAsync(item.Route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -243,10 +241,10 @@ public partial class ProfilePage : ContentPage
         {
             await Shell.Current.GoToAsync($"{nameof(MarkResourcesPage)}?mode={mode}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -260,10 +258,10 @@ public partial class ProfilePage : ContentPage
             await Shell.Current.GoToAsync(
                 $"{nameof(UserArticlesPage)}?idUser={_me.IdUser}&username={Uri.EscapeDataString(_me.Username)}&firstName={Uri.EscapeDataString(_me.FirstName)}&isOwnProfile=true");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -293,10 +291,10 @@ public partial class ProfilePage : ContentPage
             await Shell.Current.GoToAsync(
                 $"{nameof(ArticleDetailPage)}?idResource={idResource}&useOwnAccess={useOwnAccess.ToString().ToLowerInvariant()}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -323,10 +321,10 @@ public partial class ProfilePage : ContentPage
 
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 

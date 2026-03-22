@@ -18,12 +18,12 @@ public sealed class EventsApiClient : IEventsApiClient
 
     public async Task<EventResponse> GetByIdAsync(int idResource, CancellationToken ct)
     {
-        return await GetAsync($"api/events/{idResource}", "Event response was empty.", ct);
+        return await GetAsync($"api/events/{idResource}", "La reponse de l'evenement est invalide.", ct);
     }
 
     public async Task<EventResponse> GetOwnByIdAsync(int idResource, CancellationToken ct)
     {
-        return await GetAsync($"api/events/me/{idResource}", "Own event response was empty.", ct);
+        return await GetAsync($"api/events/me/{idResource}", "La reponse de votre evenement est invalide.", ct);
     }
 
     private async Task<EventResponse> GetAsync(string uri, string emptyMessage, CancellationToken ct)
@@ -34,25 +34,18 @@ public sealed class EventsApiClient : IEventsApiClient
             using var response = await _httpClient.GetAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
             var @event = await JsonSerializer.DeserializeAsync<EventResponse>(
                 responseStream,
                 new JsonSerializerOptions(JsonSerializerDefaults.Web),
                 ct);
-            return @event ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
+            return @event ?? throw ApiClientErrors.InvalidResponse(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -103,18 +96,11 @@ public sealed class EventsApiClient : IEventsApiClient
             using var response = await _httpClient.PostAsync("api/events", content, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -168,18 +154,11 @@ public sealed class EventsApiClient : IEventsApiClient
             using var response = await _httpClient.SendAsync(requestMessage, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

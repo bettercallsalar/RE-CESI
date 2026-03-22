@@ -125,7 +125,7 @@ public partial class ArticlesPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les articles pour le moment.");
             if (!append)
             {
                 _items = Array.Empty<ArticleListItem>();
@@ -138,17 +138,17 @@ public partial class ArticlesPage : ContentPage
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
             StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les articles pour le moment.");
         }
         finally
         {
@@ -196,6 +196,7 @@ public partial class ArticlesPage : ContentPage
         var subtitle = string.IsNullOrWhiteSpace(DisplayText.Normalize(article.Description))
             ? string.Empty
             : DisplayText.ToExcerpt(article.Description, 86);
+        var imageSource = ApiEndpoints.CreateCachedImageSource(article.Files, article.DefaultImageId);
 
         return new ArticleListItem(
             IdResource: article.IdResource,
@@ -206,7 +207,8 @@ public partial class ArticlesPage : ContentPage
             Subtitle: subtitle,
             Meta: $"Par {author}",
             Summary: DisplayText.ToExcerpt(summary, 220),
-            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 160)}");
+            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 160)}",
+            ImageSource: imageSource);
     }
 
     private static string GetAuthorLabel(ResourceAuthorResponse author)
@@ -262,10 +264,10 @@ public partial class ArticlesPage : ContentPage
 
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 
@@ -278,10 +280,10 @@ public partial class ArticlesPage : ContentPage
         {
             await Shell.Current.GoToAsync($"{nameof(ArticleDetailPage)}?idResource={idResource}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -294,8 +296,11 @@ public partial class ArticlesPage : ContentPage
         string Subtitle,
         string Meta,
         string Summary,
-        string AccessibilityText)
+        string AccessibilityText,
+        ImageSource? ImageSource)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+        public bool HasImage => ImageSource is not null;
+        public bool ShowImagePlaceholder => !HasImage;
     }
 }

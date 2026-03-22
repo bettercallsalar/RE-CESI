@@ -1,6 +1,5 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Devices;
 using RESR.MAUI.Pages.Articles;
 using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
@@ -27,7 +26,6 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddSingleton<AppShell>();
-		builder.Services.AddTransient<HomePage>();
 		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<RegisterPage>();
@@ -47,7 +45,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<IApiSession, ApiSession>();
 		builder.Services.AddTransient<IMarkedResourcesService, MarkedResourcesService>();
 
-		var apiBaseAddress = ResolveApiBaseAddress();
+		var apiBaseAddress = ApiEndpoints.ResolveBaseAddress();
 
 		builder.Services.AddHttpClient<IUsersApiClient, UsersApiClient>(httpClient =>
 		{
@@ -105,14 +103,5 @@ public static class MauiProgram
 #endif
 
 		return builder.Build();
-	}
-
-	private static Uri ResolveApiBaseAddress()
-	{
-		var host = DeviceInfo.Current.Platform == DevicePlatform.Android
-			? "10.0.2.2"
-			: "localhost";
-
-		return new Uri($"http://{host}:8080/");
 	}
 }

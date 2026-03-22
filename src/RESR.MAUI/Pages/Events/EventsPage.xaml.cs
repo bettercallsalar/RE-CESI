@@ -103,10 +103,10 @@ public partial class EventsPage : ContentPage
         {
             await Shell.Current.GoToAsync(nameof(CreateEventPage));
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -144,7 +144,7 @@ public partial class EventsPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les evenements pour le moment.");
             if (!append)
             {
                 _items = Array.Empty<EventListItem>();
@@ -157,17 +157,17 @@ public partial class EventsPage : ContentPage
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
             StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les evenements pour le moment.");
         }
         finally
         {
@@ -278,10 +278,10 @@ public partial class EventsPage : ContentPage
 
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 
@@ -300,10 +300,10 @@ public partial class EventsPage : ContentPage
         {
             await Shell.Current.GoToAsync($"{nameof(EventDetailPage)}?idResource={@event.IdResource}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
