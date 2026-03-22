@@ -1,4 +1,5 @@
 using System.IO;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using RESR.Models.Resources;
 
@@ -29,6 +30,20 @@ internal static class ApiEndpoints
         return Uri.TryCreate(ResolveBaseAddress(), path, out var relativeUri)
             ? relativeUri
             : null;
+    }
+
+    public static ImageSource? CreateCachedImageSource(IReadOnlyList<ResourceFileResponse>? files, int? defaultImageId)
+    {
+        var imageUri = ResolvePreferredImageUri(files, defaultImageId);
+        if (imageUri is null)
+            return null;
+
+        return new UriImageSource
+        {
+            Uri = imageUri,
+            CachingEnabled = true,
+            CacheValidity = TimeSpan.FromHours(12)
+        };
     }
 
     private static ResourceFileResponse? ResolvePreferredImage(IReadOnlyList<ResourceFileResponse>? files, int? defaultImageId)

@@ -218,6 +218,11 @@
                                         <Grid RowDefinitions="160,*">
                                             <Grid BackgroundColor="{StaticResource PlaceholderSurface}"
                                                   Padding="18">
+                                                <Image Aspect="AspectFill"
+                                                       IsVisible="{Binding HasImage}"
+                                                       Source="{Binding ImageSource}" />
+                                                <BoxView Color="#22000000"
+                                                         IsVisible="{Binding HasImage}" />
                                                 <Grid RowDefinitions="Auto,*"
                                                       RowSpacing="12">
                                                     <Grid ColumnDefinitions="Auto,*"
@@ -227,29 +232,42 @@
                                                                    Text="{Binding Badge}" />
                                                         </Border>
 
-                                                        <Label Grid.Column="1"
-                                                               HorizontalTextAlignment="End"
-                                                               Style="{StaticResource MetaLabelStyle}"
-                                                               Text="{Binding DateLabel}" />
+                                                        <Border Grid.Column="1"
+                                                                BackgroundColor="#66000000"
+                                                                HorizontalOptions="End"
+                                                                Padding="10,4"
+                                                                StrokeThickness="0"
+                                                                StrokeShape="RoundRectangle 999">
+                                                            <Label HorizontalTextAlignment="End"
+                                                                   Style="{StaticResource BadgeLabelStyle}"
+                                                                   Text="{Binding DateLabel}" />
+                                                        </Border>
                                                     </Grid>
 
-                                                    <VerticalStackLayout Grid.Row="1"
-                                                                         Spacing="6"
-                                                                         VerticalOptions="End">
-                                                        <Label FontFamily="OpenSansSemibold"
-                                                               FontSize="{OnIdiom Phone='28', Default='34'}"
-                                                               Opacity="0.35"
-                                                               Text="{Binding HeroCaption}"
-                                                               TextColor="{StaticResource BrandPrimary}" />
-                                                        <Label Style="{StaticResource CardTitleLabelStyle}"
-                                                               Text="{Binding Title}" />
-                                                    </VerticalStackLayout>
+                                                    <Label Grid.Row="1"
+                                                           FontFamily="OpenSansSemibold"
+                                                           FontSize="{OnIdiom Phone='28', Default='34'}"
+                                                           HorizontalOptions="Center"
+                                                           IsVisible="{Binding ShowImagePlaceholder}"
+                                                           Opacity="0.28"
+                                                           Text="{Binding HeroCaption}"
+                                                           TextColor="{StaticResource BrandPrimary}"
+                                                           VerticalOptions="Center" />
                                                 </Grid>
                                             </Grid>
 
                                             <VerticalStackLayout Grid.Row="1"
                                                                  Padding="18"
                                                                  Spacing="10">
+                                                <VerticalStackLayout Spacing="6">
+                                                    <Label FontFamily="OpenSansSemibold"
+                                                           FontSize="{OnIdiom Phone='16', Default='18'}"
+                                                           Opacity="0.55"
+                                                           Text="{Binding HeroCaption}"
+                                                           TextColor="{StaticResource BrandPrimary}" />
+                                                    <Label Style="{StaticResource CardTitleLabelStyle}"
+                                                           Text="{Binding Title}" />
+                                                </VerticalStackLayout>
                                                 <Label IsVisible="{Binding HasSubtitle}"
                                                        Style="{StaticResource MetaLabelStyle}"
                                                        Text="{Binding Subtitle}" />

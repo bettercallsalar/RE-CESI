@@ -196,6 +196,7 @@ public partial class ArticlesPage : ContentPage
         var subtitle = string.IsNullOrWhiteSpace(DisplayText.Normalize(article.Description))
             ? string.Empty
             : DisplayText.ToExcerpt(article.Description, 86);
+        var imageSource = ApiEndpoints.CreateCachedImageSource(article.Files, article.DefaultImageId);
 
         return new ArticleListItem(
             IdResource: article.IdResource,
@@ -206,7 +207,8 @@ public partial class ArticlesPage : ContentPage
             Subtitle: subtitle,
             Meta: $"Par {author}",
             Summary: DisplayText.ToExcerpt(summary, 220),
-            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 160)}");
+            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 160)}",
+            ImageSource: imageSource);
     }
 
     private static string GetAuthorLabel(ResourceAuthorResponse author)
@@ -294,8 +296,11 @@ public partial class ArticlesPage : ContentPage
         string Subtitle,
         string Meta,
         string Summary,
-        string AccessibilityText)
+        string AccessibilityText,
+        ImageSource? ImageSource)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+        public bool HasImage => ImageSource is not null;
+        public bool ShowImagePlaceholder => !HasImage;
     }
 }
