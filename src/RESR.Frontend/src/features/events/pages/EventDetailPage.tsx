@@ -99,7 +99,7 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                   </Badge>
                 ) : null}
                 {event.deletedAt ? (
-                  <Badge bg="red.500" color="white" fontSize="12px" px={2.5} py={1} rounded="full">
+                  <Badge bg="red.500" color="surface.onCritical" fontSize="12px" px={2.5} py={1} rounded="full">
                     Supprime le {formatEventPublishedDate(event.deletedAt)}
                   </Badge>
                 ) : null}
@@ -166,7 +166,7 @@ export function EventDetailPage({ idResource }: EventDetailPageProps) {
                     <Button
                       _hover={{ bg: "#9B2C2C" }}
                       bg="#C53030"
-                      color="white"
+                      color="surface.onCritical"
                       isDisabled={isUpdatingApproval}
                       onClick={unapproveDialog.onOpen}
                     >

@@ -3,72 +3,79 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Auth.LoginPage"
              Title="Connexion"
-             BackgroundColor="{StaticResource FormPageBackground}">
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
         <VerticalStackLayout HorizontalOptions="Center"
-                             MaximumWidthRequest="720"
-                             Padding="20,24,20,32"
-                             Spacing="22">
+                             MaximumWidthRequest="760"
+                             Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
+                             Spacing="18">
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Connexion"
-                       Style="{StaticResource FormHeroTitleStyle}" />
-                <Label Text="Retrouve tes ressources, ton profil et tes actions depuis un espace unifie."
-                       Style="{StaticResource FormHeroSubtitleStyle}" />
-            </VerticalStackLayout>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Border Style="{StaticResource FormCardStyle}">
-                <VerticalStackLayout Spacing="18">
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Connexion" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Accedez a votre espace personnel." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="16">
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Acceder a ton compte"
-                               Style="{StaticResource FormSectionTitleStyle}" />
-                        <Label Text="Renseigne ton email et ton mot de passe pour continuer."
-                               Style="{StaticResource FormCaptionStyle}" />
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Se connecter" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Renseignez votre adresse email et votre mot de passe." />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Courriel"
-                               Style="{StaticResource FormFieldLabelStyle}" />
-                        <Border Style="{StaticResource FormEntryBorderStyle}">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Courriel" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
                             <Entry x:Name="EmailEntry"
-                                   Placeholder="nom@exemple.fr"
-                                   Keyboard="Email" />
+                                   Keyboard="Email"
+                                   Placeholder="prenom.nom@exemple.fr" />
                         </Border>
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Mot de passe"
-                               Style="{StaticResource FormFieldLabelStyle}" />
-                        <Border Style="{StaticResource FormEntryBorderStyle}">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Mot de passe" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
                             <Entry x:Name="PasswordEntry"
-                                   Placeholder="Ton mot de passe"
-                                   IsPassword="True" />
+                                   IsPassword="True"
+                                   Placeholder="Votre mot de passe" />
                         </Border>
                     </VerticalStackLayout>
-
-                    <Button Text="Se connecter"
-                            Clicked="OnLoginClicked"
-                            Style="{StaticResource FormPrimaryButtonStyle}" />
 
                     <Label x:Name="StatusLabel"
-                           Text="Renseigne ton email et ton mot de passe."
-                           Style="{StaticResource FormStatusLabelStyle}" />
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Renseignez votre email et votre mot de passe." />
+
+                    <Button x:Name="LoginButton"
+                            Clicked="OnLoginClicked"
+                            Text="Se connecter" />
                 </VerticalStackLayout>
             </Border>
 
-            <Border Style="{StaticResource FormCardStyle}"
-                    Padding="18">
-                <VerticalStackLayout Spacing="12">
-                    <Label Text="Pas encore de compte ?"
-                           Style="{StaticResource FormFieldLabelStyle}"
-                           HorizontalTextAlignment="Center" />
-                    <Button Text="S'inscrire"
-                            Clicked="OnGoToRegisterClicked"
-                            Style="{StaticResource FormSecondaryButtonStyle}" />
+            <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Style="{StaticResource FieldLabelStyle}"
+                           Text="Pas encore de compte ?" />
+                    <Button Clicked="OnGoToRegisterClicked"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Text="Creer un compte" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

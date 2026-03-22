@@ -115,7 +115,7 @@ export function ReadLaterPage() {
             <Tabs index={tabIndex} onChange={setTabIndex} variant="unstyled">
               <TabList borderBottom="1px solid" borderColor="canvas.200" gap={3} overflowX="auto" pb={3}>
                 <Tab
-                  _selected={{ bg: "brand.500", color: "white" }}
+                  _selected={{ bg: "brand.500", color: "surface.onAccent" }}
                   bg="white"
                   border="1px solid"
                   borderColor="canvas.200"
@@ -129,7 +129,7 @@ export function ReadLaterPage() {
                   Articles ({articles.length})
                 </Tab>
                 <Tab
-                  _selected={{ bg: "brand.500", color: "white" }}
+                  _selected={{ bg: "brand.500", color: "surface.onAccent" }}
                   bg="white"
                   border="1px solid"
                   borderColor="canvas.200"

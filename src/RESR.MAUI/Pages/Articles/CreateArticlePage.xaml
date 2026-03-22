@@ -3,129 +3,159 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.CreateArticlePage"
              Title="Nouvel article"
-             BackgroundColor="{StaticResource FormPageBackground}">
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
         <VerticalStackLayout HorizontalOptions="Center"
                              MaximumWidthRequest="860"
-                             Padding="20,24,20,32"
-                             Spacing="22">
+                             Padding="{OnIdiom Phone='18,16,18,26', Tablet='28,22,28,30', Default='34,24,34,34'}"
+                             Spacing="18">
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Creer un article"
-                       Style="{StaticResource FormHeroTitleStyle}" />
-                <Label Text="Prepare une ressource claire, publique ou privee, dans le meme univers visuel que l'accueil."
-                       Style="{StaticResource FormHeroSubtitleStyle}" />
-            </VerticalStackLayout>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Border Style="{StaticResource FormCardStyle}">
-                <VerticalStackLayout Spacing="18">
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Publier un article" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Renseignez les informations de publication." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <VerticalStackLayout Spacing="16">
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Nouveau contenu"
-                               Style="{StaticResource FormSectionTitleStyle}" />
-                        <Label Text="Le titre, la categorie et le contenu sont requis pour publier."
-                               Style="{StaticResource FormCaptionStyle}" />
+                        <Label Style="{StaticResource SectionTitleLabelStyle}"
+                               Text="Nouvel article" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Completez les champs obligatoires avant publication." />
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*,Auto"
-                          RowDefinitions="Auto"
-                          ColumnSpacing="14"
-                          RowSpacing="14">
-                        <VerticalStackLayout Grid.Row="0"
-                                             Grid.Column="0"
-                                             Spacing="8">
-                            <Label Text="Titre"
-                                   Style="{StaticResource FormFieldLabelStyle}" />
-                            <Border Style="{StaticResource FormEntryBorderStyle}">
-                                <Entry x:Name="TitleEntry"
-                                       Placeholder="Titre de l'article"
-                                       MaxLength="50"
-                                       TextChanged="OnTitleChanged" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Row="0"
-                                             Grid.Column="1"
-                                             Spacing="8"
-                                             VerticalOptions="End">
-                            <Label Text="Compteur"
-                                   Style="{StaticResource FormFieldLabelStyle}" />
-                            <Label x:Name="TitleCounterLabel"
-                                   Text="0/50"
-                                   Style="{StaticResource FormHelperLabelStyle}"
-                                   VerticalTextAlignment="Center" />
-                        </VerticalStackLayout>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,*"
-                          RowDefinitions="Auto"
-                          ColumnSpacing="16"
-                          RowSpacing="14">
-                        <VerticalStackLayout Grid.Row="0"
-                                             Grid.Column="0"
-                                             Spacing="8">
-                            <Label Text="Visibilite"
-                                   Style="{StaticResource FormFieldLabelStyle}" />
-                            <Border Style="{StaticResource FormEntryBorderStyle}">
-                                <Picker x:Name="VisibilityPicker"
-                                        Title="Choisir une visibilite" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout Grid.Row="0"
-                                             Grid.Column="1"
-                                             Spacing="8">
-                            <Label Text="Categorie"
-                                   Style="{StaticResource FormFieldLabelStyle}" />
-                            <Border Style="{StaticResource FormEntryBorderStyle}">
-                                <Picker x:Name="CategoryPicker"
-                                        Title="Choisir une categorie"
-                                        ItemsSource="{Binding Categories}"
-                                        ItemDisplayBinding="{Binding Name}" />
-                            </Border>
-                        </VerticalStackLayout>
-                    </Grid>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Titre" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Entry x:Name="TitleEntry"
+                                   MaxLength="50"
+                                   Placeholder="Titre de l'article"
+                                   TextChanged="OnTitleChanged" />
+                        </Border>
+                        <Label x:Name="TitleCounterLabel"
+                               Style="{StaticResource FieldHintLabelStyle}"
+                               Text="0/50" />
+                    </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Description"
-                               Style="{StaticResource FormFieldLabelStyle}" />
-                        <Border Style="{StaticResource FormEntryBorderStyle}"
-                                Padding="14,10">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Visibilite" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Picker x:Name="VisibilityPicker"
+                                    Title="Choisir une visibilite" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Categorie" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
+                            <Picker x:Name="CategoryPicker"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    ItemsSource="{Binding Categories}"
+                                    Title="Choisir une categorie" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Description" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
                             <Editor x:Name="DescriptionEditor"
-                                    Placeholder="Resume de l'article"
                                     AutoSize="TextChanges"
+                                    HeightRequest="140"
                                     MaxLength="5000"
-                                    HeightRequest="150" />
+                                    Placeholder="Resume de l'article" />
                         </Border>
-                        <Label Text="Limite : 5000 caracteres"
-                               Style="{StaticResource FormHelperLabelStyle}" />
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Limite : 5000 caracteres." />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Contenu"
-                               Style="{StaticResource FormFieldLabelStyle}" />
-                        <Border Style="{StaticResource FormEntryBorderStyle}"
-                                Padding="14,10">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Contenu" />
+                        <Border Style="{StaticResource FieldBorderStyle}">
                             <Editor x:Name="ContentEditor"
-                                    Placeholder="Ecris ton article ici..."
                                     AutoSize="TextChanges"
-                                    HeightRequest="260" />
+                                    HeightRequest="240"
+                                    Placeholder="Ecrivez votre article ici..." />
                         </Border>
-                        <Label Text="Le contenu est obligatoire"
-                               Style="{StaticResource FormHelperLabelStyle}" />
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Le contenu est obligatoire." />
                     </VerticalStackLayout>
 
-                    <Button Text="Creer l'article"
-                            Clicked="OnCreateClicked"
-                            x:Name="CreateButton"
-                            Style="{StaticResource FormPrimaryButtonStyle}" />
+                    <VerticalStackLayout Spacing="8">
+                        <Label Style="{StaticResource FieldLabelStyle}"
+                               Text="Images" />
+                        <Button x:Name="PickImagesButton"
+                                Clicked="OnPickImagesClicked"
+                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                Text="Ajouter des images" />
+                        <Label Style="{StaticResource FieldHintLabelStyle}"
+                               Text="Jusqu'a 6 images, 5 Mo maximum par image." />
+
+                        <CollectionView x:Name="SelectedImagesView"
+                                        HeightRequest="180"
+                                        IsVisible="False"
+                                        SelectionMode="None">
+                            <CollectionView.ItemsLayout>
+                                <LinearItemsLayout Orientation="Vertical"
+                                                   ItemSpacing="8" />
+                            </CollectionView.ItemsLayout>
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource SubtleSurfaceBorderStyle}">
+                                        <VerticalStackLayout Spacing="4">
+                                            <Label Style="{StaticResource ValueLabelStyle}"
+                                                   Text="{Binding FileName}" />
+                                            <Label Style="{StaticResource BodyMutedLabelStyle}"
+                                                   Text="{Binding Description}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <Border x:Name="DefaultImageContainer"
+                                IsVisible="False"
+                                Style="{StaticResource SubtleSurfaceBorderStyle}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Style="{StaticResource FieldLabelStyle}"
+                                       Text="Image par defaut" />
+                                <Border Style="{StaticResource FieldBorderStyle}">
+                                    <Picker x:Name="DefaultImagePicker"
+                                            ItemDisplayBinding="{Binding Label}"
+                                            ItemsSource="{Binding DefaultImageOptions}"
+                                            SelectedIndexChanged="OnDefaultImageChanged"
+                                            Title="Choisir l'image par defaut" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
 
                     <Label x:Name="StatusLabel"
-                           Text="Renseigne les champs obligatoires."
-                           Style="{StaticResource FormStatusLabelStyle}" />
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Renseignez les champs obligatoires." />
+
+                    <Button x:Name="CreateButton"
+                            Clicked="OnCreateClicked"
+                            Text="Publier l'article" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

@@ -1,3 +1,4 @@
+using RESR.MAUI.Pages.Home;
 using RESR.MAUI.Services;
 using RESR.Models.Resources;
 
@@ -5,6 +6,9 @@ namespace RESR.MAUI.Pages.Articles;
 
 public partial class ArticlesPage : ContentPage
 {
+    private static readonly Color MutedStatusColor = Color.FromArgb("#5F5F66");
+    private static readonly Color ErrorStatusColor = Color.FromArgb("#AB231E");
+
     private const int PageSize = 10;
 
     private readonly IResourcesApiClient _resourcesApiClient;
@@ -20,6 +24,7 @@ public partial class ArticlesPage : ContentPage
     {
         _resourcesApiClient = resourcesApiClient;
         InitializeComponent();
+        StatusLabel.TextColor = MutedStatusColor;
         ApplyState();
     }
 
@@ -38,6 +43,11 @@ public partial class ArticlesPage : ContentPage
     {
         _loadCts?.Cancel();
         base.OnDisappearing();
+    }
+
+    private async void OnBackClicked(object? sender, EventArgs e)
+    {
+        await NavigateBackAsync();
     }
 
     private async void OnSearchButtonClicked(object? sender, EventArgs e)
@@ -73,8 +83,12 @@ public partial class ArticlesPage : ContentPage
 
     private async void OnArticleTapped(object? sender, TappedEventArgs e)
     {
-        if (sender is BindableObject bindable && bindable.BindingContext is ArticleListItem item)
-            await NavigateToArticleDetailAsync(item.IdResource);
+        await OpenArticleAsync(sender);
+    }
+
+    private async void OnArticleOpenClicked(object? sender, EventArgs e)
+    {
+        await OpenArticleAsync(sender);
     }
 
     private async Task ReloadAsync(bool triggeredByRefresh)
@@ -105,10 +119,12 @@ public partial class ArticlesPage : ContentPage
             _totalCount = response.TotalCount;
 
             ApplyState();
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = BuildStatusMessage();
         }
         catch (ApiException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
             if (!append)
             {
@@ -121,15 +137,18 @@ public partial class ArticlesPage : ContentPage
         }
         catch (TimeoutException ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = ex.Message;
         }
         catch (OperationCanceledException)
         {
+            StatusLabel.TextColor = MutedStatusColor;
             StatusLabel.Text = "Chargement annule.";
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = $"Erreur inattendue : {ex.Message}";
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Erreur inattendue : {TrimMessage(ex.Message)}";
         }
         finally
         {
@@ -172,14 +191,36 @@ public partial class ArticlesPage : ContentPage
 
     private static ArticleListItem ToListItem(ArticleResponse article)
     {
-        var description = FirstNonEmpty(article.Description, article.Content, "Aucune description disponible.");
+        var author = GetAuthorLabel(article.Author);
+        var summary = DisplayText.FirstNonEmpty(article.Content, article.Description, "Aucune description disponible.");
+        var subtitle = string.IsNullOrWhiteSpace(DisplayText.Normalize(article.Description))
+            ? string.Empty
+            : DisplayText.ToExcerpt(article.Description, 86);
 
         return new ArticleListItem(
-            article.IdResource,
-            article.Title,
-            $"Publie le {article.CreatedAt:dd/MM/yyyy}",
-            $"Auteur #{article.IdUser}  |  Visibilite {article.Visibility.ToLowerInvariant()}",
-            ToExcerpt(description, 220));
+            IdResource: article.IdResource,
+            Badge: article.Visibility.Equals("PUBLIC", StringComparison.OrdinalIgnoreCase) ? "Article public" : "Article prive",
+            DateLabel: article.CreatedAt.ToString("dd/MM/yyyy"),
+            Eyebrow: "ARTICLE",
+            Title: DisplayText.Normalize(article.Title),
+            Subtitle: subtitle,
+            Meta: $"Par {author}",
+            Summary: DisplayText.ToExcerpt(summary, 220),
+            AccessibilityText: $"Article {DisplayText.Normalize(article.Title)}, publie le {article.CreatedAt:dd/MM/yyyy}, par {author}. {DisplayText.ToExcerpt(summary, 160)}");
+    }
+
+    private static string GetAuthorLabel(ResourceAuthorResponse author)
+    {
+        var firstName = DisplayText.Normalize(author.FirstName);
+        var username = DisplayText.Normalize(author.Username);
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+            return firstName;
+
+        if (!string.IsNullOrWhiteSpace(username))
+            return username;
+
+        return "un utilisateur";
     }
 
     private static string? NormalizeKeyword(string? value)
@@ -187,35 +228,45 @@ public partial class ArticlesPage : ContentPage
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
-    private static string FirstNonEmpty(params string?[] values)
-    {
-        foreach (var value in values)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-                return value.Trim();
-        }
-
-        return string.Empty;
-    }
-
-    private static string ToExcerpt(string value, int maxLength)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return string.Empty;
-
-        var normalized = value.Replace("\r", " ").Replace("\n", " ").Trim();
-        if (normalized.Length <= maxLength)
-            return normalized;
-
-        return normalized[..Math.Max(0, maxLength - 3)].TrimEnd() + "...";
-    }
-
     private static string TrimMessage(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
             return "Erreur inconnue.";
 
-        return ToExcerpt(message, 180);
+        return DisplayText.ToExcerpt(message, 180);
+    }
+
+    private async Task OpenArticleAsync(object? sender)
+    {
+        if (sender is not BindableObject bindable ||
+            bindable.BindingContext is not ArticleListItem article)
+        {
+            return;
+        }
+
+        await NavigateToArticleDetailAsync(article.IdResource);
+    }
+
+    private async Task NavigateBackAsync()
+    {
+        if (Shell.Current is null)
+            return;
+
+        try
+        {
+            if (Shell.Current.Navigation.NavigationStack.Count > 1)
+            {
+                await Shell.Current.GoToAsync("..");
+                return;
+            }
+
+            await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.TextColor = ErrorStatusColor;
+            StatusLabel.Text = $"Retour impossible : {TrimMessage(ex.Message)}";
+        }
     }
 
     private async Task NavigateToArticleDetailAsync(int idResource)
@@ -229,16 +280,21 @@ public partial class ArticlesPage : ContentPage
         }
         catch (Exception ex)
         {
+            StatusLabel.TextColor = ErrorStatusColor;
             StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
         }
     }
 
     private sealed record ArticleListItem(
         int IdResource,
+        string Badge,
+        string DateLabel,
+        string Eyebrow,
         string Title,
         string Subtitle,
         string Meta,
-        string Summary)
+        string Summary,
+        string AccessibilityText)
     {
         public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     }

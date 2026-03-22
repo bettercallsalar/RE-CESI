@@ -11,7 +11,7 @@ import { MessageBanner } from "@/shared/ui/feedback/MessageBanner";
 import type { FeedbackMessage } from "@/shared/ui/feedback/message.types";
 
 export function HomePage() {
-  const { status, user, signOut } = useAuth();
+  const { status, user } = useAuth();
   const isAuthenticated = status === "authenticated";
   const [flashMessage, setFlashMessage] = useState<FeedbackMessage | null>(null);
   const {
@@ -169,8 +169,8 @@ export function HomePage() {
           </Box>
 
           {isAuthenticated ? (
-            <Button fontSize={{ base: "15px", md: "16px" }} h="48px" onClick={signOut} px={6} variant="outline">
-              Se déconnecter
+            <Button as="a" fontSize={{ base: "15px", md: "16px" }} h="48px" href="/mon-compte" px={6} variant="outline">
+              Mon compte
             </Button>
           ) : (
             <Button as="a" fontSize={{ base: "15px", md: "16px" }} h="48px" href="/login" px={6} variant="outline">

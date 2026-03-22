@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Articles.UserArticlesPage"
+             Title="Articles"
+             BackgroundColor="#F4F1EC">
+
+    <ContentPage.Resources>
+        <Style x:Key="SectionCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="CardTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="LineBreakMode" Value="TailTruncation" />
+            <Setter Property="MaxLines" Value="2" />
+        </Style>
+
+        <Style x:Key="CardMetaStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#59567A" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="CardSummaryStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#343052" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="MaxLines" Value="4" />
+        </Style>
+    </ContentPage.Resources>
+
+    <RefreshView x:Name="RefreshContainer"
+                 Refreshing="OnRefreshRequested">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
+              RowSpacing="16"
+              Padding="{OnIdiom Phone='20,18,20,24', Tablet='28,22,28,28', Default='36,24,36,30'}"
+              HorizontalOptions="Center"
+              MaximumWidthRequest="1100">
+
+            <VerticalStackLayout Spacing="6">
+                <Label x:Name="PageTitleLabel"
+                       Text="Articles"
+                       Style="{StaticResource Headline}"
+                       FontSize="{OnIdiom Phone='28', Default='34'}"
+                       TextColor="#1E1C44" />
+                <Label x:Name="PageCaptionLabel"
+                       Text="Chargement..."
+                       Style="{StaticResource SectionCaptionStyle}"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <SearchBar x:Name="KeywordSearchBar"
+                           Placeholder="Rechercher un article"
+                           SearchButtonPressed="OnSearchSubmitted"
+                           TextChanged="OnSearchTextChanged" />
+                <Button x:Name="SearchButton"
+                        Grid.Column="1"
+                        Text="Rechercher"
+                        Clicked="OnSearchButtonClicked" />
+            </Grid>
+
+            <HorizontalStackLayout Grid.Row="2"
+                                   Spacing="10"
+                                   VerticalOptions="Center">
+                <ActivityIndicator x:Name="LoadingIndicator"
+                                   IsVisible="False"
+                                   IsRunning="False" />
+                <Label x:Name="StatusLabel"
+                       Text="Chargement des articles..."
+                       Style="{StaticResource SectionCaptionStyle}" />
+            </HorizontalStackLayout>
+
+            <Grid Grid.Row="3">
+                <CollectionView x:Name="ArticlesCollectionView"
+                                IsVisible="False"
+                                SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical"
+                                           ItemSpacing="14" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border BackgroundColor="White"
+                                    Stroke="#E3DDD6"
+                                    StrokeShape="RoundRectangle 24"
+                                    Padding="20">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnArticleTapped" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="10">
+                                    <Border BackgroundColor="#2E2AA5"
+                                            HorizontalOptions="Start"
+                                            Padding="10,4"
+                                            StrokeThickness="0"
+                                            StrokeShape="RoundRectangle 12">
+                                        <Label Text="Article"
+                                               FontSize="12"
+                                               FontAttributes="Bold"
+                                               TextColor="White" />
+                                    </Border>
+
+                                    <Label Text="{Binding Title}"
+                                           Style="{StaticResource CardTitleStyle}" />
+                                    <Label Text="{Binding Subtitle}"
+                                           Style="{StaticResource CardMetaStyle}"
+                                           IsVisible="{Binding HasSubtitle}" />
+                                    <Label Text="{Binding Meta}"
+                                           Style="{StaticResource CardMetaStyle}" />
+                                    <Label Text="{Binding Summary}"
+                                           Style="{StaticResource CardSummaryStyle}" />
+                                    <Button Text="Lire l'article"
+                                            HorizontalOptions="End"
+                                            Clicked="OnArticleOpenClicked" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Border x:Name="EmptyState"
+                        IsVisible="False"
+                        BackgroundColor="#F8F5F2"
+                        Stroke="#DFD9D2"
+                        StrokeShape="RoundRectangle 24"
+                        Padding="24">
+                    <VerticalStackLayout Spacing="10"
+                                         HorizontalOptions="Center"
+                                         VerticalOptions="Center">
+                        <Label Text="Aucun article disponible."
+                               HorizontalTextAlignment="Center"
+                               Style="{StaticResource CardSummaryStyle}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Button x:Name="LoadMoreButton"
+                    Grid.Row="4"
+                    Text="Charger plus"
+                    IsVisible="False"
+                    HorizontalOptions="Center"
+                    Clicked="OnLoadMoreClicked" />
+        </Grid>
+    </RefreshView>
+</ContentPage>
