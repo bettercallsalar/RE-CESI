@@ -3,75 +3,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="RESR.MAUI.Pages.Articles.ArticlesPage"
              Title="Articles"
-             BackgroundColor="{StaticResource White}">
-
-    <ContentPage.Resources>
-        <Style x:Key="SectionCaptionStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-
-        <Style x:Key="CardTitleStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="{StaticResource Gray950}" />
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="LineBreakMode" Value="TailTruncation" />
-            <Setter Property="MaxLines" Value="2" />
-        </Style>
-
-        <Style x:Key="CardMetaStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="{StaticResource Gray500}" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
-
-        <Style x:Key="CardSummaryStyle" TargetType="Label">
-            <Setter Property="TextColor" Value="{StaticResource Gray900}" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="LineBreakMode" Value="WordWrap" />
-            <Setter Property="MaxLines" Value="4" />
-        </Style>
-    </ContentPage.Resources>
+             Shell.NavBarIsVisible="False">
 
     <RefreshView x:Name="RefreshContainer"
                  Refreshing="OnRefreshRequested">
-        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
-              RowSpacing="16"
-              Padding="{OnIdiom Phone='20,18,20,24', Tablet='28,22,28,28', Default='36,24,36,30'}"
-              HorizontalOptions="Center"
-              MaximumWidthRequest="1100">
+        <Grid HorizontalOptions="Center"
+              MaximumWidthRequest="1100"
+              Padding="{OnIdiom Phone='18,16,18,24', Tablet='28,22,28,28', Default='34,24,34,32'}"
+              RowDefinitions="Auto,Auto,Auto,*,Auto"
+              RowSpacing="16">
 
-            <VerticalStackLayout Spacing="6">
-                <Label Text="Articles"
-                       Style="{StaticResource Headline}"
-                       FontSize="{OnIdiom Phone='28', Default='34'}" />
-                <Label Text="Parcourez les articles publics approuves de la plateforme."
-                       Style="{StaticResource SectionCaptionStyle}"
-                       HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
+            <Border Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Style="{StaticResource SmallSecondaryButtonStyle}"
+                            Text="Retour" />
 
-            <Grid Grid.Row="1"
-                  ColumnDefinitions="*,Auto"
-                  ColumnSpacing="12">
-                <SearchBar x:Name="KeywordSearchBar"
-                           Placeholder="Rechercher un article"
-                           SearchButtonPressed="OnSearchSubmitted"
-                           TextChanged="OnSearchTextChanged" />
-                <Button x:Name="SearchButton"
-                        Grid.Column="1"
-                        Text="Rechercher"
-                        Clicked="OnSearchButtonClicked" />
-            </Grid>
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label Style="{StaticResource PageTitleLabelStyle}"
+                               Text="Articles" />
+                        <Label Style="{StaticResource BodyMutedLabelStyle}"
+                               Text="Parcourez les articles publics approuves." />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
 
-            <HorizontalStackLayout Grid.Row="2"
-                                   Spacing="10"
-                                   VerticalOptions="Center">
-                <ActivityIndicator x:Name="LoadingIndicator"
-                                   IsVisible="False"
-                                   IsRunning="False" />
-                <Label x:Name="StatusLabel"
-                       Text="Chargement des articles..."
-                       Style="{StaticResource SectionCaptionStyle}" />
-            </HorizontalStackLayout>
+            <Border Grid.Row="1"
+                    Style="{StaticResource SurfaceBorderStyle}">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="12">
+                    <Border Style="{StaticResource FieldBorderStyle}">
+                        <SearchBar x:Name="KeywordSearchBar"
+                                   Placeholder="Rechercher un article"
+                                   SearchButtonPressed="OnSearchSubmitted"
+                                   TextChanged="OnSearchTextChanged" />
+                    </Border>
+
+                    <Button x:Name="SearchButton"
+                            Grid.Column="1"
+                            Clicked="OnSearchButtonClicked"
+                            Style="{StaticResource SmallPrimaryButtonStyle}"
+                            Text="Rechercher" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2"
+                    Style="{StaticResource SubtleSurfaceBorderStyle}">
+                <HorizontalStackLayout Spacing="10"
+                                       VerticalOptions="Center">
+                    <ActivityIndicator x:Name="LoadingIndicator"
+                                       IsRunning="False"
+                                       IsVisible="False" />
+                    <Label x:Name="StatusLabel"
+                           Style="{StaticResource StatusLabelStyle}"
+                           Text="Chargement des articles..." />
+                </HorizontalStackLayout>
+            </Border>
 
             <Grid Grid.Row="3">
                 <CollectionView x:Name="ArticlesCollectionView"
@@ -83,62 +72,82 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Border BackgroundColor="White"
-                                    Stroke="{StaticResource Gray200}"
-                                    StrokeShape="RoundRectangle 24"
-                                    Padding="20">
+                            <Border SemanticProperties.Description="{Binding AccessibilityText}"
+                                    Style="{StaticResource CardSurfaceBorderStyle}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnArticleTapped" />
                                 </Border.GestureRecognizers>
-                                <VerticalStackLayout Spacing="10">
-                                    <Border BackgroundColor="{StaticResource Primary}"
-                                            HorizontalOptions="Start"
-                                            Padding="10,4"
-                                            StrokeThickness="0"
-                                            StrokeShape="RoundRectangle 12">
-                                        <Label Text="Article public"
-                                               FontSize="12"
-                                               FontAttributes="Bold"
-                                               TextColor="White" />
-                                    </Border>
+                                <Grid RowDefinitions="150,*">
+                                    <Grid BackgroundColor="{StaticResource PlaceholderSurface}"
+                                          Padding="18">
+                                        <Grid RowDefinitions="Auto,*"
+                                              RowSpacing="12">
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="10">
+                                                <Border Style="{StaticResource FilledBadgeBorderStyle}">
+                                                    <Label Style="{StaticResource BadgeLabelStyle}"
+                                                           Text="{Binding Badge}" />
+                                                </Border>
 
-                                    <Label Text="{Binding Title}"
-                                           Style="{StaticResource CardTitleStyle}" />
-                                    <Label Text="{Binding Subtitle}"
-                                           Style="{StaticResource CardMetaStyle}"
-                                           IsVisible="{Binding HasSubtitle}" />
-                                    <Label Text="{Binding Meta}"
-                                           Style="{StaticResource CardMetaStyle}" />
-                                    <Label Text="{Binding Summary}"
-                                           Style="{StaticResource CardSummaryStyle}" />
-                                </VerticalStackLayout>
+                                                <Label Grid.Column="1"
+                                                       HorizontalTextAlignment="End"
+                                                       Style="{StaticResource MetaLabelStyle}"
+                                                       Text="{Binding DateLabel}" />
+                                            </Grid>
+
+                                            <VerticalStackLayout Grid.Row="1"
+                                                                 Spacing="6"
+                                                                 VerticalOptions="End">
+                                                <Label FontFamily="OpenSansSemibold"
+                                                       FontSize="{OnIdiom Phone='26', Default='30'}"
+                                                       Opacity="0.35"
+                                                       Text="{Binding Eyebrow}"
+                                                       TextColor="{StaticResource BrandPrimary}" />
+                                                <Label Style="{StaticResource CardTitleLabelStyle}"
+                                                       Text="{Binding Title}" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Grid>
+
+                                    <VerticalStackLayout Grid.Row="1"
+                                                         Padding="18"
+                                                         Spacing="10">
+                                        <Label IsVisible="{Binding HasSubtitle}"
+                                               Style="{StaticResource MetaLabelStyle}"
+                                               Text="{Binding Subtitle}" />
+                                        <Label Style="{StaticResource MetaLabelStyle}"
+                                               Text="{Binding Meta}" />
+                                        <Label LineBreakMode="TailTruncation"
+                                               MaxLines="5"
+                                               Style="{StaticResource BodyLabelStyle}"
+                                               Text="{Binding Summary}" />
+                                        <Button Clicked="OnArticleOpenClicked"
+                                                HorizontalOptions="End"
+                                                Style="{StaticResource SmallSecondaryButtonStyle}"
+                                                Text="Lire l'article" />
+                                    </VerticalStackLayout>
+                                </Grid>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                        <Border x:Name="EmptyState"
-                                IsVisible="False"
-                                BackgroundColor="{StaticResource Gray100}"
-                                Stroke="{StaticResource Gray200}"
-                                StrokeShape="RoundRectangle 24"
-                                Padding="24">
-                    <VerticalStackLayout Spacing="10"
-                                         HorizontalOptions="Center"
-                                         VerticalOptions="Center">
-                        <Label Text="Aucun article disponible."
-                               HorizontalTextAlignment="Center"
-                               Style="{StaticResource CardSummaryStyle}" />
-                    </VerticalStackLayout>
+                <Border x:Name="EmptyState"
+                        IsVisible="False"
+                        Style="{StaticResource SurfaceBorderStyle}">
+                    <Label HorizontalTextAlignment="Center"
+                           Style="{StaticResource BodyMutedLabelStyle}"
+                           Text="Aucun article public disponible." />
                 </Border>
             </Grid>
 
             <Button x:Name="LoadMoreButton"
                     Grid.Row="4"
-                    Text="Charger plus"
-                    IsVisible="False"
+                    Clicked="OnLoadMoreClicked"
                     HorizontalOptions="Center"
-                    Clicked="OnLoadMoreClicked" />
+                    IsVisible="False"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Text="Charger plus" />
         </Grid>
     </RefreshView>
 </ContentPage>

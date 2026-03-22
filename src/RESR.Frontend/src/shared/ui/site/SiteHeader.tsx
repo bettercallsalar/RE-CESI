@@ -20,6 +20,7 @@ import { FiBookmark, FiCalendar, FiChevronDown, FiChevronUp, FiFileText, FiHome,
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { navigateTo } from "@/shared/lib/navigation/navigateTo";
 import { AppIcon } from "@/shared/ui/icons/AppIcon";
+import { AccessibilityModeToggle } from "@/shared/ui/site/AccessibilityModeToggle";
 import { GovernmentBrand } from "@/shared/ui/site/GovernmentBrand";
 
 interface SiteHeaderProps {
@@ -263,6 +264,8 @@ function MobileNavigation({
         <MobileHeaderLink href={item.href} icon={item.icon} key={item.label} label={item.label} />
       ))}
 
+      <AccessibilityModeToggle />
+
       {variant === "authenticated" ? (
         <Box borderTop="1px solid" borderColor="canvas.200" mt={1} pt={2} w="100%">
           <Button
@@ -365,6 +368,12 @@ export function SiteHeader({ variant = "public" }: SiteHeaderProps) {
         <Collapse animateOpacity in={isOpen}>
           <MobileNavigation canAccessAdminDashboard={canAccessAdminDashboard} onSignOut={handleSignOut} userLabel={userLabel} variant={variant} />
         </Collapse>
+      </Show>
+
+      <Show above="lg">
+        <Box maxW="320px" ml="auto" mt={4}>
+          <AccessibilityModeToggle compact />
+        </Box>
       </Show>
     </Box>
   );

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Articles.EditArticlePage"
+             Title="Modifier article"
+             BackgroundColor="#F4F1EC"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Resources>
+        <Style x:Key="SectionCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style x:Key="FieldLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+        <Style x:Key="InputBorderStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="White" />
+            <Setter Property="Stroke" Value="#111111" />
+            <Setter Property="StrokeThickness" Value="1.2" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+        </Style>
+        <Style x:Key="InputTextStyle" TargetType="InputView">
+            <Setter Property="TextColor" Value="#111111" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="PlaceholderColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="PickerTextStyle" TargetType="Picker">
+            <Setter Property="TextColor" Value="#111111" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TitleColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="BackgroundColor" Value="#2E2AA5" />
+            <Setter Property="FontFamily" Value="OpenSansSemibold" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Padding" Value="18,12" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="1100"
+                             Spacing="24"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='34,24,34,36', Default='48,28,48,44'}">
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='18', Tablet='22', Default='24'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Modifier un article"
+                           Style="{StaticResource Headline}"
+                           FontSize="{OnIdiom Phone='28', Default='34'}"
+                           TextColor="#1E1C44" />
+                    <Label Text="Mets a jour le titre, la categorie, le texte et les images si besoin."
+                           Style="{StaticResource SectionCaptionStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='18', Tablet='22', Default='26'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 24">
+                <VerticalStackLayout Spacing="18">
+                    <Grid ColumnDefinitions="{OnIdiom Phone='*', Default='*,*'}"
+                          ColumnSpacing="18"
+                          RowSpacing="16">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Titre (max 50 caracteres)"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Entry x:Name="TitleEntry"
+                                       Placeholder="Titre de l'article"
+                                       MaxLength="50"
+                                       TextChanged="OnTitleChanged"
+                                       Style="{StaticResource InputTextStyle}" />
+                            </Border>
+                            <Label x:Name="TitleCounterLabel"
+                                   Text="0/50"
+                                   Style="{StaticResource SectionCaptionStyle}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="{OnIdiom Phone='0', Default='1'}"
+                                             Grid.Row="{OnIdiom Phone='1', Default='0'}"
+                                             Spacing="8">
+                            <Label Text="Visibilite" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Picker x:Name="VisibilityPicker" Title="Choisir une visibilite" Style="{StaticResource PickerTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Categorie" Style="{StaticResource FieldLabelStyle}" />
+                        <Border Style="{StaticResource InputBorderStyle}">
+                            <Picker x:Name="CategoryPicker"
+                                    Title="Choisir une categorie"
+                                    ItemsSource="{Binding Categories}"
+                                    ItemDisplayBinding="{Binding Name}"
+                                    Style="{StaticResource PickerTextStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Description (max 5000 caracteres)" Style="{StaticResource FieldLabelStyle}" />
+                        <Border Style="{StaticResource InputBorderStyle}" Padding="12,10">
+                            <Editor x:Name="DescriptionEditor" Placeholder="Resume de l'article" AutoSize="TextChanges" MaxLength="5000" HeightRequest="160" Style="{StaticResource InputTextStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Contenu" Style="{StaticResource FieldLabelStyle}" />
+                        <Border Style="{StaticResource InputBorderStyle}" Padding="12,10">
+                            <Editor x:Name="ContentEditor" Placeholder="Ecris ton article ici..." AutoSize="TextChanges" HeightRequest="260" Style="{StaticResource InputTextStyle}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Nouvelles images" Style="{StaticResource FieldLabelStyle}" />
+                        <Label Text="Si tu ajoutes de nouvelles images, elles remplaceront les images actuelles."
+                               Style="{StaticResource SectionCaptionStyle}" />
+                        <Button x:Name="PickImagesButton" Text="Remplacer les images" Clicked="OnPickImagesClicked" Style="{StaticResource PrimaryButtonStyle}" />
+                        <CollectionView x:Name="SelectedImagesView" HeightRequest="140" IsVisible="False" SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BackgroundColor="#F8F5F2" Padding="10" Stroke="#111111" StrokeShape="RoundRectangle 12">
+                                        <VerticalStackLayout Spacing="4">
+                                            <Label Text="{Binding FileName}" TextColor="#111111" FontAttributes="Bold" LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding Description}" Style="{StaticResource SectionCaptionStyle}" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <VerticalStackLayout x:Name="DefaultImageContainer" IsVisible="False" Spacing="8">
+                            <Label Text="Image par defaut" Style="{StaticResource FieldLabelStyle}" />
+                            <Border Style="{StaticResource InputBorderStyle}">
+                                <Picker x:Name="DefaultImagePicker"
+                                        Title="Choisir l'image par defaut"
+                                        ItemsSource="{Binding DefaultImageOptions}"
+                                        ItemDisplayBinding="{Binding Label}"
+                                        SelectedIndexChanged="OnDefaultImageChanged"
+                                        Style="{StaticResource PickerTextStyle}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <Button x:Name="SaveButton" Text="Enregistrer les modifications" Clicked="OnSaveClicked" Style="{StaticResource PrimaryButtonStyle}" />
+
+                    <Border BackgroundColor="#F8F5F2" Padding="14" Stroke="#111111" StrokeShape="RoundRectangle 16">
+                        <Label x:Name="StatusLabel" Text="Chargement de l'article..." LineBreakMode="WordWrap" Style="{StaticResource SectionCaptionStyle}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

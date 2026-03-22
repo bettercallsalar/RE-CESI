@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Profile.UserProfilePage"
+             Title="Profil public"
+             BackgroundColor="#F4F1EC">
+
+    <ContentPage.Resources>
+        <Style x:Key="SectionCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1E1C44" />
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+
+        <Style x:Key="CardTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#1D1B43" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="LineBreakMode" Value="TailTruncation" />
+            <Setter Property="MaxLines" Value="2" />
+        </Style>
+
+        <Style x:Key="CardMetaStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#59567A" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style x:Key="CardSummaryStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#343052" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="MaxLines" Value="4" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="1080"
+                             Spacing="22"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='30,24,30,34', Default='36,28,36,40'}">
+
+            <Border BackgroundColor="White"
+                    Padding="22"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 26">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Profil public"
+                           Style="{StaticResource Headline}"
+                           FontSize="{OnIdiom Phone='28', Default='34'}"
+                           TextColor="#1E1C44" />
+                    <Label x:Name="DisplayNameLabel"
+                           FontSize="28"
+                           FontAttributes="Bold"
+                           TextColor="#2E2AA5" />
+                    <Label x:Name="UsernameLabel"
+                           Style="{StaticResource SectionCaptionStyle}" />
+
+                    <HorizontalStackLayout Spacing="12">
+                        <Button x:Name="FollowButton"
+                                Text="Suivre"
+                                Clicked="OnFollowClicked" />
+                        <ActivityIndicator x:Name="LoadingIndicator"
+                                           IsVisible="False"
+                                           IsRunning="False"
+                                           VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <Label x:Name="FollowHintLabel"
+                           Style="{StaticResource SectionCaptionStyle}" />
+                    <Label x:Name="StatusLabel"
+                           Style="{StaticResource SectionCaptionStyle}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="12">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="16">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Articles publics"
+                               Style="{StaticResource SectionTitleStyle}" />
+                        <Label x:Name="ArticlesSummaryLabel"
+                               Text="Chargement des articles..."
+                               Style="{StaticResource SectionCaptionStyle}" />
+                    </VerticalStackLayout>
+
+                    <Button x:Name="ViewAllArticlesButton"
+                            Grid.Column="1"
+                            Text="Voir tout"
+                            Clicked="OnViewAllClicked" />
+                </Grid>
+
+                <Grid IsClippedToBounds="True">
+                    <CarouselView x:Name="ArticlesCarousel"
+                                  HeightRequest="{OnIdiom Phone='340', Tablet='380', Default='390'}"
+                                  IndicatorView="ArticlesIndicator"
+                                  IsBounceEnabled="False"
+                                  Loop="False"
+                                  PeekAreaInsets="0">
+                        <CarouselView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="{OnIdiom Phone='6,0', Tablet='20,0', Default='36,0'}">
+                                    <Border BackgroundColor="White"
+                                            Stroke="#E3DDD6"
+                                            StrokeShape="RoundRectangle 26"
+                                            WidthRequest="{OnIdiom Phone='308', Tablet='520', Default='720'}"
+                                            HorizontalOptions="Center">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnArticleTapped" />
+                                        </Border.GestureRecognizers>
+                                        <VerticalStackLayout Padding="22"
+                                                             Spacing="10">
+                                            <Border BackgroundColor="#2E2AA5"
+                                                    HorizontalOptions="Start"
+                                                    Padding="10,4"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 12">
+                                                <Label Text="Article public"
+                                                       FontSize="12"
+                                                       FontAttributes="Bold"
+                                                       TextColor="White" />
+                                            </Border>
+
+                                            <Label Text="{Binding Title}"
+                                                   Style="{StaticResource CardTitleStyle}" />
+                                            <Label Text="{Binding Subtitle}"
+                                                   Style="{StaticResource CardMetaStyle}" />
+                                            <Label Text="{Binding Meta}"
+                                                   Style="{StaticResource CardMetaStyle}" />
+                                            <Label Text="{Binding Summary}"
+                                                   Style="{StaticResource CardSummaryStyle}" />
+                                            <Button Text="Lire l'article"
+                                                    HorizontalOptions="End"
+                                                    Clicked="OnArticleOpenClicked" />
+                                        </VerticalStackLayout>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </CarouselView.ItemTemplate>
+                    </CarouselView>
+
+                    <Border x:Name="ArticlesEmptyState"
+                            IsVisible="False"
+                            BackgroundColor="#F8F5F2"
+                            Stroke="#DFD9D2"
+                            StrokeShape="RoundRectangle 24"
+                            Padding="24">
+                        <Label Text="Aucun article public disponible pour ce profil."
+                               HorizontalTextAlignment="Center"
+                               Style="{StaticResource CardSummaryStyle}" />
+                    </Border>
+                </Grid>
+
+                <IndicatorView x:Name="ArticlesIndicator"
+                               HorizontalOptions="Center"
+                               IndicatorSize="10"
+                               IsVisible="False" />
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

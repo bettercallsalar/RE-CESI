@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RESR.MAUI.Pages.Information.InformationPage"
+             Title="Informations"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F4F1EC">
+
+    <ContentPage.Resources>
+        <Style x:Key="PageTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#201B66" />
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+
+        <Style x:Key="PageCaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#6A678A" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#201B66" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontAttributes" Value="Bold" />
+        </Style>
+
+        <Style x:Key="BodyTextStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#343052" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+
+        <Style x:Key="MetaTextStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="#59567A" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout HorizontalOptions="Center"
+                             MaximumWidthRequest="920"
+                             Padding="{OnIdiom Phone='20,18,20,28', Tablet='30,24,30,34', Default='36,26,36,40'}"
+                             Spacing="18">
+
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='16', Default='22'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 24">
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="14">
+                    <Button Clicked="OnBackClicked"
+                            Text="Retour" />
+
+                    <VerticalStackLayout Grid.Column="1"
+                                         Spacing="4">
+                        <Label x:Name="PageTitleLabel"
+                               Style="{StaticResource PageTitleStyle}" />
+                        <Label x:Name="PageCaptionLabel"
+                               Style="{StaticResource PageCaptionStyle}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Border BackgroundColor="White"
+                    Padding="{OnIdiom Phone='14,12', Default='18,14'}"
+                    Stroke="#E5E0DA"
+                    StrokeShape="RoundRectangle 20">
+                <Label x:Name="UpdatedAtLabel"
+                       Style="{StaticResource MetaTextStyle}" />
+            </Border>
+
+            <VerticalStackLayout x:Name="SectionsContainer"
+                                 Spacing="16" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

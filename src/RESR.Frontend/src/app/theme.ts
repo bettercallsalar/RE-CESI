@@ -6,34 +6,44 @@ export const theme = extendTheme({
     body: "'Avenir Next', 'Trebuchet MS', sans-serif"
   },
   colors: {
+    white: "var(--color-surface-base)",
     brand: {
-      50: "#342B9A",
-      100: "#342B9A",
-      200: "#342B9A",
-      300: "#342B9A",
-      400: "#342B9A",
-      500: "#342B9A",
-      600: "#342B9A",
-      700: "#342B9A",
-      800: "#342B9A",
-      900: "#342B9A"
+      50: "var(--color-brand-500)",
+      100: "var(--color-brand-500)",
+      200: "var(--color-brand-500)",
+      300: "var(--color-brand-500)",
+      400: "var(--color-brand-500)",
+      500: "var(--color-brand-500)",
+      600: "var(--color-brand-500)",
+      700: "var(--color-brand-500)",
+      800: "var(--color-brand-500)",
+      900: "var(--color-brand-500)"
     },
     ink: {
-      50: "#2C2C2C",
-      100: "#2C2C2C",
-      200: "#2C2C2C",
-      300: "#2C2C2C",
-      400: "#2C2C2C",
-      500: "#2C2C2C",
-      600: "#2C2C2C",
-      700: "#2C2C2C",
-      800: "#2C2C2C",
-      900: "#2C2C2C"
+      50: "var(--color-ink-500)",
+      100: "var(--color-ink-500)",
+      200: "var(--color-ink-500)",
+      300: "var(--color-ink-500)",
+      400: "var(--color-ink-500)",
+      500: "var(--color-ink-500)",
+      600: "var(--color-ink-600)",
+      700: "var(--color-ink-700)",
+      800: "var(--color-ink-800)",
+      900: "var(--color-ink-900)"
     },
     canvas: {
-      50: "#FFFFFF",
-      100: "#FFFFFF",
-      200: "#D7D7D7"
+      50: "var(--color-canvas-50)",
+      100: "var(--color-canvas-100)",
+      200: "var(--color-canvas-200)",
+      300: "var(--color-canvas-300)"
+    },
+    surface: {
+      base: "var(--color-surface-base)",
+      muted: "var(--color-surface-muted)",
+      strong: "var(--color-surface-strong)",
+      onAccent: "var(--color-on-accent)",
+      onStrong: "var(--color-on-strong)",
+      onCritical: "var(--color-on-critical)"
     }
   },
   styles: {
@@ -43,7 +53,7 @@ export const theme = extendTheme({
         color: "ink.800"
       },
       "*:focus-visible": {
-        outline: "3px solid #342B9A",
+        outline: "3px solid var(--color-focus-ring)",
         outlineOffset: "2px"
       }
     }
@@ -62,7 +72,7 @@ export const theme = extendTheme({
       variants: {
         solid: {
           bg: "brand.500",
-          color: "white",
+          color: "surface.onAccent",
           _disabled: {
             bg: "canvas.200",
             color: "ink.800",
@@ -76,7 +86,7 @@ export const theme = extendTheme({
         ghost: {
           color: "brand.500",
           _hover: {
-            bg: "white"
+            bg: "canvas.100"
           }
         },
         outline: {
@@ -84,7 +94,7 @@ export const theme = extendTheme({
           color: "brand.500",
           bg: "white",
           _hover: {
-            bg: "white"
+            bg: "canvas.100"
           }
         }
       }
@@ -116,7 +126,7 @@ export const theme = extendTheme({
           },
           _focusVisible: {
             borderColor: "brand.500",
-            boxShadow: "0 0 0 1px #342B9A"
+            boxShadow: "0 0 0 1px var(--color-brand-500)"
           }
         }
       }
@@ -135,7 +145,7 @@ export const theme = extendTheme({
           },
           _focusVisible: {
             borderColor: "brand.500",
-            boxShadow: "0 0 0 1px #342B9A"
+            boxShadow: "0 0 0 1px var(--color-brand-500)"
           }
         },
         icon: {
@@ -159,7 +169,7 @@ export const theme = extendTheme({
         },
         _focusVisible: {
           borderColor: "brand.500",
-          boxShadow: "0 0 0 1px #342B9A"
+          boxShadow: "0 0 0 1px var(--color-brand-500)"
         }
       }
     }

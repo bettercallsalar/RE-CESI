@@ -155,7 +155,7 @@ export function ArticleDetailPage({ idResource }: ArticleDetailPageProps) {
                     <Button
                       _hover={{ bg: "#9B2C2C" }}
                       bg="#C53030"
-                      color="white"
+                      color="surface.onCritical"
                       isDisabled={isUpdatingApproval}
                       onClick={unapproveDialog.onOpen}
                     >

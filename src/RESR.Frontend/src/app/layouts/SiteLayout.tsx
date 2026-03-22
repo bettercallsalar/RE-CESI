@@ -15,7 +15,7 @@ export function SiteLayout({ children, intro, headerVariant = "public" }: SiteLa
         <Box marginInline="auto" maxW="1520px">
           <Link
             bg="brand.500"
-            color="white"
+            color="surface.onAccent"
             fontSize="15px"
             fontWeight="700"
             href="#main-content"

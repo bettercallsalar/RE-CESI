@@ -22,9 +22,14 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { FollowingFeedPage } from "@/features/follows/pages/FollowingFeedPage";
 import { ReadLaterPage } from "@/features/marks/pages/ReadLaterPage";
+import { AccessibilityPage } from "@/pages/AccessibilityPage";
+import { ContactPage } from "@/pages/ContactPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { UserProfilePage } from "@/features/profile/pages/UserProfilePage";
 import { HomePage } from "@/pages/HomePage";
+import { LegalNoticePage } from "@/pages/LegalNoticePage";
+import { PrivacyCookiesPage } from "@/pages/PrivacyCookiesPage";
+import { TermsOfUsePage } from "@/pages/TermsOfUsePage";
 import { PermissionNames } from "@/shared/lib/auth/permissionNames";
 import { AppLoader } from "@/shared/ui/AppLoader";
 
@@ -294,6 +299,26 @@ function App() {
     }
 
     return <RegisterPage />;
+  }
+
+  if (pathname === "/mentions-legales") {
+    return <LegalNoticePage />;
+  }
+
+  if (pathname === "/accessibilite") {
+    return <AccessibilityPage />;
+  }
+
+  if (pathname === "/contact" || pathname === "/contacts") {
+    return <ContactPage />;
+  }
+
+  if (pathname === "/donnees-personnelles-cookies") {
+    return <PrivacyCookiesPage />;
+  }
+
+  if (pathname === "/conditions-generales-utilisation" || pathname === "/cgu") {
+    return <TermsOfUsePage />;
   }
 
   if (pathname === "/articles") {

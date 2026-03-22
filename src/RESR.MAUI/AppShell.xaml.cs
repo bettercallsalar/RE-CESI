@@ -1,7 +1,9 @@
-using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Articles;
+using RESR.MAUI.Pages.Auth;
 using RESR.MAUI.Pages.Events;
 using RESR.MAUI.Pages.Home;
+using RESR.MAUI.Pages.Marks;
+using RESR.MAUI.Pages.Information;
 using RESR.MAUI.Pages.Profile;
 
 namespace RESR.MAUI;
@@ -15,10 +17,18 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
 		Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
 		Routing.RegisterRoute(nameof(ProfilePage), typeof(ProfilePage));
+		Routing.RegisterRoute(nameof(UserProfilePage), typeof(UserProfilePage));
 		Routing.RegisterRoute(nameof(CreateArticlePage), typeof(CreateArticlePage));
+		Routing.RegisterRoute(nameof(EditArticlePage), typeof(EditArticlePage));
 		Routing.RegisterRoute(nameof(ArticleDetailPage), typeof(ArticleDetailPage));
 		Routing.RegisterRoute(nameof(ArticlesPage), typeof(ArticlesPage));
+		Routing.RegisterRoute(nameof(UserArticlesPage), typeof(UserArticlesPage));
 		Routing.RegisterRoute(nameof(EventsPage), typeof(EventsPage));
+		Routing.RegisterRoute(nameof(EventDetailPage), typeof(EventDetailPage));
+		Routing.RegisterRoute(nameof(CreateEventPage), typeof(CreateEventPage));
+		Routing.RegisterRoute(nameof(EditEventPage), typeof(EditEventPage));
+		Routing.RegisterRoute(nameof(MarkResourcesPage), typeof(MarkResourcesPage));
+		Routing.RegisterRoute(nameof(InformationPage), typeof(InformationPage));
 
 		Items.Add(new ShellContent
 		{
@@ -28,4 +38,3 @@ public partial class AppShell : Shell
 		});
 	}
 }
-

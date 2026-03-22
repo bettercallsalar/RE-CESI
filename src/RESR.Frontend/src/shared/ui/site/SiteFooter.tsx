@@ -3,6 +3,7 @@ import { Box, HStack, Link, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 function SocialBadge({ label }: { label: string }) {
   return (
     <Box
+      aria-hidden="true"
       alignItems="center"
       border="1px solid"
       borderColor="brand.500"
@@ -40,16 +41,19 @@ export function SiteFooter() {
         <Text color="brand.500" fontSize={{ base: "15px", md: "16px" }} fontWeight="700">
           Légal & Contact
         </Text>
-        <Link color="brand.500" fontSize={{ base: "14px", md: "15px" }} minH="32px">
+        <Link alignItems="center" color="brand.500" display="inline-flex" fontSize={{ base: "14px", md: "15px" }} href="/mentions-legales" minH="44px">
           Mentions légales
         </Link>
-        <Link color="brand.500" fontSize={{ base: "14px", md: "15px" }} minH="32px">
+        <Link alignItems="center" color="brand.500" display="inline-flex" fontSize={{ base: "14px", md: "15px" }} href="/accessibilite" minH="44px">
+          Accessibilité
+        </Link>
+        <Link alignItems="center" color="brand.500" display="inline-flex" fontSize={{ base: "14px", md: "15px" }} href="/donnees-personnelles-cookies" minH="44px">
           Données personnelles et cookies
         </Link>
-        <Link color="brand.500" fontSize={{ base: "14px", md: "15px" }} minH="32px">
+        <Link alignItems="center" color="brand.500" display="inline-flex" fontSize={{ base: "14px", md: "15px" }} href="/conditions-generales-utilisation" minH="44px">
           Conditions générales d'utilisation
         </Link>
-        <Link color="brand.500" fontSize={{ base: "14px", md: "15px" }} minH="32px">
+        <Link alignItems="center" color="brand.500" display="inline-flex" fontSize={{ base: "14px", md: "15px" }} href="/contact" minH="44px">
           Contacts
         </Link>
       </Stack>
