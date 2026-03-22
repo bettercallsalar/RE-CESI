@@ -46,7 +46,7 @@ public sealed class MarksApiClient : IMarksApiClient
     {
         return await SendForPayloadAsync(
             () => _httpClient.PostAsync($"api/marks/favorite/{idResource}", content: null, ct),
-            "Favori cree mais reponse vide.",
+            "Le favori a ete enregistre, mais la reponse du serveur est invalide.",
             ct);
     }
 
@@ -59,7 +59,7 @@ public sealed class MarksApiClient : IMarksApiClient
     {
         return await SendForPayloadAsync(
             () => _httpClient.PostAsync($"api/marks/readLater/{idResource}", content: null, ct),
-            "Read later cree mais reponse vide.",
+            "La lecture differeree a ete enregistree, mais la reponse du serveur est invalide.",
             ct);
     }
 
@@ -76,18 +76,11 @@ public sealed class MarksApiClient : IMarksApiClient
             using var response = await _httpClient.DeleteAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -102,20 +95,13 @@ public sealed class MarksApiClient : IMarksApiClient
                 return null;
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             return await response.Content.ReadFromJsonAsync<MarkResponse>(cancellationToken: ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -127,21 +113,14 @@ public sealed class MarksApiClient : IMarksApiClient
             using var response = await _httpClient.GetAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken: ct);
             return payload ?? fallback;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -156,21 +135,14 @@ public sealed class MarksApiClient : IMarksApiClient
             using var response = await action();
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var payload = await response.Content.ReadFromJsonAsync<MarkResponse>(cancellationToken: ct);
-            return payload ?? throw new ApiException(response.StatusCode, emptyPayloadMessage);
+            return payload ?? throw ApiClientErrors.InvalidResponse(response.StatusCode, emptyPayloadMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

@@ -126,6 +126,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         StatusLabel.Text = "Chargement de l'article...";
         HeaderCaptionLabel.Text = "Chargement du contenu...";
         ArticleContentLayout.IsVisible = false;
+        ResetArticleImage();
         MarksCard.IsVisible = false;
         ReactionsCard.IsVisible = false;
         CommentsCard.IsVisible = false;
@@ -161,21 +162,21 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         catch (ApiException ex)
         {
             HeaderCaptionLabel.Text = "Erreur de chargement";
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible d'afficher l'article pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            HeaderCaptionLabel.Text = "Temps depasse";
-            StatusLabel.Text = ex.Message;
+            HeaderCaptionLabel.Text = "Service indisponible";
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Chargement annule.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             HeaderCaptionLabel.Text = "Erreur inattendue";
-            StatusLabel.Text = $"Impossible d'afficher l'article : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible d'afficher l'article pour le moment.");
         }
         finally
         {
@@ -210,6 +211,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         TitleLabel.Text = article.Title;
         DescriptionLabel.Text = Normalize(article.Description);
         DescriptionLabel.IsVisible = !string.IsNullOrWhiteSpace(DescriptionLabel.Text);
+        ApplyArticleImage(article);
         ContentLabel.Text = Normalize(article.Content);
         AuthorButton.Text = BuildAuthorLabel(article);
         MetaLabel.Text = BuildMetaLabel(article);
@@ -220,6 +222,30 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _currentUserId.Value == article.IdUser;
         EditArticleButton.IsVisible = canManageArticle;
         DeleteArticleButton.IsVisible = canManageArticle;
+    }
+
+    private void ApplyArticleImage(ArticleResponse article)
+    {
+        var imageUri = ApiEndpoints.ResolvePreferredImageUri(article.Files, article.DefaultImageId);
+        if (imageUri is null)
+        {
+            ResetArticleImage();
+            return;
+        }
+
+        ArticleImage.Source = new UriImageSource
+        {
+            Uri = imageUri,
+            CachingEnabled = true,
+            CacheValidity = TimeSpan.FromHours(12)
+        };
+        ArticleImageContainer.IsVisible = true;
+    }
+
+    private void ResetArticleImage()
+    {
+        ArticleImage.Source = null;
+        ArticleImageContainer.IsVisible = false;
     }
 
     private static string BuildAuthorLabel(ArticleResponse article)
@@ -291,9 +317,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         {
             await Shell.Current.GoToAsync(route);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -331,22 +357,22 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _isReadLater = false;
             ApplyMarkButtonState(FavoriteButton, false);
             ApplyMarkButtonState(ReadLaterButton, false);
-            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible d'afficher vos enregistrements pour le moment.");
             UpdateMarkControlsState();
         }
         catch (TimeoutException ex)
         {
-            MarkStatusLabel.Text = ex.Message;
+            MarkStatusLabel.Text = UserFeedback.FromTimeout(ex);
             UpdateMarkControlsState();
         }
         catch (OperationCanceledException)
         {
-            MarkStatusLabel.Text = "Chargement des marks annule.";
+            MarkStatusLabel.Text = string.Empty;
             UpdateMarkControlsState();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            MarkStatusLabel.Text = $"Impossible d'afficher les marks : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromUnexpected("Impossible d'afficher vos enregistrements pour le moment.");
             UpdateMarkControlsState();
         }
         finally
@@ -379,28 +405,28 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _reactions = Array.Empty<ReactionResponse>();
             _currentUserReaction = null;
             ApplyReactionCounters();
-            ReactionsSummaryLabel.Text = "Impossible de charger les reactions.";
-            ReactionsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            ReactionsSummaryLabel.Text = "Les reactions sont indisponibles pour le moment.";
+            ReactionsStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les reactions pour le moment.");
         }
         catch (TimeoutException ex)
         {
             _reactions = Array.Empty<ReactionResponse>();
             _currentUserReaction = null;
             ApplyReactionCounters();
-            ReactionsSummaryLabel.Text = "Chargement interrompu.";
-            ReactionsStatusLabel.Text = ex.Message;
+            ReactionsSummaryLabel.Text = "Les reactions sont indisponibles pour le moment.";
+            ReactionsStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            ReactionsStatusLabel.Text = "Chargement des reactions annule.";
+            ReactionsStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _reactions = Array.Empty<ReactionResponse>();
             _currentUserReaction = null;
             ApplyReactionCounters();
-            ReactionsSummaryLabel.Text = "Erreur inattendue.";
-            ReactionsStatusLabel.Text = $"Impossible d'afficher les reactions : {TrimMessage(ex.Message)}";
+            ReactionsSummaryLabel.Text = "Les reactions sont indisponibles pour le moment.";
+            ReactionsStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les reactions pour le moment.");
         }
         finally
         {
@@ -415,9 +441,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         var loveCount = CountReactions(ReactionNames.Love);
         var totalCount = _reactions.Count;
 
-        LikeButton.Text = $"{LikeEmoji} Like ({likeCount})";
-        DislikeButton.Text = $"{DislikeEmoji} Dislike ({dislikeCount})";
-        LoveButton.Text = $"{LoveEmoji} Love ({loveCount})";
+        LikeButton.Text = $"{LikeEmoji} J'aime ({likeCount})";
+        DislikeButton.Text = $"{DislikeEmoji} Je n'aime pas ({dislikeCount})";
+        LoveButton.Text = $"{LoveEmoji} J'adore ({loveCount})";
 
         ReactionsSummaryLabel.Text = totalCount == 0
             ? "Aucune reaction pour le moment."
@@ -462,7 +488,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
 
         if (_currentUserReaction is not null)
         {
-            ReactionsStatusLabel.Text = $"Votre reaction actuelle : {_currentUserReaction.Name}.";
+            ReactionsStatusLabel.Text = $"Reaction selectionnee : {FormatReactionName(_currentUserReaction.Name)}.";
             return;
         }
 
@@ -549,28 +575,28 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             _comments = Array.Empty<CommentResponse>();
             _visibleCommentItems.Clear();
             NoCommentsLabel.IsVisible = false;
-            CommentsSummaryLabel.Text = "Impossible de charger les commentaires.";
-            CommentsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            CommentsSummaryLabel.Text = "Les commentaires sont indisponibles pour le moment.";
+            CommentsStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de charger les commentaires pour le moment.");
         }
         catch (TimeoutException ex)
         {
             _comments = Array.Empty<CommentResponse>();
             _visibleCommentItems.Clear();
             NoCommentsLabel.IsVisible = false;
-            CommentsSummaryLabel.Text = "Chargement interrompu.";
-            CommentsStatusLabel.Text = ex.Message;
+            CommentsSummaryLabel.Text = "Les commentaires sont indisponibles pour le moment.";
+            CommentsStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            CommentsStatusLabel.Text = "Chargement des commentaires annule.";
+            CommentsStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             _comments = Array.Empty<CommentResponse>();
             _visibleCommentItems.Clear();
             NoCommentsLabel.IsVisible = false;
-            CommentsSummaryLabel.Text = "Erreur inattendue.";
-            CommentsStatusLabel.Text = $"Impossible d'afficher les commentaires : {TrimMessage(ex.Message)}";
+            CommentsSummaryLabel.Text = "Les commentaires sont indisponibles pour le moment.";
+            CommentsStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de charger les commentaires pour le moment.");
         }
         finally
         {
@@ -775,7 +801,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
 
         _replyToCommentId = item.IdComment;
-        CommentsStatusLabel.Text = "Reponse preparee.";
+        CommentsStatusLabel.Text = string.Empty;
         UpdateCommentComposerState();
         MainThread.BeginInvokeOnMainThread(() => CommentEditor.Focus());
     }
@@ -783,7 +809,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
     private void OnCancelReplyClicked(object? sender, EventArgs e)
     {
         _replyToCommentId = null;
-        CommentsStatusLabel.Text = "Mode reponse annule.";
+        CommentsStatusLabel.Text = string.Empty;
         UpdateCommentComposerState();
     }
 
@@ -832,19 +858,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            CommentsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            CommentsStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de publier le commentaire pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            CommentsStatusLabel.Text = ex.Message;
+            CommentsStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            CommentsStatusLabel.Text = "Publication annulee.";
+            CommentsStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            CommentsStatusLabel.Text = $"Impossible de publier le commentaire : {TrimMessage(ex.Message)}";
+            CommentsStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de publier le commentaire pour le moment.");
         }
         finally
         {
@@ -907,7 +933,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
                 string.Equals(_currentUserReaction.Name, normalized, StringComparison.OrdinalIgnoreCase))
             {
                 await _reactionsApiClient.DeleteAsync(_currentUserReaction.IdReaction, _reactionActionCts.Token);
-                ReactionsStatusLabel.Text = $"Reaction {normalized} retiree.";
+                ReactionsStatusLabel.Text = "Reaction retiree.";
             }
             else if (_currentUserReaction is not null)
             {
@@ -915,7 +941,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
                     _currentUserReaction.IdReaction,
                     new UpdateReactionRequest(normalized),
                     _reactionActionCts.Token);
-                ReactionsStatusLabel.Text = $"Reaction mise a jour : {normalized}.";
+                ReactionsStatusLabel.Text = "Reaction mise a jour.";
             }
             else
             {
@@ -923,26 +949,26 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
                     _article.IdResource,
                     new CreateReactionRequest(normalized),
                     _reactionActionCts.Token);
-                ReactionsStatusLabel.Text = $"Reaction ajoutee : {normalized}.";
+                ReactionsStatusLabel.Text = "Reaction enregistree.";
             }
 
             await LoadReactionsAsync(_article.IdResource, _reactionActionCts.Token);
         }
         catch (ApiException ex)
         {
-            ReactionsStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            ReactionsStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de mettre a jour la reaction pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            ReactionsStatusLabel.Text = ex.Message;
+            ReactionsStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            ReactionsStatusLabel.Text = "Action sur les reactions annulee.";
+            ReactionsStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            ReactionsStatusLabel.Text = $"Impossible de mettre a jour la reaction : {TrimMessage(ex.Message)}";
+            ReactionsStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de mettre a jour la reaction pour le moment.");
         }
         finally
         {
@@ -980,19 +1006,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de mettre a jour vos favoris pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            MarkStatusLabel.Text = ex.Message;
+            MarkStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            MarkStatusLabel.Text = "Action sur les favoris annulee.";
+            MarkStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            MarkStatusLabel.Text = $"Impossible de mettre a jour les favoris : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de mettre a jour vos favoris pour le moment.");
         }
         finally
         {
@@ -1030,19 +1056,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            MarkStatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de mettre a jour votre liste lire plus tard pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            MarkStatusLabel.Text = ex.Message;
+            MarkStatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            MarkStatusLabel.Text = "Action sur les marks annulee.";
+            MarkStatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            MarkStatusLabel.Text = $"Impossible de mettre a jour les marks : {TrimMessage(ex.Message)}";
+            MarkStatusLabel.Text = UserFeedback.FromUnexpected("Impossible de mettre a jour votre liste lire plus tard pour le moment.");
         }
         finally
         {
@@ -1063,7 +1089,7 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             return;
         }
 
-        var shouldDelete = await DisplayAlert(
+        var shouldDelete = await DisplayAlertAsync(
             "Supprimer l'article",
             "Voulez-vous vraiment supprimer cet article ? Cette action est irreversible.",
             "Supprimer",
@@ -1086,19 +1112,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         }
         catch (ApiException ex)
         {
-            StatusLabel.Text = $"Erreur API ({(int)ex.StatusCode}) : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Impossible de supprimer l'article pour le moment.");
         }
         catch (TimeoutException ex)
         {
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Suppression annulee.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Impossible de supprimer l'article : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Impossible de supprimer l'article pour le moment.");
         }
         finally
         {
@@ -1124,9 +1150,9 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
             await Shell.Current.GoToAsync(
                 $"{nameof(EditArticlePage)}?idResource={_article.IdResource}&useOwnAccess={_useOwnAccess.ToString().ToLowerInvariant()}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusLabel.Text = $"Navigation impossible : {TrimMessage(ex.Message)}";
+            StatusLabel.Text = UserFeedback.NavigationError;
         }
     }
 
@@ -1160,6 +1186,19 @@ public partial class ArticleDetailPage : ContentPage, IQueryAttributable
         return normalized.Length <= 180
             ? normalized
             : normalized[..177].TrimEnd() + "...";
+    }
+
+    private static string FormatReactionName(string? reactionName)
+    {
+        var normalized = reactionName?.Trim().ToLowerInvariant();
+
+        return normalized switch
+        {
+            ReactionNames.Like => "J'aime",
+            ReactionNames.Dislike => "Je n'aime pas",
+            ReactionNames.Love => "J'adore",
+            _ => "Reaction"
+        };
     }
 
     private sealed record CommentThreadItem(

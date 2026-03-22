@@ -24,21 +24,14 @@ public sealed class FollowsApiClient : IFollowsApiClient
             using var response = await _httpClient.GetAsync($"api/follows/me/following/{idFollowing}", ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             var state = await response.Content.ReadFromJsonAsync<FollowStateResponse>(cancellationToken: ct);
             return state?.IsFollowing ?? false;
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -51,18 +44,11 @@ public sealed class FollowsApiClient : IFollowsApiClient
             using var response = await _httpClient.PostAsync($"api/follows/{idFollowing}", content: null, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -75,18 +61,11 @@ public sealed class FollowsApiClient : IFollowsApiClient
             using var response = await _httpClient.DeleteAsync($"api/follows/{idFollowing}", ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(content)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : content;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

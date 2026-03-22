@@ -87,12 +87,14 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
             VisibilityPicker.SelectedItem = article.Visibility;
             CategoryPicker.SelectedItem = Categories.FirstOrDefault(c => c.IdCategory == article.IdCategory);
             UpdateTitleCounter();
-            StatusLabel.Text = "Mets a jour les champs puis enregistre.";
+            StatusLabel.Text = "Mettez a jour les champs puis enregistrez.";
         }
         catch (Exception ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = ex is ApiException apiEx ? apiEx.Message : $"Chargement impossible: {ex.Message}";
+            StatusLabel.Text = ex is ApiException apiEx
+                ? UserFeedback.FromApiException(apiEx, "Impossible de charger l'article pour le moment.")
+                : UserFeedback.FromUnexpected("Impossible de charger l'article pour le moment.");
         }
     }
 
@@ -131,7 +133,7 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
             }
             if (CategoryPicker.SelectedItem is not CategoryResponse category)
             {
-                StatusLabel.Text = "Selectionne une categorie.";
+                StatusLabel.Text = "Selectionnez une categorie.";
                 return;
             }
 
@@ -148,7 +150,9 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
         catch (Exception ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = ex is ApiException apiEx ? apiEx.Message : $"Mise a jour impossible: {ex.Message}";
+            StatusLabel.Text = ex is ApiException apiEx
+                ? UserFeedback.FromApiException(apiEx, "La mise a jour de l'article a echoue.")
+                : UserFeedback.FromUnexpected("La mise a jour de l'article a echoue.");
         }
         finally
         {
@@ -185,7 +189,7 @@ public partial class EditArticlePage : ContentPage, IQueryAttributable
         catch (Exception ex)
         {
             StatusLabel.TextColor = Colors.Red;
-            StatusLabel.Text = $"Selection des images impossible: {ex.Message}";
+            StatusLabel.Text = DisplayText.FirstNonEmpty(DisplayText.ToExcerpt(ex.Message, 180), "Impossible de selectionner les images.");
         }
     }
 

@@ -18,12 +18,12 @@ public sealed class ArticlesApiClient : IArticlesApiClient
 
     public async Task<ArticleResponse> GetByIdAsync(int idResource, CancellationToken ct)
     {
-        return await GetAsync($"api/articles/{idResource}", "Article response was empty.", ct);
+        return await GetAsync($"api/articles/{idResource}", "La reponse de l'article est invalide.", ct);
     }
 
     public async Task<ArticleResponse> GetOwnByIdAsync(int idResource, CancellationToken ct)
     {
-        return await GetAsync($"api/articles/me/{idResource}", "Own article response was empty.", ct);
+        return await GetAsync($"api/articles/me/{idResource}", "La reponse de votre article est invalide.", ct);
     }
 
     private async Task<ArticleResponse> GetAsync(string uri, string emptyMessage, CancellationToken ct)
@@ -34,25 +34,18 @@ public sealed class ArticlesApiClient : IArticlesApiClient
             using var response = await _httpClient.GetAsync(uri, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(ct);
             var article = await JsonSerializer.DeserializeAsync<ArticleResponse>(
                 responseStream,
                 new JsonSerializerOptions(JsonSerializerDefaults.Web),
                 ct);
-            return article ?? throw new ApiException(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
+            return article ?? throw ApiClientErrors.InvalidResponse(System.Net.HttpStatusCode.InternalServerError, emptyMessage);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -93,18 +86,11 @@ public sealed class ArticlesApiClient : IArticlesApiClient
             using var response = await _httpClient.PostAsync("api/articles", content, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 
@@ -150,18 +136,11 @@ public sealed class ArticlesApiClient : IArticlesApiClient
             using var response = await _httpClient.SendAsync(requestMessage, ct);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync(ct);
-                var message = string.IsNullOrWhiteSpace(body)
-                    ? $"API call failed with status {(int)response.StatusCode}."
-                    : body;
-
-                throw new ApiException(response.StatusCode, message);
-            }
+                throw await ApiClientErrors.FromResponseAsync(response, ct);
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new TimeoutException("API call timed out.");
+            throw ApiClientErrors.Timeout();
         }
     }
 

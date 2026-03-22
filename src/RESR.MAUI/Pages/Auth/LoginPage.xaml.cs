@@ -56,22 +56,22 @@ public partial class LoginPage : ContentPage
         catch (ApiException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur login ({(int)ex.StatusCode}) : {DisplayText.ToExcerpt(ex.Message, 180)}";
+            StatusLabel.Text = UserFeedback.FromApiException(ex, "Connexion impossible pour le moment.");
         }
         catch (TimeoutException ex)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = ex.Message;
+            StatusLabel.Text = UserFeedback.FromTimeout(ex);
         }
         catch (OperationCanceledException)
         {
             StatusLabel.TextColor = MutedStatusColor;
-            StatusLabel.Text = "Requete annulee.";
+            StatusLabel.Text = string.Empty;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Erreur inattendue : {DisplayText.ToExcerpt(ex.Message, 180)}";
+            StatusLabel.Text = UserFeedback.FromUnexpected("Connexion impossible pour le moment.");
         }
         finally
         {
@@ -107,10 +107,10 @@ public partial class LoginPage : ContentPage
 
             await Shell.Current.GoToAsync($"//{nameof(MainPage)}");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             StatusLabel.TextColor = ErrorStatusColor;
-            StatusLabel.Text = $"Retour impossible : {DisplayText.ToExcerpt(ex.Message, 160)}";
+            StatusLabel.Text = UserFeedback.BackNavigationError;
         }
     }
 }
