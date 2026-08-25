@@ -29,3 +29,4 @@ Frontend structure:
 - `src/features/auth`: auth feature code, hooks, provider, service, page, components
 - `src/shared`: shared HTTP client, config, storage, error helpers, UI primitives, shared types
 - `src/pages`: top-level screens after authentication
+  .
