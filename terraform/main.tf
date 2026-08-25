@@ -55,12 +55,24 @@ resource "azurerm_network_security_group" "application" {
     destination_address_prefix = "*"
   }
 
+  security_rule {
+    name                       = "Https"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "Internet"
+    destination_address_prefix = "*"
+  }
+
   dynamic "security_rule" {
     for_each = var.admin_ssh_source_cidr == null ? [] : [var.admin_ssh_source_cidr]
 
     content {
       name                       = "SshFromAdministrator"
-      priority                   = 110
+      priority                   = 120
       direction                  = "Inbound"
       access                     = "Allow"
       protocol                   = "Tcp"

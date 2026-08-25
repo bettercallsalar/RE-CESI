@@ -5,6 +5,7 @@ set -eu
 readonly APP_USER="${RECESI_APP_USER:-recesi}"
 readonly APP_DIRECTORY="${RECESI_APP_DIRECTORY:-/home/recesi/recesi}"
 readonly COMPOSE_FILE="$APP_DIRECTORY/docker-compose.yml"
+readonly CADDY_FILE="$APP_DIRECTORY/Caddyfile"
 readonly ENV_FILE="$APP_DIRECTORY/.env"
 readonly COMPOSE_PROJECT_NAME="recesi"
 readonly MYSQL_DATABASE="resr"
@@ -28,8 +29,12 @@ cleanup() {
 require_inputs() {
   : "${COMPOSE_FILE_BASE64:?COMPOSE_FILE_BASE64 is required}"
   : "${COMPOSE_FILE_SHA256:?COMPOSE_FILE_SHA256 is required}"
+  : "${CADDY_FILE_BASE64:?CADDY_FILE_BASE64 is required}"
+  : "${CADDY_FILE_SHA256:?CADDY_FILE_SHA256 is required}"
   : "${IMAGE_TAG:?IMAGE_TAG is required}"
   : "${REGISTRY_OWNER:?REGISTRY_OWNER is required}"
+  : "${RECESI_DOMAIN:?RECESI_DOMAIN is required}"
+  : "${ACME_CONTACT_EMAIL:?ACME_CONTACT_EMAIL is required}"
   : "${GHCR_TOKEN:?GHCR_TOKEN is required}"
   : "${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}"
   : "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}"
@@ -45,12 +50,31 @@ validate_image_tag() {
   exit 1
 }
 
+validate_https_configuration() {
+  if printf '%s' "$RECESI_DOMAIN" | grep -Eq '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'; then
+    :
+  else
+    echo "RECESI_DOMAIN must be a lowercase fully qualified domain name." >&2
+    exit 1
+  fi
+
+  if printf '%s' "$ACME_CONTACT_EMAIL" | grep -Eq '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'; then
+    return
+  fi
+
+  echo "ACME_CONTACT_EMAIL must be a valid email address." >&2
+  exit 1
+}
+
 prepare_configuration() {
+  local actual_caddy_sha
   local actual_compose_sha
+  local caddy_candidate
   local compose_candidate
   local env_candidate
 
   temporary_directory="$(mktemp -d)"
+  caddy_candidate="$temporary_directory/Caddyfile"
   compose_candidate="$temporary_directory/docker-compose.yml"
   env_candidate="$temporary_directory/.env"
 
@@ -59,6 +83,14 @@ prepare_configuration() {
 
   if [ "$actual_compose_sha" != "$COMPOSE_FILE_SHA256" ]; then
     echo "Docker Compose checksum mismatch." >&2
+    exit 1
+  fi
+
+  printf '%s' "$CADDY_FILE_BASE64" | base64 --decode >"$caddy_candidate"
+  actual_caddy_sha="$(sha256sum "$caddy_candidate" | awk '{print $1}')"
+
+  if [ "$actual_caddy_sha" != "$CADDY_FILE_SHA256" ]; then
+    echo "Caddy configuration checksum mismatch." >&2
     exit 1
   fi
 
@@ -73,9 +105,12 @@ prepare_configuration() {
     printf 'JWT_EXPIRATION_MINUTES=%s\n' "$JWT_EXPIRATION_MINUTES"
     printf 'REGISTRY_OWNER=%s\n' "$REGISTRY_OWNER"
     printf 'IMAGE_TAG=%s\n' "$IMAGE_TAG"
+    printf 'RECESI_DOMAIN=%s\n' "$RECESI_DOMAIN"
+    printf 'ACME_CONTACT_EMAIL=%s\n' "$ACME_CONTACT_EMAIL"
   } >"$env_candidate"
 
   install -d -o "$APP_USER" -g "$APP_USER" -m 0750 "$APP_DIRECTORY"
+  install -o "$APP_USER" -g "$APP_USER" -m 0640 "$caddy_candidate" "$CADDY_FILE"
   install -o "$APP_USER" -g "$APP_USER" -m 0640 "$compose_candidate" "$COMPOSE_FILE"
   install -o "$APP_USER" -g "$APP_USER" -m 0600 "$env_candidate" "$ENV_FILE"
 }
@@ -102,6 +137,7 @@ main() {
   trap cleanup EXIT INT TERM
   require_inputs
   validate_image_tag
+  validate_https_configuration
   prepare_configuration
   deploy
 }

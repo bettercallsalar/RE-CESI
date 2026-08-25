@@ -6,12 +6,13 @@ RE-CESI reprend la topologie éprouvée dans CESIZen : une VM Linux Azure écono
 
 | Composant            | Conteneur         | Exposition               | Persistance                       |
 | -------------------- | ----------------- | ------------------------ | --------------------------------- |
-| Frontend React/Nginx | `recesi-frontend` | Port public 80           | Image immuable                    |
+| Proxy HTTPS Caddy    | `recesi-proxy`    | Ports publics 80 et 443  | Certificats ACME                  |
+| Frontend React/Nginx | `recesi-frontend` | Réseau Docker uniquement | Image immuable                    |
 | API ASP.NET          | `recesi-api`      | Réseau Docker uniquement | Volume des fichiers envoyés       |
 | Migrations Flyway    | `recesi-migrate`  | Aucune                   | Image immuable des migrations SQL |
 | MySQL                | `recesi-mysql`    | Réseau Docker uniquement | Volume de données MySQL           |
 
-Nginx sert l'application monopage et transmet `/api/*` et `/uploads/*` à l'API. Le frontend et le backend restent des images distinctes, comme dans CESIZen, tout en étant servis sous la même origine publique.
+Caddy termine TLS, renouvelle automatiquement le certificat public et redirige HTTP vers HTTPS. Nginx sert l'application monopage et transmet `/api/*` et `/uploads/*` à l'API. Le frontend et le backend restent des images distinctes, comme dans CESIZen, tout en étant servis sous la même origine publique.
 
 L'infrastructure utilise `polandcentral` et la taille `Standard_B2ls_v2`, identiques à CESIZen. Le disque système est un SSD standard pour limiter le coût de l'abonnement étudiant.
 
@@ -35,7 +36,7 @@ Terraform crée :
 - une extension Azure qui installe Docker et Docker Compose ;
 - un budget annuel avec alertes à 25, 50, 75 et 90 %.
 
-Seul le port HTTP 80 est public. SSH reste fermé tant que `admin_ssh_source_cidr` n'est pas défini ; GitHub Actions administre la VM avec Azure Run Command. MySQL et l'API ne publient aucun port sur Internet.
+Les ports 80 et 443 sont publics. Caddy réserve le port 80 au challenge ACME et à la redirection vers HTTPS. SSH reste fermé tant que `admin_ssh_source_cidr` n'est pas défini ; GitHub Actions administre la VM avec Azure Run Command. MySQL, l'API et le frontend ne publient aucun port directement sur Internet.
 
 ## État Terraform distant
 
@@ -66,9 +67,15 @@ AZURE_TENANT_ID
 AZURE_SUBSCRIPTION_ID
 TF_ADMIN_SSH_PUBLIC_KEY
 TF_BUDGET_CONTACT_EMAILS
+RECESI_DOMAIN
+ACME_CONTACT_EMAIL
 ```
 
 `TF_BUDGET_CONTACT_EMAILS` doit être une liste JSON Terraform, par exemple `["adresse@example.com"]` sur une seule ligne.
+
+`RECESI_DOMAIN` contient le domaine public en minuscules, par exemple `recesi.example.com`. `ACME_CONTACT_EMAIL` reçoit les notifications de l'autorité de certification. Ces valeurs ne sont pas des secrets.
+
+Avant le déploiement HTTPS, créer chez le fournisseur DNS un enregistrement `A` pour `RECESI_DOMAIN` pointant vers l'adresse IP statique retournée par Terraform. La résolution DNS doit être effective avant de lancer Caddy.
 
 Créer deux environnements GitHub protégés par validation manuelle :
 
@@ -146,9 +153,11 @@ L'environnement `application-production` doit imposer une approbation pour garde
 4. Exécuter et examiner le plan Terraform de production.
 5. Appliquer le plan de production après approbation.
 6. Attribuer `Virtual Machine Contributor` à l'identité de déploiement sur `recesi-prod-group`.
-7. Créer l'environnement et les secrets `application-production`.
-8. Relancer `Build & Push Docker Images` depuis `main`.
-9. Approuver le déploiement et vérifier le nom DNS retourné par Terraform.
+7. Créer l'enregistrement DNS du domaine personnalisé vers l'IP publique Terraform.
+8. Ajouter `RECESI_DOMAIN` et `ACME_CONTACT_EMAIL` aux variables de dépôt GitHub.
+9. Créer l'environnement et les secrets `application-production`.
+10. Relancer `Build & Push Docker Images` depuis `main`.
+11. Approuver le déploiement et vérifier l'URL HTTPS.
 
 ## Retour arrière et maintenance
 
@@ -156,4 +165,4 @@ Pour revenir à une version précédente, relancer le déploiement avec le SHA v
 
 Les demandes d'évolution et incidents sont suivis dans GitHub Issues. Un incident de production suit le cycle : qualification, priorité, affectation, correction sur branche dédiée, revue, validation, déploiement puis compte rendu. Un incident de sécurité impose en plus la rotation immédiate des secrets concernés et la conservation des journaux Azure/GitHub nécessaires à l'analyse.
 
-Cette première version expose HTTP uniquement, comme CESIZen. Avant une ouverture réelle au public, ajouter un nom de domaine et un certificat TLS géré, puis fermer le port 80 ou le réserver à la redirection HTTPS.
+Le volume `recesi_caddy_data` conserve les certificats et les informations ACME entre les déploiements. Le port 80 reste ouvert uniquement pour le renouvellement ACME et la redirection permanente vers HTTPS.
