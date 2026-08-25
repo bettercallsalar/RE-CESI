@@ -31,6 +31,7 @@ services:
   migrate:
     image: ghcr.io/${REGISTRY_OWNER}/re-cesi-migrations:${IMAGE_TAG}
     container_name: recesi-migrate
+    command: ["migrate"]
     depends_on:
       db:
         condition: service_healthy
