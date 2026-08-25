@@ -11,6 +11,14 @@
 *.sln.docstates
 .env
 
+# Terraform local state and generated plans
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*-plan.txt
+crash.log
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

@@ -1,0 +1,84 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: recesi-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - recesi_mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+  migrate:
+    image: ghcr.io/${REGISTRY_OWNER}/re-cesi-migrations:${IMAGE_TAG}
+    container_name: recesi-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLYWAY_URL: "jdbc:mysql://db:3306/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+      FLYWAY_USER: ${MYSQL_USER}
+      FLYWAY_PASSWORD: ${MYSQL_PASSWORD}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_OUT_OF_ORDER: "true"
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    image: ghcr.io/${REGISTRY_OWNER}/re-cesi-api:${IMAGE_TAG}
+    container_name: recesi-api
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      JwtSettings__SecretKey: ${JWT_SECRET}
+      JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-60}
+      FileStorage__UploadsRoot: /data/uploads
+    expose:
+      - "8080"
+    volumes:
+      - recesi_uploads_data:/data/uploads
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    image: ghcr.io/${REGISTRY_OWNER}/re-cesi-frontend:${IMAGE_TAG}
+    container_name: recesi-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:8080"
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  recesi_mysql_data:
+  recesi_uploads_data:

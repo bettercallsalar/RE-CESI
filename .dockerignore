@@ -1,8 +1,12 @@
 **/bin/
 **/obj/
+.env
 .git/
 .vscode/
 .idea/
 .DS_Store
+TestResults/
+coverage/
+terraform/
 *.user
 *.suo

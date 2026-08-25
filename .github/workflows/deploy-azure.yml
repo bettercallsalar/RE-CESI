@@ -1,0 +1,152 @@
+name: Deploy Production to Azure VM
+
+on:
+  workflow_run:
+    workflows: ["Build & Push Docker Images"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+concurrency:
+  group: recesi-application-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    environment:
+      name: application-production
+    env:
+      AZURE_RESOURCE_GROUP: recesi-prod-group
+      AZURE_VM_NAME: recesi-prod-vm
+      AZURE_LOCATION: polandcentral
+      DEPLOY_RUN_COMMAND_NAME: deploy-${{ github.run_id }}
+      SMOKE_RUN_COMMAND_NAME: smoke-${{ github.run_id }}
+      IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+      DEPLOY_TIMEOUT_SECONDS: "900"
+      SMOKE_TIMEOUT_SECONDS: "180"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare deployment configuration
+        id: compose
+        shell: bash
+        run: |
+          echo "base64=$(base64 -w 0 docker/docker-compose.yml)" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum docker/docker-compose.yml | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy immutable images
+        shell: bash
+        run: |
+          az vm run-command create \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --location "$AZURE_LOCATION" \
+            --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
+            --script @scripts/azure/deploy-app.sh \
+            --parameters \
+              COMPOSE_FILE_BASE64="${{ steps.compose.outputs.base64 }}" \
+              COMPOSE_FILE_SHA256="${{ steps.compose.outputs.sha256 }}" \
+              IMAGE_TAG="$IMAGE_TAG" \
+              REGISTRY_OWNER="${{ github.repository_owner }}" \
+            --protected-parameters \
+              GHCR_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
+              MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD }}" \
+              MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --timeout-in-seconds "$DEPLOY_TIMEOUT_SECONDS" \
+            --output none
+
+      - name: Check deployment result
+        shell: bash
+        run: |
+          exit_code="$(az vm run-command show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
+            --instance-view \
+            --query instanceView.exitCode \
+            --output tsv)"
+
+          az vm run-command show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
+            --instance-view \
+            --query instanceView.output \
+            --output tsv
+
+          if [[ "$exit_code" == "0" ]]; then
+            exit 0
+          fi
+
+          az vm run-command show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
+            --instance-view \
+            --query instanceView.error \
+            --output tsv >&2
+          exit 1
+
+      - name: Run smoke test
+        shell: bash
+        run: |
+          az vm run-command create \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --location "$AZURE_LOCATION" \
+            --run-command-name "$SMOKE_RUN_COMMAND_NAME" \
+            --script @scripts/azure/smoke-test.sh \
+            --timeout-in-seconds "$SMOKE_TIMEOUT_SECONDS" \
+            --output none
+
+          exit_code="$(az vm run-command show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$SMOKE_RUN_COMMAND_NAME" \
+            --instance-view \
+            --query instanceView.exitCode \
+            --output tsv)"
+
+          az vm run-command show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$SMOKE_RUN_COMMAND_NAME" \
+            --instance-view \
+            --query instanceView.output \
+            --output tsv
+
+          [[ "$exit_code" == "0" ]]
+
+      - name: Remove temporary Run Command resources
+        if: always()
+        shell: bash
+        run: |
+          az vm run-command delete \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
+            --yes || true
+
+          az vm run-command delete \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --vm-name "$AZURE_VM_NAME" \
+            --run-command-name "$SMOKE_RUN_COMMAND_NAME" \
+            --yes || true

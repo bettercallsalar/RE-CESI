@@ -23,7 +23,7 @@ RUN dotnet publish ./src/RESR.WebAPI/RESR.WebAPI.csproj \
     /p:BuildInParallel=false \
     /p:UseSharedCompilation=false
 
-FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/aspnet:10.0
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
