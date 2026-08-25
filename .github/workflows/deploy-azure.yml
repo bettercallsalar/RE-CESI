@@ -30,6 +30,8 @@ jobs:
       DEPLOY_RUN_COMMAND_NAME: deploy-${{ github.run_id }}
       SMOKE_RUN_COMMAND_NAME: smoke-${{ github.run_id }}
       IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+      RECESI_DOMAIN: ${{ vars.RECESI_DOMAIN }}
+      ACME_CONTACT_EMAIL: ${{ vars.ACME_CONTACT_EMAIL }}
       DEPLOY_TIMEOUT_SECONDS: "900"
       SMOKE_TIMEOUT_SECONDS: "180"
 
@@ -37,6 +39,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Validate HTTPS configuration
+        shell: bash
+        run: |
+          if [[ -z "$RECESI_DOMAIN" ]]; then
+            echo "Repository variable RECESI_DOMAIN is required." >&2
+            exit 1
+          fi
+
+          if [[ -z "$ACME_CONTACT_EMAIL" ]]; then
+            echo "Repository variable ACME_CONTACT_EMAIL is required." >&2
+            exit 1
+          fi
 
       - uses: azure/login@v2
         with:
@@ -48,8 +63,10 @@ jobs:
         id: compose
         shell: bash
         run: |
-          echo "base64=$(base64 -w 0 docker/docker-compose.yml)" >> "$GITHUB_OUTPUT"
-          echo "sha256=$(sha256sum docker/docker-compose.yml | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "compose_base64=$(base64 -w 0 docker/docker-compose.yml)" >> "$GITHUB_OUTPUT"
+          echo "compose_sha256=$(sha256sum docker/docker-compose.yml | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "caddy_base64=$(base64 -w 0 docker/Caddyfile)" >> "$GITHUB_OUTPUT"
+          echo "caddy_sha256=$(sha256sum docker/Caddyfile | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Deploy immutable images
         shell: bash
@@ -61,10 +78,14 @@ jobs:
             --run-command-name "$DEPLOY_RUN_COMMAND_NAME" \
             --script @scripts/azure/deploy-app.sh \
             --parameters \
-              COMPOSE_FILE_BASE64="${{ steps.compose.outputs.base64 }}" \
-              COMPOSE_FILE_SHA256="${{ steps.compose.outputs.sha256 }}" \
+              COMPOSE_FILE_BASE64="${{ steps.compose.outputs.compose_base64 }}" \
+              COMPOSE_FILE_SHA256="${{ steps.compose.outputs.compose_sha256 }}" \
+              CADDY_FILE_BASE64="${{ steps.compose.outputs.caddy_base64 }}" \
+              CADDY_FILE_SHA256="${{ steps.compose.outputs.caddy_sha256 }}" \
               IMAGE_TAG="$IMAGE_TAG" \
               REGISTRY_OWNER="${{ github.repository_owner }}" \
+              RECESI_DOMAIN="$RECESI_DOMAIN" \
+              ACME_CONTACT_EMAIL="$ACME_CONTACT_EMAIL" \
             --protected-parameters \
               GHCR_TOKEN="${{ secrets.GITHUB_TOKEN }}" \
               MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD }}" \
@@ -114,6 +135,8 @@ jobs:
             --location "$AZURE_LOCATION" \
             --run-command-name "$SMOKE_RUN_COMMAND_NAME" \
             --script @scripts/azure/smoke-test.sh \
+            --parameters \
+              RECESI_HEALTHCHECK_DOMAIN="$RECESI_DOMAIN" \
             --timeout-in-seconds "$SMOKE_TIMEOUT_SECONDS" \
             --output none
 

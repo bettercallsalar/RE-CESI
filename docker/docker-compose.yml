@@ -74,11 +74,32 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    expose:
+      - "8080"
+    security_opt:
+      - no-new-privileges:true
+
+  proxy:
+    image: caddy:2.10.2-alpine
+    container_name: recesi-proxy
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      ACME_CONTACT_EMAIL: ${ACME_CONTACT_EMAIL}
+      RECESI_DOMAIN: ${RECESI_DOMAIN}
     ports:
-      - "80:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - recesi_caddy_data:/data
+      - recesi_caddy_config:/config
     security_opt:
       - no-new-privileges:true
 
 volumes:
+  recesi_caddy_config:
+  recesi_caddy_data:
   recesi_mysql_data:
   recesi_uploads_data:

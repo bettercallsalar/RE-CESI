@@ -6,10 +6,11 @@ readonly APP_DIRECTORY="${RECESI_APP_DIRECTORY:-/home/recesi/recesi}"
 readonly COMPOSE_FILE="$APP_DIRECTORY/docker-compose.yml"
 readonly ENV_FILE="$APP_DIRECTORY/.env"
 readonly COMPOSE_PROJECT_NAME="recesi"
-readonly HEALTHCHECK_URL="${RECESI_HEALTHCHECK_URL:-http://127.0.0.1/}"
+readonly HEALTHCHECK_DOMAIN="${RECESI_HEALTHCHECK_DOMAIN:?RECESI_HEALTHCHECK_DOMAIN is required}"
+readonly HEALTHCHECK_URL="https://$HEALTHCHECK_DOMAIN/"
 readonly MAX_ATTEMPTS="${RECESI_HEALTHCHECK_ATTEMPTS:-18}"
 readonly RETRY_DELAY_SECONDS="${RECESI_HEALTHCHECK_DELAY_SECONDS:-5}"
-readonly EXPECTED_SERVICES="db api frontend"
+readonly EXPECTED_SERVICES="db api frontend proxy"
 
 compose() {
   docker compose \
@@ -41,7 +42,11 @@ verify_http() {
   attempt=1
 
   while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
-    if curl -fsS --max-time 10 "$HEALTHCHECK_URL" >/dev/null; then
+    if curl -fsS \
+      --max-time 10 \
+      --noproxy '*' \
+      --resolve "$HEALTHCHECK_DOMAIN:443:127.0.0.1" \
+      "$HEALTHCHECK_URL" >/dev/null; then
       return
     fi
 
