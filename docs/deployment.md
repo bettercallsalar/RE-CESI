@@ -4,12 +4,12 @@
 
 RE-CESI reprend la topologie éprouvée dans CESIZen : une VM Linux Azure économique exécute Docker Compose, avec un conteneur par responsabilité.
 
-| Composant | Conteneur | Exposition | Persistance |
-| --- | --- | --- | --- |
-| Frontend React/Nginx | `recesi-frontend` | Port public 80 | Image immuable |
-| API ASP.NET | `recesi-api` | Réseau Docker uniquement | Volume des fichiers envoyés |
-| Migrations Flyway | `recesi-migrate` | Aucune | Image immuable des migrations SQL |
-| MySQL | `recesi-mysql` | Réseau Docker uniquement | Volume de données MySQL |
+| Composant            | Conteneur         | Exposition               | Persistance                       |
+| -------------------- | ----------------- | ------------------------ | --------------------------------- |
+| Frontend React/Nginx | `recesi-frontend` | Port public 80           | Image immuable                    |
+| API ASP.NET          | `recesi-api`      | Réseau Docker uniquement | Volume des fichiers envoyés       |
+| Migrations Flyway    | `recesi-migrate`  | Aucune                   | Image immuable des migrations SQL |
+| MySQL                | `recesi-mysql`    | Réseau Docker uniquement | Volume de données MySQL           |
 
 Nginx sert l'application monopage et transmet `/api/*` et `/uploads/*` à l'API. Le frontend et le backend restent des images distinctes, comme dans CESIZen, tout en étant servis sous la même origine publique.
 
@@ -17,10 +17,10 @@ L'infrastructure utilise `polandcentral` et la taille `Standard_B2ls_v2`, identi
 
 ## Environnements
 
-| Branche | Environnement | État Terraform | Préfixe Azure | Déploiement |
-| --- | --- | --- | --- | --- |
-| `main` | Production | `recesi-prod.terraform.tfstate` | `recesi-prod` | Autorisé |
-| `dev` | Développement prévu | `recesi-dev.terraform.tfstate` | `recesi-dev` | Interdit |
+| Branche | Environnement       | État Terraform                  | Préfixe Azure | Déploiement |
+| ------- | ------------------- | ------------------------------- | ------------- | ----------- |
+| `main`  | Production          | `recesi-prod.terraform.tfstate` | `recesi-prod` | Autorisé    |
+| `dev`   | Développement prévu | `recesi-dev.terraform.tfstate`  | `recesi-dev`  | Interdit    |
 
 Les variables `dev.tfvars` permettent de démontrer la séparation des environnements et de produire un plan. Le workflow bloque structurellement l'`apply` de `dev`, et le workflow applicatif ne déploie que les images construites depuis `main`.
 
@@ -30,7 +30,7 @@ Terraform crée :
 
 - un groupe de ressources ;
 - un réseau virtuel, un sous-réseau, une interface réseau et un NSG ;
-- une IP publique statique avec le DNS `recesi-salar-prod.polandcentral.cloudapp.azure.com` ;
+- une IP publique statique avec le DNS `recesi.polandcentral.cloudapp.azure.com` ;
 - une VM Ubuntu 22.04 avec authentification SSH par clé uniquement ;
 - une extension Azure qui installe Docker et Docker Compose ;
 - un budget annuel avec alertes à 25, 50, 75 et 90 %.
