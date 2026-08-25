@@ -1,5 +1,9 @@
 # RE-CESI
 
+## Deployment
+
+The Azure infrastructure, Terraform plan/apply process, GitHub Actions configuration, and production runbook are documented in [docs/deployment.md](docs/deployment.md).
+
 ## Web frontend
 
 A new React + Chakra UI frontend is available in `src/RESR.Frontend`.
