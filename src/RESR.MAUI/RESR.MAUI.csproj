@@ -24,8 +24,7 @@
 		<ApplicationTitle>(RE) Sources Relationnelles</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.resr.maui</ApplicationId>
-
+		<ApplicationId>fr.cesi.resr</ApplicationId>
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>

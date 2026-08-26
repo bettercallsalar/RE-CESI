@@ -9,11 +9,15 @@ internal static class ApiEndpoints
 {
     public static Uri ResolveBaseAddress()
     {
+#if DEBUG
         var host = DeviceInfo.Current.Platform == DevicePlatform.Android
             ? "10.0.2.2"
             : "localhost";
 
         return new Uri($"http://{host}:8080/");
+#else
+        return new Uri("https://recesi.polandcentral.cloudapp.azure.com/");
+#endif
     }
 
     public static Uri? ResolvePreferredImageUri(IReadOnlyList<ResourceFileResponse>? files, int? defaultImageId)
