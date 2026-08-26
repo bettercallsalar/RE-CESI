@@ -14,7 +14,7 @@ public sealed class ReactionsApiClientTests
         var handler = new StubHttpMessageHandler(request =>
         {
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal("/resources/12/reactions", request.RequestUri?.PathAndQuery);
+            Assert.Equal("/api/reactions/resources/12", request.RequestUri?.PathAndQuery);
             Assert.Null(request.Headers.Authorization);
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -57,7 +57,7 @@ public sealed class ReactionsApiClientTests
         var handler = new StubHttpMessageHandler(async request =>
         {
             Assert.Equal(HttpMethod.Post, request.Method);
-            Assert.Equal("/resources/12/reactions", request.RequestUri?.PathAndQuery);
+            Assert.Equal("/api/reactions/resources/12", request.RequestUri?.PathAndQuery);
             Assert.NotNull(request.Headers.Authorization);
             Assert.Equal("Bearer", request.Headers.Authorization!.Scheme);
             Assert.Equal("jwt-reaction-token", request.Headers.Authorization.Parameter);
