@@ -10,7 +10,7 @@ RE-CESI reprend la topologie éprouvée dans CESIZen : une VM Linux Azure écono
 | Frontend React/Nginx | `recesi-frontend` | Réseau Docker uniquement | Image immuable                    |
 | API ASP.NET          | `recesi-api`      | Réseau Docker uniquement | Volume des fichiers envoyés       |
 | Migrations Flyway    | `recesi-migrate`  | Aucune                   | Image immuable des migrations SQL |
-| MySQL                | `recesi-mysql`    | Réseau Docker uniquement | Volume de données MySQL           |
+| MySQL                | `recesi-mysql`    | Loopback VM `127.0.0.1:3306` | Volume de données MySQL        |
 
 Caddy termine TLS, renouvelle automatiquement le certificat public et redirige HTTP vers HTTPS. Nginx sert l'application monopage et transmet `/api/*` et `/uploads/*` à l'API. Le frontend et le backend restent des images distinctes, comme dans CESIZen, tout en étant servis sous la même origine publique.
 
@@ -36,7 +36,7 @@ Terraform crée :
 - une extension Azure qui installe Docker et Docker Compose ;
 - un budget annuel avec alertes à 25, 50, 75 et 90 %.
 
-Les ports 80 et 443 sont publics. Caddy réserve le port 80 au challenge ACME et à la redirection vers HTTPS. SSH reste fermé tant que `admin_ssh_source_cidr` n'est pas défini ; GitHub Actions administre la VM avec Azure Run Command. MySQL, l'API et le frontend ne publient aucun port directement sur Internet.
+Les ports 80 et 443 sont publics. Caddy réserve le port 80 au challenge ACME et à la redirection vers HTTPS. Le port SSH 22 est temporairement ouvert à toutes les adresses, avec authentification par clé uniquement. MySQL écoute seulement sur le loopback de la VM afin de permettre un tunnel SSH ; l'API, le frontend et MySQL ne publient aucun port de données directement sur Internet. Supprimer `admin_ssh_source_cidr` de `prod.tfvars`, puis appliquer Terraform, dès que l'accès administratif temporaire n'est plus nécessaire.
 
 ## État Terraform distant
 
