@@ -18,7 +18,7 @@ public sealed class ReactionsApiClient : IReactionsApiClient
     public async Task<IReadOnlyList<ReactionResponse>> GetByResourceIdAsync(int idResource, CancellationToken ct)
     {
         return await SendAsync(
-            () => _httpClient.GetAsync($"resources/{idResource}/reactions", ct),
+            () => _httpClient.GetAsync($"api/reactions/resources/{idResource}", ct),
             Array.Empty<ReactionResponse>(),
             ct,
             requireAuthorization: false);
@@ -27,7 +27,7 @@ public sealed class ReactionsApiClient : IReactionsApiClient
     public async Task<ReactionResponse> CreateAsync(int idResource, CreateReactionRequest request, CancellationToken ct)
     {
         return await SendForPayloadAsync(
-            () => _httpClient.PostAsJsonAsync($"resources/{idResource}/reactions", request, ct),
+            () => _httpClient.PostAsJsonAsync($"api/reactions/resources/{idResource}", request, ct),
             "La reaction a ete creee, mais la reponse du serveur est invalide.",
             ct);
     }

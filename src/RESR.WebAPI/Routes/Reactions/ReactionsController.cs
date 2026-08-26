@@ -14,7 +14,7 @@ public sealed class ReactionsController : ControllerBase
 
     public ReactionsController(IReactionService service) => _service = service;
 
-    [HttpGet("/resources/{idResource:int}/reactions")]
+    [HttpGet("resources/{idResource:int}")]
     public async Task<ActionResult<IReadOnlyList<ReactionResponse>>> GetByResourceId([FromRoute] int idResource, CancellationToken ct)
     {
         try
@@ -76,7 +76,7 @@ public sealed class ReactionsController : ControllerBase
     }
 
     [AuthorizePermission]
-    [HttpPost("/resources/{idResource:int}/reactions")]
+    [HttpPost("resources/{idResource:int}")]
     public async Task<ActionResult<ReactionResponse>> Create([FromRoute] int idResource, [FromBody] CreateReactionRequest req, CancellationToken ct)
     {
         if (!User.TryGetCurrentUserId(out var currentUserId))
