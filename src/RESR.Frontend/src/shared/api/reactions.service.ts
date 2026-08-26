@@ -3,11 +3,11 @@ import type { CreateReactionRequest, ResourceReaction, UpdateReactionRequest } f
 
 export const reactionsService = {
   getByResource(idResource: number) {
-    return httpClient.get<ResourceReaction[]>(`/resources/${idResource}/reactions`);
+    return httpClient.get<ResourceReaction[]>(`/api/reactions/resources/${idResource}`);
   },
 
   create(token: string, idResource: number, request: CreateReactionRequest) {
-    return httpClient.post<ResourceReaction>(`/resources/${idResource}/reactions`, request, { token });
+    return httpClient.post<ResourceReaction>(`/api/reactions/resources/${idResource}`, request, { token });
   },
 
   update(token: string, idReaction: number, request: UpdateReactionRequest) {
